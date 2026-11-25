@@ -243,6 +243,30 @@ main.workspace {
   display: block;
 }
 
+/* Botón flotante de tema en la esquina superior derecha */
+.theme-fab {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 20;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: var(--pn);
+  color: var(--tx);
+  border: 1.5px solid var(--sep);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+.theme-fab:hover {
+  border-color: var(--ac);
+  color: var(--ac);
+}
+
 /* ===== Panel inferior: 3 Tarjetas separadas con bordes visibles ===== */
 section#bottom-dock {
   flex: 0 0 44%;

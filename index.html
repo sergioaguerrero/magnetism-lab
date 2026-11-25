@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Simulador 3D de Magnetismo · Unidad 4</title>
+  <title>Magnetism Lab · Unidad 4</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
   <link rel="stylesheet" href="css/styles.css">
 </head>
@@ -12,12 +12,11 @@
   <aside id="sidebar">
     <div class="hdr">
       <div>
-        <h1>Simulador 3D de Magnetismo</h1>
+        <h1>Magnetism Lab</h1>
         <p class="sub">Electromagnetismo · Unidad 4 (SI)</p>
       </div>
       <div class="hdr-actions">
         <button id="btn-home" title="Ver los 7 temas del laboratorio">7 Temas</button>
-        <button id="btn-theme" title="Alternar modo claro / oscuro">🌓</button>
       </div>
     </div>
 
@@ -45,7 +44,13 @@
 
   <!-- Área principal derecha: arriba visor 3D y abajo panel de parámetros modificables, lecturas y teoría -->
   <main class="workspace">
-    <div id="cvw"></div>
+    <div id="cvw">
+      <button id="btn-theme" class="theme-fab" title="Alternar modo claro / oscuro" aria-label="Alternar tema">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+      </button>
+    </div>
 
     <section id="bottom-dock">
       <div class="dock-col dock-ctrls">
