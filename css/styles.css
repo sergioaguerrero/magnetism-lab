@@ -722,12 +722,12 @@ input[type="range"]::-webkit-slider-thumb:hover {
   border-radius: 999px;
   white-space: nowrap;
   overflow: hidden;
-  transition: color 0.2s ease, border-color 0.2s ease, padding 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: color 0.4s ease, border-color 0.4s ease, padding 0.65s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 .btn-defaults svg {
   flex: none;
-  transition: transform 0.3s ease;
+  transition: transform 0.65s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 .btn-defaults span {
@@ -736,9 +736,9 @@ input[type="range"]::-webkit-slider-thumb:hover {
   margin-left: 0;
   overflow: hidden;
   transition:
-    max-width 0.3s cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 0.22s ease,
-    margin-left 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    max-width 0.65s cubic-bezier(0.25, 1, 0.5, 1),
+    opacity 0.55s ease,
+    margin-left 0.65s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 .btn-defaults:hover {
