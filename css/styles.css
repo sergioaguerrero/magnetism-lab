@@ -257,6 +257,10 @@ button.on {
 
 #variants select {
   background: var(--pn);
+  font-size: 12.2px;
+  padding: 6px 8px;
+  max-width: 100%;
+  text-overflow: ellipsis;
 }
 
 .legend {

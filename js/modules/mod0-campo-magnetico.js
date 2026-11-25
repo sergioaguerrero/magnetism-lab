@@ -24,16 +24,16 @@
       k: 'modo',
       t: 'Subtema de campo magnético',
       opts: {
-        'Definición vectorial F_B = q(v × B) y Mano Derecha': 'vectorial',
-        'Imán de barra (Polos N–S) y Brújula 3D': 'iman'
+        'Fuerza F = q(v × B) y Mano Derecha': 'vectorial',
+        'Imán de barra (N–S) y Brújula 3D': 'iman'
       }
     },
     {
       k: 'signo',
       t: 'Signo de la carga de prueba q',
       opts: {
-        'Carga positiva (q > 0, F_B ∥ v × B)': 'pos',
-        'Carga negativa (q < 0, F_B opuesta a v × B)': 'neg'
+        'Positiva (q > 0, F ∥ v × B)': 'pos',
+        'Negativa (q < 0, F opuesta a v × B)': 'neg'
       },
       show: () => S0.modo === 'vectorial'
     },

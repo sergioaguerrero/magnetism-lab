@@ -60,8 +60,8 @@
       k: 'mode',
       t: 'Modo de simulación',
       opts: {
-        'Dinámico (gira al equilibrio θ = 0°)': 'dinamico',
-        'Estático (mantener ángulo fijo θ)': 'estatico'
+        'Dinámico (gira al equilibrio)': 'dinamico',
+        'Estático (ángulo fijo θ)': 'estatico'
       },
       onSelect() {
         omega = 0;
