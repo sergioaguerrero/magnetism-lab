@@ -710,8 +710,10 @@ input[type="range"]::-webkit-slider-thumb:hover {
 .btn-defaults {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 3px 9px;
+  justify-content: center;
+  gap: 0;
+  height: 26px;
+  padding: 0 7px;
   font-size: 11.2px;
   font-weight: 600;
   color: var(--mu);
@@ -719,11 +721,40 @@ input[type="range"]::-webkit-slider-thumb:hover {
   border: 1px solid var(--bd);
   border-radius: 999px;
   white-space: nowrap;
+  overflow: hidden;
+  transition: color 0.2s ease, border-color 0.2s ease, padding 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.btn-defaults svg {
+  flex: none;
+  transition: transform 0.3s ease;
+}
+
+.btn-defaults span {
+  max-width: 0;
+  opacity: 0;
+  margin-left: 0;
+  overflow: hidden;
+  transition:
+    max-width 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.22s ease,
+    margin-left 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .btn-defaults:hover {
   color: var(--ac);
   border-color: var(--ac);
+  padding: 0 10px;
+}
+
+.btn-defaults:hover svg {
+  transform: rotate(-45deg);
+}
+
+.btn-defaults:hover span {
+  max-width: 115px;
+  opacity: 1;
+  margin-left: 5px;
 }
 
 .scene-ctrl-bar {
