@@ -75,24 +75,18 @@ if ($('btn-theme')) {
   $('btn-theme').onclick = () => Sim.scene.toggleTheme();
 }
 
-/* Alternar entre barra lateral izquierda (Temas) y barra lateral derecha (Explicación detallada) */
+/* Alternar entre barra lateral izquierda (Temas) y barra lateral derecha (Explicación detallada) con animación */
 let explainOpen = false;
 function toggleExplain(forceState) {
   explainOpen = typeof forceState === 'boolean' ? forceState : !explainOpen;
-  const leftSb = $('sidebar');
-  const rightSb = $('explain-sidebar');
   const btnExp = $('btn-explain');
-
-  if (leftSb) leftSb.hidden = explainOpen;
-  if (rightSb) rightSb.hidden = !explainOpen;
-  if (btnExp) btnExp.classList.toggle('on', explainOpen);
 
   if (explainOpen && Sim.explainer && activeMod) {
     Sim.explainer.update(activeMod);
   }
-  if (Sim.scene && Sim.scene.syncSize) {
-    requestAnimationFrame(() => Sim.scene.syncSize());
-  }
+
+  document.body.classList.toggle('explain-open', explainOpen);
+  if (btnExp) btnExp.classList.toggle('on', explainOpen);
 }
 
 if ($('btn-explain')) {

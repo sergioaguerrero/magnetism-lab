@@ -60,11 +60,12 @@ body {
   color: var(--tx);
 }
 
-/* ===== Barra lateral izquierda: Temas y Variantes ===== */
+/* ===== Barra lateral izquierda: Temas y Variantes (con animación de apertura/cierre) ===== */
 aside#sidebar {
   width: 360px;
   flex: none;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 16px 18px;
   background: var(--pn);
   border: 1.5px solid var(--sep);
@@ -72,6 +73,31 @@ aside#sidebar {
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22);
   display: flex;
   flex-direction: column;
+  opacity: 1;
+  transform: translateX(0);
+  transition:
+    width 0.48s cubic-bezier(0.22, 1, 0.36, 1),
+    padding 0.48s cubic-bezier(0.22, 1, 0.36, 1),
+    margin 0.48s cubic-bezier(0.22, 1, 0.36, 1),
+    border-width 0.48s ease,
+    opacity 0.36s ease,
+    transform 0.48s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+aside#sidebar > * {
+  min-width: 320px;
+}
+
+body.explain-open aside#sidebar {
+  width: 0;
+  padding-left: 0;
+  padding-right: 0;
+  border-width: 0;
+  margin-right: -14px;
+  opacity: 0;
+  transform: translateX(-40px);
+  overflow: hidden;
+  pointer-events: none;
 }
 
 .hdr {
@@ -290,18 +316,43 @@ main.workspace {
   color: #fff;
 }
 
-/* ===== Barra lateral derecha: Explicación Pedagógica del Problema ===== */
+/* ===== Barra lateral derecha: Explicación Pedagógica del Problema (con animación de apertura/cierre) ===== */
 aside#explain-sidebar {
-  width: 460px;
+  width: 0;
   flex: none;
   background: var(--pn);
-  border: 1.5px solid var(--sep);
+  border: 0 solid var(--sep);
   border-radius: 12px;
-  padding: 16px 18px;
+  padding: 16px 0;
+  margin-left: -14px;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.24);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  opacity: 0;
+  transform: translateX(40px);
+  pointer-events: none;
+  transition:
+    width 0.48s cubic-bezier(0.22, 1, 0.36, 1),
+    padding 0.48s cubic-bezier(0.22, 1, 0.36, 1),
+    margin 0.48s cubic-bezier(0.22, 1, 0.36, 1),
+    border-width 0.48s ease,
+    opacity 0.36s ease,
+    transform 0.48s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+aside#explain-sidebar > * {
+  min-width: 420px;
+}
+
+body.explain-open aside#explain-sidebar {
+  width: 460px;
+  padding: 16px 18px;
+  border-width: 1.5px;
+  margin-left: 0;
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
 }
 
 .explain-hdr {
