@@ -1,7 +1,16 @@
 /* ===== Coordinador principal, navegación de temas y bucle de animación ===== */
 let activeMod = null;
-let paused = false;
+let paused = true;
 let fr = 0;
+
+function setPaused(p) {
+  paused = p;
+  const pzBtn = $('pz');
+  if (pzBtn) {
+    pzBtn.textContent = paused ? 'Iniciar' : 'Pausar';
+    pzBtn.classList.toggle('on', paused);
+  }
+}
 
 /* Contador de FPS en vivo (RNF-05) */
 let fpsFrames = 0;
@@ -33,6 +42,7 @@ function setMode(id, presetName) {
   $('th').innerHTML = mod.theory;
   Sim.ui.renderMath($('th'));
   $('pz').hidden = !mod.canPause;
+  setPaused(true);
   if ($('btn-free')) {
     $('btn-free').hidden = !mod.canFollow;
   }
@@ -63,14 +73,14 @@ function centerCamera() {
 }
 
 $('rs').onclick = () => {
+  setPaused(true);
   if (activeMod && activeMod.reset) {
     activeMod.reset();
   }
 };
 
 $('pz').onclick = () => {
-  paused = !paused;
-  $('pz').textContent = paused ? 'Continuar' : 'Pausar';
+  setPaused(!paused);
 };
 
 Sim.freeCam = false;
