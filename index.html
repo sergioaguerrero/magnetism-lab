@@ -8,11 +8,12 @@
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-  <aside>
+  <!-- Barra lateral izquierda: solo selección de Tema, Variantes y control rápido de escena -->
+  <aside id="sidebar">
     <div class="hdr">
       <div>
         <h1>Simulador 3D de Magnetismo</h1>
-        <p class="sub">Electromagnetismo · Unidad 4 (Sistema Internacional)</p>
+        <p class="sub">Electromagnetismo · Unidad 4 (SI)</p>
       </div>
       <div class="hdr-actions">
         <button id="btn-home" title="Ver los 7 temas del laboratorio">7 Temas</button>
@@ -20,17 +21,18 @@
       </div>
     </div>
 
+    <h2>Temas del laboratorio</h2>
     <div id="tabs"></div>
-    <div id="ctrls"></div>
 
+    <h2>Variantes del tema</h2>
+    <div id="variants"></div>
+
+    <h2>Control de escena</h2>
     <div class="btns">
       <button id="rs">Reiniciar</button>
       <button id="pz">Pausar</button>
       <button id="btn-cam" title="Restaurar vista 3D inicial">Centrar vista</button>
     </div>
-
-    <h2>Lecturas en vivo (SI)</h2>
-    <div id="ro"></div>
 
     <h2>Código de colores 3D</h2>
     <div class="legend">
@@ -42,15 +44,33 @@
       <span class="leg-item"><i class="dot" style="background:#facc15"></i>Pulgar $\vec{v} \times \vec{B}$</span>
     </div>
 
-    <h2>Teoría y ecuaciones</h2>
-    <div id="th"></div>
-
     <p class="mu">
-      Ejes: X rojo, Y verde (vertical), Z azul. Ratón: izq. rotar, rueda zoom, der. desplazar. <b id="fps">60 FPS</b>
+      Ejes: X rojo, Y verde (vertical), Z azul.<br>
+      Ratón: izq. rotar · rueda zoom · der. desplazar · <b id="fps">60 FPS</b>
     </p>
   </aside>
 
-  <div id="cvw"></div>
+  <!-- Área principal derecha: arriba visor 3D y abajo panel de parámetros modificables, lecturas y teoría -->
+  <main class="workspace">
+    <div id="cvw"></div>
+
+    <section id="bottom-dock">
+      <div class="dock-col dock-ctrls">
+        <h2>Parámetros modificables</h2>
+        <div id="ctrls" class="ctrls-grid"></div>
+      </div>
+
+      <div class="dock-col dock-ro">
+        <h2>Lecturas en vivo (SI)</h2>
+        <div id="ro"></div>
+      </div>
+
+      <div class="dock-col dock-th">
+        <h2>Teoría y ecuaciones</h2>
+        <div id="th"></div>
+      </div>
+    </section>
+  </main>
 
   <!-- Pantalla de inicio / Guía rápida con acceso a los 7 temas del laboratorio -->
   <div id="welcome-modal" class="modal-backdrop" hidden>

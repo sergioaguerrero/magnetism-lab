@@ -45,15 +45,17 @@ body {
   height: 100%;
   margin: 0;
   display: flex;
+  overflow: hidden;
   font: 13.5px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
   background: var(--bg);
   color: var(--tx);
 }
 
-aside {
-  width: 370px;
+/* ===== Barra lateral izquierda: Temas y Variantes ===== */
+aside#sidebar {
+  width: 280px;
   flex: none;
-  overflow: auto;
+  overflow-y: auto;
   padding: 14px;
   background: var(--pn);
   border-right: 1px solid var(--bd);
@@ -63,15 +65,16 @@ aside {
 
 .hdr {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 8px;
-  margin-bottom: 10px;
+  margin-bottom: 6px;
 }
 
 .hdr-actions {
   display: flex;
   gap: 5px;
+  flex: none;
 }
 
 .hdr-actions button {
@@ -80,9 +83,9 @@ aside {
 }
 
 h1 {
-  font-size: 16.5px;
+  font-size: 15.5px;
   margin: 0;
-  line-height: 1.2;
+  line-height: 1.25;
 }
 
 .sub {
@@ -92,19 +95,18 @@ h1 {
 }
 
 h2 {
-  font-size: 12.5px;
+  font-size: 11.5px;
   color: var(--mu);
-  margin: 14px 0 6px;
-  font-weight: 600;
+  margin: 12px 0 6px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.04em;
 }
 
 #tabs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
 }
 
 button,
@@ -114,7 +116,7 @@ select {
   background: var(--bg);
   border: 1px solid var(--bd);
   border-radius: 8px;
-  padding: 6px 9px;
+  padding: 6px 10px;
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s;
 }
@@ -125,9 +127,9 @@ select:hover {
 }
 
 #tabs button {
-  font-size: 12.5px;
+  font-size: 13px;
   text-align: left;
-  padding: 6px 8px;
+  padding: 7px 10px;
   font-weight: 500;
 }
 
@@ -137,39 +139,25 @@ button.on {
   color: #fff;
 }
 
-.row {
-  display: block;
-  margin: 8px 0;
+#variants .row {
+  margin: 7px 0;
 }
 
-.row[hidden] {
-  display: none;
-}
-
-.row div {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 2px;
-}
-
-.row b {
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-
-input[type="range"] {
-  width: 100%;
-  accent-color: var(--ac);
+#variants .row div {
+  font-size: 12.5px;
+  color: var(--mu);
+  margin-bottom: 3px;
 }
 
 .btns {
   display: flex;
-  gap: 6px;
-  margin-top: 10px;
+  gap: 5px;
 }
 
 .btns button {
   flex: 1;
+  font-size: 12.5px;
+  padding: 6px 6px;
   font-weight: 500;
 }
 
@@ -177,27 +165,11 @@ input[type="range"] {
   display: none;
 }
 
-.kv {
-  display: flex;
-  justify-content: space-between;
-  border-bottom: 1px solid var(--bd);
-  padding: 3.5px 0;
-  gap: 8px;
-  font-size: 13px;
-}
-
-.kv span:last-child {
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-  font-weight: 500;
-}
-
 .legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 10px;
-  margin-top: 8px;
-  padding: 7px 9px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px 8px;
+  padding: 8px 9px;
   background: var(--card);
   border: 1px solid var(--bd);
   border-radius: 8px;
@@ -211,14 +183,143 @@ input[type="range"] {
 }
 
 .dot {
-  width: 9px;
-  height: 9px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
+  flex: none;
   display: inline-block;
 }
 
+.mu {
+  color: var(--mu);
+  font-size: 11.5px;
+  margin-top: auto;
+  padding-top: 12px;
+  line-height: 1.4;
+}
+
+/* ===== Área principal derecha: Arriba 3D (#cvw) + Abajo Dock (#bottom-dock) ===== */
+main.workspace {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#cvw {
+  flex: 1 1 56%;
+  min-width: 0;
+  min-height: 220px;
+  overflow: hidden;
+  position: relative;
+}
+
+#cvw canvas {
+  display: block;
+}
+
+/* ===== Panel inferior: Parámetros modificables, Lecturas y Teoría ===== */
+section#bottom-dock {
+  flex: 0 0 42%;
+  min-height: 230px;
+  max-height: 360px;
+  background: var(--pn);
+  border-top: 1px solid var(--bd);
+  display: grid;
+  grid-template-columns: 1.25fr 1.05fr 1.2fr;
+  gap: 0;
+  overflow: hidden;
+}
+
+.dock-col {
+  padding: 10px 16px 14px;
+  overflow-y: auto;
+  border-right: 1px solid var(--bd);
+}
+
+.dock-col:last-child {
+  border-right: 0;
+}
+
+.dock-col h2 {
+  margin-top: 2px;
+  margin-bottom: 8px;
+  position: sticky;
+  top: 0;
+  background: var(--pn);
+  padding: 2px 0 4px;
+  z-index: 2;
+}
+
+/* Rejilla de sliders modificables en el panel inferior */
+.ctrls-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(195px, 1fr));
+  gap: 8px 14px;
+}
+
+.row {
+  display: block;
+}
+
+.row[hidden] {
+  display: none;
+}
+
+.slider-row {
+  background: var(--card);
+  border: 1px solid var(--bd);
+  border-radius: 8px;
+  padding: 7px 10px;
+}
+
+.slider-row div {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 4px;
+  font-size: 12.5px;
+}
+
+.slider-row b {
+  font-weight: 600;
+  color: var(--ac);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+input[type="range"] {
+  width: 100%;
+  margin: 0;
+  accent-color: var(--ac);
+}
+
+/* Lecturas en vivo */
+.kv {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--bd);
+  padding: 4.5px 0;
+  gap: 10px;
+  font-size: 12.8px;
+}
+
+.kv span:last-child {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  font-weight: 600;
+}
+
+.kv .katex {
+  font-size: 1.01em;
+}
+
+/* Panel de teoría y fórmulas KaTeX */
 #th {
-  margin: 4px 0 8px;
   font-size: 12.8px;
   line-height: 1.55;
   background: var(--card);
@@ -228,45 +329,13 @@ input[type="range"] {
 }
 
 #th .katex-display {
-  margin: 8px 0;
+  margin: 7px 0;
   padding: 6px 8px;
   background: var(--bg);
   border: 1px solid var(--bd);
   border-radius: 6px;
   overflow-x: auto;
   overflow-y: hidden;
-}
-
-.kv .katex {
-  font-size: 1.02em;
-}
-
-.topic-card .eq-box {
-  background: var(--bg);
-  border: 1px solid var(--bd);
-  border-radius: 6px;
-  padding: 5px 8px;
-  margin: 2px 0;
-  overflow-x: auto;
-}
-
-.mu {
-  color: var(--mu);
-  font-size: 11.5px;
-  margin-top: auto;
-  padding-top: 10px;
-}
-
-#cvw {
-  flex: 1;
-  min-width: 0;
-  min-height: 0;
-  overflow: hidden;
-  position: relative;
-}
-
-#cvw canvas {
-  display: block;
 }
 
 /* Modal de inicio con los 7 temas del laboratorio */
@@ -352,13 +421,13 @@ input[type="range"] {
   color: var(--ac);
 }
 
-.topic-card code {
-  font-size: 11.5px;
-  color: var(--tx);
+.topic-card .eq-box {
   background: var(--bg);
-  padding: 2px 6px;
-  border-radius: 4px;
-  align-self: flex-start;
+  border: 1px solid var(--bd);
+  border-radius: 6px;
+  padding: 5px 8px;
+  margin: 2px 0;
+  overflow-x: auto;
 }
 
 .topic-card span {
@@ -376,18 +445,12 @@ input[type="range"] {
   color: var(--mu);
 }
 
-@media (max-width: 760px) {
-  body {
-    flex-direction: column-reverse;
+@media (max-width: 1024px) {
+  section#bottom-dock {
+    grid-template-columns: 1fr 1fr;
   }
-  aside {
-    width: auto;
-    height: 52%;
-    border: 0;
+  .dock-th {
+    grid-column: span 2;
     border-top: 1px solid var(--bd);
-  }
-  #cvw {
-    height: 48%;
-    flex: none;
   }
 }

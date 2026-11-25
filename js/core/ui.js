@@ -1,4 +1,4 @@
-/* ===== Gestor de interfaz: renderizado matemático KaTeX, lecturas y controles ===== */
+/* ===== Gestor de interfaz: renderizado matemático KaTeX, variantes, sliders y lecturas ===== */
 let lastRoKey = '';
 let roValSpans = [];
 
@@ -32,8 +32,11 @@ function ro(list) {
 }
 
 function build(cfg, state, onChange) {
-  const c = $('ctrls');
-  c.innerHTML = '';
+  const vContainer = $('variants');
+  const cContainer = $('ctrls');
+  if (vContainer) vContainer.innerHTML = '';
+  if (cContainer) cContainer.innerHTML = '';
+
   const rows = [];
 
   const vis = () => {
@@ -49,6 +52,8 @@ function build(cfg, state, onChange) {
     let syncVal = null;
 
     if (o.opts) {
+      /* Las variantes / selectores de cada tema van en la barra lateral izquierda (#variants) */
+      r.classList.add('variant-row');
       r.innerHTML = `<div><span>${o.t}</span></div>`;
       const s = document.createElement('select');
       s.style.width = '100%';
@@ -67,7 +72,11 @@ function build(cfg, state, onChange) {
         onChange();
       };
       r.append(s);
+      if (vContainer) vContainer.append(r);
+      else if (cContainer) cContainer.append(r);
     } else {
+      /* Los parámetros numéricos modificables (sliders) van en la sección inferior (#ctrls) */
+      r.classList.add('slider-row');
       r.innerHTML = `<div><span>${o.t}</span><b></b></div><input type="range" min="${o.min}" max="${o.max}" step="${o.step}">`;
       const i = r.querySelector('input');
       const b = r.querySelector('b');
@@ -85,13 +94,14 @@ function build(cfg, state, onChange) {
         sh();
         onChange();
       };
+      if (cContainer) cContainer.append(r);
     }
 
     rows.push([o, r, syncVal]);
-    c.append(r);
   });
 
-  renderMath(c);
+  if (vContainer) renderMath(vContainer);
+  if (cContainer) renderMath(cContainer);
   vis();
 }
 
