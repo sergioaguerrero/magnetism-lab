@@ -1,0 +1,179 @@
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  --bg: #f4f5f7;
+  --pn: #fff;
+  --tx: #1b1f24;
+  --mu: #5c6670;
+  --ac: #2563eb;
+  --bd: #d9dde3;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1116;
+    --pn: #171b22;
+    --tx: #e6e9ee;
+    --mu: #9aa5b1;
+    --ac: #5b9bff;
+    --bd: #2a313b;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #0e1116;
+  --pn: #171b22;
+  --tx: #e6e9ee;
+  --mu: #9aa5b1;
+  --ac: #5b9bff;
+  --bd: #2a313b;
+}
+
+html {
+  height: 100%;
+  scroll-padding-top: env(safe-area-inset-top, 0px);
+}
+
+body {
+  height: 100%;
+  margin: 0;
+  display: flex;
+  font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--tx);
+}
+
+aside {
+  width: 340px;
+  flex: none;
+  overflow: auto;
+  padding: 14px;
+  background: var(--pn);
+  border-right: 1px solid var(--bd);
+}
+
+h1 {
+  font-size: 17px;
+  margin: 0 0 10px;
+}
+
+h2 {
+  font-size: 13px;
+  color: var(--mu);
+  margin: 16px 0 6px;
+  font-weight: 600;
+}
+
+#tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+button,
+select {
+  font: inherit;
+  color: var(--tx);
+  background: var(--bg);
+  border: 1px solid var(--bd);
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+#tabs button {
+  flex: 1 1 auto;
+}
+
+button.on {
+  background: var(--ac);
+  border-color: var(--ac);
+  color: #fff;
+}
+
+.row {
+  display: block;
+  margin: 9px 0;
+}
+
+.row[hidden] {
+  display: none;
+}
+
+.row div {
+  display: flex;
+  justify-content: space-between;
+}
+
+.row b {
+  font-weight: 600;
+}
+
+input[type="range"] {
+  width: 100%;
+  accent-color: var(--ac);
+}
+
+.btns {
+  display: flex;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.btns button {
+  flex: 1;
+}
+
+.btns button[hidden] {
+  display: none;
+}
+
+.kv {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--bd);
+  padding: 3px 0;
+  gap: 8px;
+}
+
+.kv span:last-child {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.mu {
+  color: var(--mu);
+  font-size: 12px;
+}
+
+#cvw {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+#cvw canvas {
+  display:block;
+}
+
+@media (max-width: 760px) {
+  body {
+    flex-direction: column-reverse;
+  }
+  aside {
+    width: auto;
+    height: 50%;
+    border: 0;
+    border-top: 1px solid var(--bd);
+  }
+  #cvw {
+    height: 50%;
+    flex: none;
+  }
+}

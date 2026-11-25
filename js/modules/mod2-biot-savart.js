@@ -1,0 +1,210 @@
+/* ===== Módulo 2: Biot-Savart (suma numérica sobre segmentos) ===== */
+(function () {
+  const gB = new THREE.Group();
+  scene.add(gB);
+
+  gB.add(new THREE.AxesHelper(14));
+
+  const gr = new THREE.GridHelper(24, 12);
+  gr.rotation.x = Math.PI / 2;
+  gB.add(gr);
+
+  const cond = new THREE.Group();
+  const lines = new THREE.Group();
+  gB.add(cond, lines);
+
+  const arrows = [];
+  for (let i = -6; i <= 6; i++) {
+    for (let j = -6; j <= 6; j++) {
+      const a = new THREE.ArrowHelper(V(0, 1, 0), V(2 * i, 2 * j, 0), 1.5, 0xffffff, 0.6, 0.4);
+      arrows.push(a);
+      gB.add(a);
+    }
+  }
+
+  const probe = new THREE.Mesh(
+    new THREE.SphereGeometry(0.35, 16, 12),
+    new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xe879f9 })
+  );
+  const pA = new THREE.ArrowHelper(V(0, 1, 0), V(), 4, 0xe879f9, 1, 0.6);
+  gB.add(probe, pA);
+
+  const SB = { geo: 'hilo', I: 5, R: 5, N: 10, L: 15, px: 6, py: 0 };
+  const cfgB = [
+    {
+      k: 'geo',
+      t: 'Conductor',
+      opts: {
+        'Hilo recto largo': 'hilo',
+        'Espira circular': 'espira',
+        'Bobinas de Helmholtz': 'helmholtz',
+        'Solenoide': 'solenoide'
+      }
+    },
+    { k: 'I', t: 'Corriente I', u: 'A', min: 0.1, max: 20, step: 0.1 },
+    { k: 'R', t: 'Radio R', u: 'cm', min: 1, max: 10, step: 0.5, show: () => SB.geo !== 'hilo' },
+    { k: 'N', t: 'Vueltas N', u: '', min: 2, max: 30, step: 1, show: () => SB.geo === 'solenoide' },
+    { k: 'L', t: 'Longitud L', u: 'cm', min: 4, max: 30, step: 1, show: () => SB.geo === 'solenoide' },
+    { k: 'px', t: 'Punto de medida x', u: 'cm', min: -12, max: 12, step: 0.5 },
+    { k: 'py', t: 'Punto de medida y', u: 'cm', min: -12, max: 12, step: 0.5 }
+  ];
+
+  let SG = { m: [], d: [] };
+
+  const path = (f, n) => {
+    const a = [];
+    for (let i = 0; i <= n; i++) a.push(f(i / n));
+    return a;
+  };
+
+  function geoPaths() {
+    const R = SB.R;
+    const g = SB.geo;
+    const out = [];
+    const lp = (y) => path((t) => V(R * Math.cos(2 * Math.PI * t), y, -R * Math.sin(2 * Math.PI * t)), 72);
+
+    if (g === 'hilo') out.push(path((t) => V(0, -60 + 120 * t, 0), 120));
+    if (g === 'espira') out.push(lp(0));
+    if (g === 'helmholtz') out.push(lp(-R / 2), lp(R / 2));
+    if (g === 'solenoide') {
+      out.push(
+        path((t) => {
+          const a = 2 * Math.PI * SB.N * t;
+          return V(R * Math.cos(a), -SB.L / 2 + SB.L * t, -R * Math.sin(a));
+        }, 24 * SB.N)
+      );
+    }
+    return out;
+  }
+
+  function Bf(p) {
+    let x = 0,
+      y = 0,
+      z = 0;
+    for (let i = 0; i < SG.m.length; i++) {
+      const m = SG.m[i];
+      const d = SG.d[i];
+      const rx = p.x - m.x;
+      const ry = p.y - m.y;
+      const rz = p.z - m.z;
+      const r2 = rx * rx + ry * ry + rz * rz + 0.04;
+      const k = 1 / (r2 * Math.sqrt(r2));
+      x += (d.y * rz - d.z * ry) * k;
+      y += (d.z * rx - d.x * rz) * k;
+      z += (d.x * ry - d.y * rx) * k;
+    }
+    /* cm→m: factor 1e4; resultado en tesla */
+    const c = ((MU0 * SB.I) / (4 * Math.PI)) * 1e4;
+    return V(x * c, y * c, z * c);
+  }
+
+  function ana(p) {
+    const I = SB.I;
+    const R = SB.R * 1e-2;
+    const g = SB.geo;
+    const y = p.y * 1e-2;
+    const d = Math.abs(p.x) * 1e-2;
+    const ax = Math.abs(p.x) < 0.05;
+    const lp = (yy) => (MU0 * I * R * R) / (2 * Math.pow(R * R + yy * yy, 1.5));
+
+    if (g === 'hilo') return d > 0.003 ? (MU0 * I) / (2 * Math.PI * d) : null;
+    if (g === 'espira') return ax ? lp(y) : null;
+    if (g === 'helmholtz') return ax ? lp(y - R / 2) + lp(y + R / 2) : null;
+    return Math.abs(p.x) < SB.R * 0.7 && Math.abs(p.y) < SB.L * 0.3
+      ? (MU0 * SB.N * I) / (SB.L * 1e-2)
+      : null;
+  }
+
+  function onB() {
+    cond.clear();
+    lines.clear();
+    SG = { m: [], d: [] };
+
+    geoPaths().forEach((pts) => {
+      cond.add(
+        new THREE.Line(
+          new THREE.BufferGeometry().setFromPoints(pts),
+          new THREE.LineBasicMaterial({ color: 0xf59e0b })
+        )
+      );
+      const k = Math.floor(pts.length * 0.25);
+      cond.add(
+        new THREE.ArrowHelper(pts[k + 1].clone().sub(pts[k]).normalize(), pts[k], 2.5, 0xf59e0b, 1, 0.7)
+      );
+      for (let i = 0; i < pts.length - 1; i++) {
+        SG.m.push(pts[i].clone().add(pts[i + 1]).multiplyScalar(0.5));
+        SG.d.push(pts[i + 1].clone().sub(pts[i]));
+      }
+    });
+
+    const bs = arrows.map((a) => Bf(a.position));
+    const ms = bs.map((b) => b.length());
+    const sr = [...ms].sort((a, b) => a - b);
+    const ref = sr[Math.floor(0.95 * sr.length)] || 1;
+
+    arrows.forEach((a, i) => {
+      const t = Math.min(1, Math.max(0, (Math.log10(ms[i] / ref + 1e-12) + 2) / 2.3));
+      a.setDirection(bs[i].clone().normalize());
+      a.setColor(new THREE.Color().setHSL((1 - t) * 0.67, 1, 0.5));
+      a.setLength(1.5, 0.6, 0.4);
+    });
+
+    [-9, -6, -3, -1.5, 1.5, 3, 6, 9].forEach((x) =>
+      [1, -1].forEach((dir) => {
+        const s0 = V(x, 0, 0);
+        const pts = [s0.clone()];
+        let p = s0.clone();
+        for (let k = 0; k < 300; k++) {
+          const b1 = Bf(p);
+          if (b1.length() < 1e-12) break;
+          b1.normalize().multiplyScalar(0.6 * dir);
+          const b2 = Bf(p.clone().addScaledVector(b1, 0.5))
+            .normalize()
+            .multiplyScalar(0.6 * dir);
+          p = p.clone().add(b2);
+          if (p.length() > 22) break;
+          pts.push(p);
+          if (k > 10 && p.distanceTo(s0) < 0.5) break;
+        }
+        lines.add(
+          new THREE.Line(
+            new THREE.BufferGeometry().setFromPoints(pts),
+            new THREE.LineBasicMaterial({ color: 0x22c55e })
+          )
+        );
+      })
+    );
+
+    const pp = V(SB.px, SB.py, 0);
+    const b = Bf(pp);
+    probe.position.copy(pp);
+    pA.position.copy(pp);
+    pA.setDirection(b.clone().normalize());
+
+    const m = b.length();
+    const a = ana(pp);
+    ro([
+      ['|B| numérico (Biot-Savart)', fm(m * 1e6) + ' μT'],
+      ['Bx · By · Bz', [b.x, b.y, b.z].map((x) => fm(x * 1e6)).join(' · ') + ' μT'],
+      ['|B| analítico', a == null ? '— (no aplica aquí)' : fm(a * 1e6) + ' μT'],
+      ['Error relativo', a == null ? '—' : fm((Math.abs(m - a) / a) * 100) + ' %']
+    ]);
+  }
+
+  Sim.registerModule({
+    id: 'B',
+    title: '2 · Biot-Savart',
+    group: gB,
+    canPause: false,
+    cameraPos: [14, 10, 30],
+    theory:
+      'Ley de Biot-Savart: dB = (μ₀/4π)·I·dl × r̂ / r². El conductor (naranja, flecha = sentido de I) se divide en segmentos y se suman sus aportes. Flechas: |B| en el plano z = 0 (color en escala logarítmica, rojo = más intenso). Líneas verdes: líneas de campo. Esfera rosa: punto de medida; se compara con la fórmula analítica (hilo μ₀I/2πd, espira en su eje μ₀IR²/2(R²+y²)^(3/2), solenoide ideal μ₀NI/L).',
+    activate() {
+      build(cfgB, SB, onB);
+      onB();
+    },
+    reset() {
+      onB();
+    }
+  });
+})();
