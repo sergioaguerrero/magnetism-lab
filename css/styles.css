@@ -831,6 +831,22 @@ input[type="range"]::-webkit-slider-thumb:hover {
   overflow-y: hidden;
 }
 
+#th p {
+  margin: 8px 0 2px;
+  text-align: justify;
+}
+
+.th-list {
+  margin: 8px 0;
+  padding-left: 18px;
+  text-align: left;
+}
+
+.th-list li {
+  margin: 5px 0;
+  line-height: 1.5;
+}
+
 /* Modal de inicio con los 7 temas del laboratorio */
 .modal-backdrop {
   position: fixed;

@@ -326,7 +326,11 @@
       '<b>Ley de Gauss del magnetismo (ausencia de monopolos magnéticos):</b>' +
       '$$\\oint_S \\vec{B} \\cdot d\\vec{A} = \\Phi_{\\text{saliente}} + \\Phi_{\\text{entrante}} = 0 \\iff \\nabla \\cdot \\vec{B} = 0$$' +
       '$$\\Phi_{\\text{saliente}} = -\\Phi_{\\text{entrante}}$$' +
-      'Todas las líneas de campo magnético son curvas cerradas (continúan por el interior del imán de Sur a Norte). Incluso cuando la superficie cerrada $S$ (esfera o caja azul) encierra un solo polo del imán, todo el flujo que sale ($\\Phi_{\\text{sal}} > 0$, flechas verdes) iguala al que entra ($\\Phi_{\\text{ent}} < 0$, flechas rojas).',
+      '<ul class="th-list">' +
+      '<li><b>Flujo saliente ($\\Phi_{\\text{sal}} > 0$, flechas verdes):</b> Regiones donde el campo sale de $S$ ($\\vec{B}\\cdot\\hat{n} > 0$).</li>' +
+      '<li><b>Flujo entrante ($\\Phi_{\\text{ent}} < 0$, flechas rojas):</b> Regiones donde el campo entra a $S$ ($\\vec{B}\\cdot\\hat{n} < 0$).</li>' +
+      '</ul>' +
+      '<p>Como todas las líneas de campo magnético son curvas cerradas, todo el flujo que sale de cualquier superficie cerrada iguala exactamente al flujo que entra en ella.</p>',
     activate() {
       build(cfgF, SF, onF);
       onF();

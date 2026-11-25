@@ -330,7 +330,14 @@
       '<b>Fuerza de Lorentz y movimiento en campos $\\vec{E}$ y $\\vec{B}$:</b>' +
       '$$\\vec{F} = q\\,(\\vec{E} + \\vec{v} \\times \\vec{B}), \\qquad \\vec{v}_d = \\frac{\\vec{E}\\times\\vec{B}}{B^2}$$' +
       '$$r = \\frac{m\\,v_\\perp}{|q|\\,B}, \\qquad T = \\frac{2\\pi\\,m}{|q|\\,B}, \\qquad p = v_\\parallel\\,T$$' +
-      '<b>Regla de la mano derecha (triedro 3D):</b> índice $= \\vec{v}$ (azul), medio $= \\vec{B}$ (verde), pulgar $= \\vec{v}\\times\\vec{B}$ (amarillo). Si $q > 0$, $\\vec{F}_B$ (roja) apunta como el pulgar; si $q < 0$, se invierte. En el <b>Selector de velocidades</b> ($v = \\frac{E}{B}$), $\\vec{F}_E = -\\vec{F}_B$ y la trayectoria es rectilínea.',
+      '<b>Regla de la mano derecha (triedro 3D):</b>' +
+      '<ul class="th-list">' +
+      '<li><b>Dedo índice:</b> Velocidad $\\vec{v}$ (flecha azul)</li>' +
+      '<li><b>Dedo medio:</b> Campo magnético $\\vec{B}$ (flecha verde)</li>' +
+      '<li><b>Dedo pulgar:</b> Producto cruz $\\vec{v} \\times \\vec{B}$ (flecha amarilla)</li>' +
+      '<li><b>Fuerza $\\vec{F}_B$ (roja):</b> Apunta como el pulgar si $q > 0$, y se invierte si $q < 0$.</li>' +
+      '</ul>' +
+      '<p>En el <b>Selector de velocidades</b> ($v = \\tfrac{E}{B}$), las fuerzas eléctrica y magnética se anulan ($\\vec{F}_E = -\\vec{F}_B$) y la partícula describe una trayectoria rectilínea.</p>',
     activate() {
       build(cfgA, SA, initA);
       initA();

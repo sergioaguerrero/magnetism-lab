@@ -292,7 +292,11 @@
       '<b>Ley de Biot-Savart y fuentes de campo magnético:</b>' +
       '$$d\\vec{B} = \\frac{\\mu_0}{4\\pi}\\,\\frac{I\\,d\\vec{l} \\times \\hat{r}}{r^2}, \\qquad \\vec{B}_q = \\frac{\\mu_0}{4\\pi}\\,\\frac{q\\,\\vec{v} \\times \\hat{r}}{r^2}$$' +
       '$$B_{\\text{hilo}} = \\frac{\\mu_0 I}{2\\pi d}, \\quad B_{\\text{espira}} = \\frac{\\mu_0 I R^2}{2(R^2+y^2)^{3/2}}, \\quad B_{\\text{sol}} = \\frac{\\mu_0 N I}{L}$$' +
-      'El conductor (naranja) se divide en segmentos diferenciales $d\\vec{l}$ y se integran sus aportes. La esfera rosa mide $\\vec{B}(x,y,0)$ y valida el resultado numérico frente a la fórmula analítica.',
+      '<ul class="th-list">' +
+      '<li><b>Conductor (naranja):</b> Dividido en segmentos diferenciales $d\\vec{l}$ en el sentido de $I$.</li>' +
+      '<li><b>Líneas de campo (verdes):</b> Curvas cerradas tangentes al vector $\\vec{B}$ en cada punto.</li>' +
+      '<li><b>Sonda de medida (rosa):</b> Evalúa $\\vec{B}(x,y,0)$ y lo compara con la solución analítica.</li>' +
+      '</ul>',
     activate() {
       build(cfgB, SB, onB);
       onB();

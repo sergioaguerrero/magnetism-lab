@@ -247,7 +247,11 @@
       '<b>Fuerza magnética entre elementos de corriente:</b>' +
       '$$d\\vec{F}_{1\\to 2} = I_2\\,d\\vec{l}_2 \\times \\vec{B}_1, \\qquad B_1 = \\frac{\\mu_0 I_1}{2\\pi d}$$' +
       '$$\\frac{F}{L} = \\frac{\\mu_0\\,I_1\\,I_2}{2\\pi\\,d}, \\qquad \\Delta F = \\frac{\\mu_0\\,I_1\\,I_2}{2\\pi\\,d}\\,\\Delta l$$' +
-      'Corrientes paralelas ($\\uparrow\\uparrow$) se <b>atraen</b> y corrientes antiparalelas ($\\uparrow\\downarrow$) se <b>repelen</b>, cumpliendo la tercera ley de Newton ($\\vec{F}_{1\\to 2} = -\\vec{F}_{2\\to 1}$).',
+      '<ul class="th-list">' +
+      '<li><b>Mismo sentido ($\\uparrow\\uparrow$):</b> Los conductores se <b>atraen</b> mutuamente.</li>' +
+      '<li><b>Sentidos opuestos ($\\uparrow\\downarrow$):</b> Los conductores se <b>repelen</b> mutuamente.</li>' +
+      '</ul>' +
+      '<p>En ambos casos las fuerzas cumplen la tercera ley de Newton ($\\vec{F}_{1\\to 2} = -\\vec{F}_{2\\to 1}$).</p>',
     activate() {
       build(cfgC, SC, onC);
       onC();

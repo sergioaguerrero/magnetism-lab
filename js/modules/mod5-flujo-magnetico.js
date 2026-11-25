@@ -287,7 +287,12 @@
       '<b>Flujo magnético a través de una superficie orientable:</b>' +
       '$$\\Phi_B = \\int_S \\vec{B} \\cdot d\\vec{A} = \\vec{B} \\cdot \\vec{A} = B\\,A\\,\\cos\\theta \\quad [\\text{Wb} = \\text{T}\\cdot\\text{m}^2]$$' +
       '$$A_\\perp = A\\,\\cos\\theta, \\qquad \\Phi_B(t) = B\\,A\\,\\cos(\\omega t)$$' +
-      'El flujo es proporcional al área proyectada $A\\cos\\theta$ y al número de líneas de campo que atraviesan la superficie: es <b>positivo</b> ($\\Phi_B > 0$, verde) si $|\\theta| < 90^\\circ$, <b>nulo</b> ($\\Phi_B = 0$) si $\\theta = \\pm 90^\\circ$ y <b>negativo</b> ($\\Phi_B < 0$, rojo) si $|\\theta| > 90^\\circ$.',
+      '<ul class="th-list">' +
+      '<li><b>Flujo positivo ($\\Phi_B > 0$, verde):</b> Cuando $|\\theta| < 90^\\circ$ (las líneas salen por $+\\hat{n}$).</li>' +
+      '<li><b>Flujo nulo ($\\Phi_B = 0$, gris):</b> Cuando $\\theta = \\pm 90^\\circ$ (superficie paralela al campo $\\vec{B}$).</li>' +
+      '<li><b>Flujo negativo ($\\Phi_B < 0$, rojo):</b> Cuando $|\\theta| > 90^\\circ$ (las líneas entran contra $+\\hat{n}$).</li>' +
+      '</ul>' +
+      '<p>El flujo total es proporcional al área proyectada $A\\cos\\theta$ y al número de líneas que atraviesan la superficie.</p>',
     activate() {
       build(cfgE, SE, initE);
       initE();

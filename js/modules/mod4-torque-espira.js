@@ -264,7 +264,11 @@
       '<b>Momento de torsión sobre un lazo de corriente en $\\vec{B}$ uniforme:</b>' +
       '$$\\vec{\\mu} = N\\,I\\,A\\,\\hat{n}, \\qquad \\vec{\\tau} = \\vec{\\mu} \\times \\vec{B}, \\qquad |\\vec{\\tau}| = N\\,I\\,A\\,B\\,|\\sin\\theta|$$' +
       '$$\\sum \\vec{F} = \\vec{F}_1 + \\vec{F}_2 = \\vec{0}, \\qquad U = -\\vec{\\mu}\\cdot\\vec{B} = -\\mu\\,B\\,\\cos\\theta$$' +
-      'El par de fuerzas $\\vec{F}_1$ y $\\vec{F}_2$ (rojas) sobre los brazos de la espira produce un torque $\\vec{\\tau}$ (azul, eje $Y$) que alinea a $\\vec{\\mu}$ (magenta) con $\\vec{B}$ (verde) en el equilibrio estable $\\theta = 0^\\circ$.',
+      '<ul class="th-list">' +
+      '<li><b>Momento dipolar $\\vec{\\mu}$ (magenta):</b> Normal al plano de la espira por la regla de la mano derecha.</li>' +
+      '<li><b>Par de fuerzas $\\vec{F}_1, \\vec{F}_2$ (rojas):</b> Fuerzas laterales opuestas con resultante neta nula.</li>' +
+      '<li><b>Torque $\\vec{\\tau}$ (azul, eje $Y$):</b> Gira la espira hacia el equilibrio estable en $\\theta = 0^\\circ$.</li>' +
+      '</ul>',
     activate() {
       build(cfgD, SD, initD);
       initD();
