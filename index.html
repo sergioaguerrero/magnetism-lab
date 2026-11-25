@@ -26,14 +26,14 @@
     <h2>Variantes del tema</h2>
     <div id="variants"></div>
 
-    <h2>Código de colores 3D</h2>
+    <h2>Código de colores 3D (clic para inspeccionar)</h2>
     <div class="legend">
-      <span class="leg-item"><i class="dot" style="background:#22c55e"></i>Campo $\vec{B}$</span>
-      <span class="leg-item"><i class="dot" style="background:#f59e0b"></i>Corriente $I\,d\vec{l}$</span>
-      <span class="leg-item"><i class="dot" style="background:#38bdf8"></i>Velocidad $\vec{v}$ / Torque $\vec{\tau}$</span>
-      <span class="leg-item"><i class="dot" style="background:#ef4444"></i>Fuerza $\vec{F}$</span>
-      <span class="leg-item"><i class="dot" style="background:#e879f9"></i>Dipolo $\vec{\mu}$ / Normal $\hat{n}$</span>
-      <span class="leg-item"><i class="dot" style="background:#facc15"></i>Pulgar $\vec{v} \times \vec{B}$</span>
+      <button type="button" class="leg-item" data-vec="B"><i class="dot" style="background:#22c55e"></i><span>Campo $\vec{B}$</span></button>
+      <button type="button" class="leg-item" data-vec="I"><i class="dot" style="background:#f59e0b"></i><span>Corriente $I\,d\vec{l}$</span></button>
+      <button type="button" class="leg-item" data-vec="v"><i class="dot" style="background:#38bdf8"></i><span>Velocidad $\vec{v}$ / $\vec{\tau}$</span></button>
+      <button type="button" class="leg-item" data-vec="F"><i class="dot" style="background:#ef4444"></i><span>Fuerza $\vec{F}$</span></button>
+      <button type="button" class="leg-item" data-vec="mu"><i class="dot" style="background:#e879f9"></i><span>Dipolo $\vec{\mu}$ / $\hat{n}$</span></button>
+      <button type="button" class="leg-item" data-vec="vxb"><i class="dot" style="background:#facc15"></i><span>Pulgar $\vec{v} \times \vec{B}$</span></button>
     </div>
 
     <p class="mu">
@@ -57,6 +57,19 @@
         </svg>
         <span>Explicación</span>
       </button>
+
+      <!-- Tarjeta flotante 3D sobre el vector o referencia seleccionado -->
+      <div id="vec-hud" class="vec-hud" hidden>
+        <div class="vec-hud-hdr">
+          <div class="vec-hud-title-wrap">
+            <i id="vec-hud-dot" class="dot"></i>
+            <b id="vec-hud-title"></b>
+          </div>
+          <button type="button" id="vec-hud-close" title="Cerrar inspección">✕</button>
+        </div>
+        <div id="vec-hud-val" class="vec-hud-val"></div>
+        <div id="vec-hud-desc" class="vec-hud-desc"></div>
+      </div>
     </div>
 
     <section id="bottom-dock">
@@ -171,6 +184,7 @@
   <script src="js/core/scene.js"></script>
   <script src="js/core/ui.js"></script>
   <script src="js/core/explainer.js"></script>
+  <script src="js/core/inspector.js"></script>
 
   <!-- Módulos de simulación (Los 7 temas) -->
   <script src="js/modules/mod1-lorentz.js"></script>

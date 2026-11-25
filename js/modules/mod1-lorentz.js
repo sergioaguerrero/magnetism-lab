@@ -316,6 +316,10 @@
     canFollow: true,
     cameraPos: [7, 5, 8],
     state: SA,
+    getLive() {
+      const F = sim.E.clone().add(sim.v.clone().cross(sim.B)).multiplyScalar(sim.q);
+      return { p: ball.position, v: sim.v, B: sim.B, E: sim.E, F, q: sim.q, m: sim.m, s: sim.s };
+    },
     applyPreset(p) {
       SA.preset = p;
       applyPreset(p);

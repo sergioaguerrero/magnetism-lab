@@ -46,6 +46,9 @@ function setMode(id, presetName) {
   if (Sim.explainer) {
     Sim.explainer.update(mod);
   }
+  if (Sim.inspector) {
+    Sim.inspector.clear();
+  }
 
   centerCamera();
 }
@@ -80,7 +83,24 @@ if ($('btn-free')) {
 }
 
 if ($('btn-cam')) {
-  $('btn-cam').onclick = centerCamera;
+  $('btn-cam').onclick = () => {
+    if (Sim.inspector) Sim.inspector.clear();
+    centerCamera();
+  };
+}
+
+document.querySelectorAll('.leg-item[data-vec]').forEach((btn) => {
+  btn.onclick = () => {
+    if (Sim.inspector) {
+      Sim.inspector.select(btn.getAttribute('data-vec'));
+    }
+  };
+});
+
+if ($('vec-hud-close')) {
+  $('vec-hud-close').onclick = () => {
+    if (Sim.inspector) Sim.inspector.clear();
+  };
 }
 
 if ($('btn-theme')) {
@@ -146,6 +166,9 @@ function loop(now) {
 
   if (activeMod && activeMod.update) {
     activeMod.update(paused, fr++);
+  }
+  if (Sim.inspector) {
+    Sim.inspector.tick(now);
   }
   ctl.update();
   renderer.render(scene, cam);
