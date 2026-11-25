@@ -238,7 +238,7 @@
 
   Sim.registerModule({
     id: 'C',
-    title: '3 · Fuerza entre corrientes',
+    title: '3 · Fuerza entre elementos de corriente',
     group: gC,
     canPause: true,
     cameraPos: [14, 11, 22],

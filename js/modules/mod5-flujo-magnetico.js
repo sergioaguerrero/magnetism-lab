@@ -278,7 +278,7 @@
 
   Sim.registerModule({
     id: 'E',
-    title: '5 · Flujo magnético',
+    title: '6 · Flujo magnético',
     group: gE,
     canPause: true,
     cameraPos: [12, 11, 18],

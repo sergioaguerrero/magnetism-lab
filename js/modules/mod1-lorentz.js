@@ -310,7 +310,7 @@
 
   Sim.registerModule({
     id: 'A',
-    title: '1 · Carga en E y B',
+    title: '5 · Movimiento de partícula cargada',
     group: gA,
     canPause: true,
     canFollow: true,

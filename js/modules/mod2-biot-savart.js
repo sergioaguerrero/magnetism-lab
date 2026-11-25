@@ -283,7 +283,7 @@
 
   Sim.registerModule({
     id: 'B',
-    title: '2 · Biot-Savart',
+    title: '2 · Fuentes de campo magnético',
     group: gB,
     canPause: false,
     cameraPos: [14, 10, 30],

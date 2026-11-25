@@ -317,7 +317,7 @@
 
   Sim.registerModule({
     id: 'F',
-    title: '6 · Ley de Gauss (∇·B = 0)',
+    title: '7 · Ley de Gauss del magnetismo',
     group: gF,
     canPause: false,
     cameraPos: [15, 11, 22],

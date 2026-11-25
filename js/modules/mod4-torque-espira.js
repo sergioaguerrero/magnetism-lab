@@ -255,7 +255,7 @@
 
   Sim.registerModule({
     id: 'D',
-    title: '4 · Torque sobre espira',
+    title: '4 · Momento de torsión sobre un lazo',
     group: gD,
     canPause: true,
     cameraPos: [11, 12, 16],
