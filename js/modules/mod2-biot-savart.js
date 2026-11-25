@@ -1,4 +1,4 @@
-/* ===== Módulo 2: Biot-Savart (suma numérica sobre segmentos) ===== */
+/* ===== Módulo 2 (RF-07 + B-08): Fuentes de campo magnético (Biot-Savart, elemento dl y carga en movimiento) ===== */
 (function () {
   const gB = new THREE.Group();
   scene.add(gB);
@@ -33,25 +33,34 @@
   const cfgB = [
     {
       k: 'geo',
-      t: 'Conductor',
+      t: 'Fuente de campo magnético',
       opts: {
         'Hilo recto largo': 'hilo',
         'Espira circular': 'espira',
         'Bobinas de Helmholtz': 'helmholtz',
-        'Solenoide': 'solenoide'
+        'Solenoide': 'solenoide',
+        'Elemento diferencial I·dl (B-08)': 'elemento_dl',
+        'Carga puntual en movimiento q·v (B-08)': 'carga_mov'
       },
       onSelect(val) {
-        /* Coloca la sonda en la región donde aplica la fórmula analítica de cada geometría */
-        if (val === 'hilo' && Math.abs(SB.px) < 0.5) {
-          SB.px = 6;
-        } else if (val !== 'hilo') {
+        if (val === 'hilo' || val === 'elemento_dl' || val === 'carga_mov') {
+          if (Math.abs(SB.px) < 0.5) SB.px = 6;
+        } else {
           SB.px = 0;
           SB.py = 0;
         }
       }
     },
-    { k: 'I', t: 'Corriente I', u: 'A', min: 0.1, max: 20, step: 0.1 },
-    { k: 'R', t: 'Radio R', u: 'cm', min: 1, max: 10, step: 0.5, show: () => SB.geo !== 'hilo' },
+    { k: 'I', t: 'Corriente I (o prod. q·v equiv.)', u: 'A', min: 0.1, max: 20, step: 0.1 },
+    {
+      k: 'R',
+      t: 'Radio R',
+      u: 'cm',
+      min: 1,
+      max: 10,
+      step: 0.5,
+      show: () => SB.geo === 'espira' || SB.geo === 'helmholtz' || SB.geo === 'solenoide'
+    },
     { k: 'N', t: 'Vueltas N', u: '', min: 2, max: 30, step: 1, show: () => SB.geo === 'solenoide' },
     { k: 'L', t: 'Longitud L', u: 'cm', min: 4, max: 30, step: 1, show: () => SB.geo === 'solenoide' },
     { k: 'px', t: 'Punto de medida x', u: 'cm', min: -12, max: 12, step: 0.5 },
@@ -82,6 +91,10 @@
           return V(R * Math.cos(a), -SB.L / 2 + SB.L * t, -R * Math.sin(a));
         }, 36 * SB.N)
       );
+    }
+    if (g === 'elemento_dl' || g === 'carga_mov') {
+      /* Elemento diferencial Δl = 1 cm centrado en el origen a lo largo de +Y (o q·v = I·Δl) */
+      out.push([V(0, -0.5, 0), V(0, 0.5, 0)]);
     }
     return out;
   }
@@ -121,13 +134,22 @@
     if (g === 'hilo') return d > 0.003 ? (MU0 * I) / (2 * Math.PI * d) : null;
     if (g === 'espira') return ax ? lp(y) : null;
     if (g === 'helmholtz') return ax ? lp(y - R / 2) + lp(y + R / 2) : null;
+    if (g === 'elemento_dl' || g === 'carga_mov') {
+      const r = Math.hypot(d, y);
+      if (r < 0.005) return null;
+      const sinTh = d / r;
+      const dlMeters = 0.01; // Δl = 1 cm = 0.01 m (o q·v = I · 0.01 C·m/s)
+      return ((MU0 / (4 * Math.PI)) * (I * dlMeters * sinTh)) / (r * r);
+    }
     return Math.abs(p.x) < SB.R * 0.7 && Math.abs(p.y) < SB.L * 0.3
       ? (MU0 * SB.N * I) / (SB.L * 1e-2)
       : null;
   }
 
   function anaHint() {
-    if (SB.geo === 'hilo') return '— (sobre el conductor, x = 0)';
+    if (SB.geo === 'hilo' || SB.geo === 'elemento_dl' || SB.geo === 'carga_mov') {
+      return '— (sobre la fuente, r = 0)';
+    }
     if (SB.geo === 'espira' || SB.geo === 'helmholtz') return '— (válido en el eje x = 0)';
     return '— (válido en región central)';
   }
@@ -144,15 +166,51 @@
           new THREE.LineBasicMaterial({ color: 0xf59e0b })
         )
       );
-      const k = Math.floor(pts.length * 0.25);
-      cond.add(
-        new THREE.ArrowHelper(pts[k + 1].clone().sub(pts[k]).normalize(), pts[k], 2.5, 0xf59e0b, 1, 0.7)
-      );
+      if (pts.length > 2) {
+        const k = Math.floor(pts.length * 0.25);
+        cond.add(
+          new THREE.ArrowHelper(pts[k + 1].clone().sub(pts[k]).normalize(), pts[k], 2.5, 0xf59e0b, 1, 0.7)
+        );
+      }
       for (let i = 0; i < pts.length - 1; i++) {
         SG.m.push(pts[i].clone().add(pts[i + 1]).multiplyScalar(0.5));
         SG.d.push(pts[i + 1].clone().sub(pts[i]));
       }
     });
+
+    const pp = V(SB.px, SB.py, 0);
+
+    /* Representación 3D especial para Elemento diferencial I·dl y Carga en movimiento q·v */
+    if (SB.geo === 'elemento_dl') {
+      const cyl = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.32, 0.32, 1.8, 20),
+        new THREE.MeshStandardMaterial({ color: 0xf59e0b, emissive: 0xd97706, emissiveIntensity: 0.4 })
+      );
+      cond.add(cyl);
+      cond.add(new THREE.ArrowHelper(V(0, 1, 0), V(0, 0, 0), 3.6, 0xf59e0b, 0.9, 0.55));
+      /* Vector posición r desde el elemento dl hasta la sonda */
+      cond.add(
+        new THREE.Line(
+          new THREE.BufferGeometry().setFromPoints([V(0, 0, 0), pp]),
+          new THREE.LineBasicMaterial({ color: 0xe879f9, transparent: true, opacity: 0.65 })
+        )
+      );
+    } else if (SB.geo === 'carga_mov') {
+      const qMesh = new THREE.Mesh(
+        new THREE.SphereGeometry(0.55, 24, 16),
+        new THREE.MeshStandardMaterial({ color: 0xef4444, emissive: 0x991b1b, emissiveIntensity: 0.4 })
+      );
+      cond.add(qMesh);
+      /* Vector velocidad v de la carga puntual (azul claro, eje +Y) */
+      cond.add(new THREE.ArrowHelper(V(0, 1, 0), V(0, 0, 0), 3.8, 0x38bdf8, 0.9, 0.55));
+      /* Vector posición r desde la carga hasta la sonda */
+      cond.add(
+        new THREE.Line(
+          new THREE.BufferGeometry().setFromPoints([V(0, 0, 0), pp]),
+          new THREE.LineBasicMaterial({ color: 0xe879f9, transparent: true, opacity: 0.65 })
+        )
+      );
+    }
 
     const bs = arrows.map((a) => Bf(a.position));
     const ms = bs.map((b) => b.length());
@@ -199,7 +257,6 @@
       })
     );
 
-    const pp = V(SB.px, SB.py, 0);
     const b = Bf(pp);
     const m = b.length();
     probe.position.copy(pp);
@@ -210,12 +267,18 @@
     }
 
     const a = ana(pp);
-    ro([
+    const rows = [
       ['|B| numérico (Biot-Savart)', fm(m * 1e6) + ' μT'],
       ['Bx · By · Bz', [b.x, b.y, b.z].map((x) => fm(x * 1e6)).join(' · ') + ' μT'],
       ['|B| analítico', a == null ? anaHint() : fm(a * 1e6) + ' μT'],
       ['Error relativo', a == null || a === 0 ? '—' : fm((Math.abs(m - a) / a) * 100) + ' %']
-    ]);
+    ];
+    if (SB.geo === 'carga_mov') {
+      rows.unshift(['Producto fuente q·v equivalente', fm(SB.I * 0.01) + ' C·m/s (沿 +Y)']);
+    } else if (SB.geo === 'elemento_dl') {
+      rows.unshift(['Elemento fuente I·Δl (Δl = 1 cm)', fm(SB.I * 0.01) + ' A·m (沿 +Y)']);
+    }
+    ro(rows);
   }
 
   Sim.registerModule({
@@ -226,7 +289,7 @@
     cameraPos: [14, 10, 30],
     state: SB,
     theory:
-      'Ley de Biot-Savart: dB = (μ₀/4π)·I·dl × r̂ / r². El conductor (naranja, flecha = sentido de I) se divide en segmentos y se suman sus aportes. Flechas: |B| en el plano z = 0 (color en escala logarítmica, rojo = más intenso). Líneas verdes: líneas de campo. Esfera rosa: punto de medida; se compara con la fórmula analítica (hilo μ₀I/2πd, espira en su eje μ₀IR²/2(R²+y²)^(3/2), solenoide ideal μ₀NI/L).',
+      'Fuentes de campo magnético y Ley de Biot-Savart: dB = (μ₀/4π)·I·dl × r̂ / r² (para una carga puntual en movimiento: B = (μ₀/4π)·q·v × r̂ / r²). El conductor (naranja, flecha = sentido de I) se divide en segmentos y se suman sus aportes. Flechas: |B| en el plano z = 0 (escala logarítmica, rojo = más intenso). Líneas verdes: líneas de campo. Esfera rosa: sonda de medida comparada con la solución analítica (hilo μ₀I/2πd, espira en su eje μ₀IR²/2(R²+y²)^(3/2), solenoide μ₀NI/L, elemento dl y carga q·v).',
     activate() {
       build(cfgB, SB, onB);
       onB();
