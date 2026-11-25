@@ -1,7 +1,12 @@
-/* ===== Coordinador principal y bucle de animación ===== */
+/* ===== Coordinador principal, navegación de temas y bucle de animación ===== */
 let activeMod = null;
 let paused = false;
 let fr = 0;
+
+/* Contador de FPS en vivo (RNF-05) */
+let fpsFrames = 0;
+let fpsLastTime = performance.now();
+const fpsEl = $('fps');
 
 const tabButtons = Sim.modules.map((mod) => {
   const b = document.createElement('button');
@@ -11,7 +16,7 @@ const tabButtons = Sim.modules.map((mod) => {
   return { id: mod.id, btn: b };
 });
 
-function setMode(id) {
+function setMode(id, presetName) {
   const mod = Sim.modulesById[id];
   if (!mod) return;
   activeMod = mod;
@@ -27,12 +32,22 @@ function setMode(id) {
   $('th').textContent = mod.theory;
   $('pz').hidden = !mod.canPause;
 
-  mod.activate();
+  if (presetName && mod.applyPreset) {
+    mod.applyPreset(presetName);
+  } else {
+    mod.activate();
+  }
 
-  if (mod.cameraPos) {
-    cam.position.set(...mod.cameraPos);
+  centerCamera();
+}
+
+function centerCamera() {
+  if (!activeMod) return;
+  if (activeMod.cameraPos) {
+    cam.position.set(...activeMod.cameraPos);
   }
   ctl.target.set(0, 0, 0);
+  ctl.update();
 }
 
 $('rs').onclick = () => {
@@ -46,8 +61,50 @@ $('pz').onclick = () => {
   $('pz').textContent = paused ? 'Continuar' : 'Pausar';
 };
 
-function loop() {
+if ($('btn-cam')) {
+  $('btn-cam').onclick = centerCamera;
+}
+
+if ($('btn-theme')) {
+  $('btn-theme').onclick = () => Sim.scene.toggleTheme();
+}
+
+/* Modal de inicio con acceso directo a los 7 temas del laboratorio */
+const modalEl = $('welcome-modal');
+if ($('btn-home') && modalEl) {
+  $('btn-home').onclick = () => {
+    modalEl.hidden = false;
+  };
+}
+if ($('btn-close-modal') && modalEl) {
+  $('btn-close-modal').onclick = () => {
+    modalEl.hidden = true;
+  };
+  modalEl.onclick = (e) => {
+    if (e.target === modalEl) modalEl.hidden = true;
+  };
+}
+
+document.querySelectorAll('[data-goto]').forEach((card) => {
+  card.onclick = () => {
+    const targetMod = card.getAttribute('data-goto');
+    const preset = card.getAttribute('data-preset');
+    setMode(targetMod, preset);
+    if (modalEl) modalEl.hidden = true;
+  };
+});
+
+function loop(now) {
   requestAnimationFrame(loop);
+
+  fpsFrames++;
+  if (now - fpsLastTime >= 600) {
+    const fps = Math.min(60, Math.round((fpsFrames * 1000) / (now - fpsLastTime)));
+    if (fpsEl) fpsEl.textContent = fps + ' FPS';
+    fpsFrames = 0;
+    fpsLastTime = now;
+  }
+
   if (activeMod && activeMod.update) {
     activeMod.update(paused, fr++);
   }
@@ -58,4 +115,4 @@ function loop() {
 if (Sim.modules.length > 0) {
   setMode(Sim.modules[0].id);
 }
-loop();
+requestAnimationFrame(loop);

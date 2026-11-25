@@ -3,27 +3,115 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Simulador 3D de Magnetismo</title>
+  <title>Simulador 3D de Magnetismo · Unidad 4</title>
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
   <aside>
-    <h1>Simulador 3D de Magnetismo</h1>
+    <div class="hdr">
+      <div>
+        <h1>Simulador 3D de Magnetismo</h1>
+        <p class="sub">Electromagnetismo · Unidad 4 (Sistema Internacional)</p>
+      </div>
+      <div class="hdr-actions">
+        <button id="btn-home" title="Ver los 7 temas del laboratorio">7 Temas</button>
+        <button id="btn-theme" title="Alternar modo claro / oscuro">🌓</button>
+      </div>
+    </div>
+
     <div id="tabs"></div>
     <div id="ctrls"></div>
+
     <div class="btns">
       <button id="rs">Reiniciar</button>
       <button id="pz">Pausar</button>
+      <button id="btn-cam" title="Restaurar vista 3D inicial">Centrar vista</button>
     </div>
-    <h2>Lecturas en vivo</h2>
+
+    <h2>Lecturas en vivo (SI)</h2>
     <div id="ro"></div>
-    <h2>Teoría</h2>
+
+    <h2>Código de colores 3D</h2>
+    <div class="legend">
+      <span class="leg-item"><i class="dot" style="background:#22c55e"></i>Campo B</span>
+      <span class="leg-item"><i class="dot" style="background:#f59e0b"></i>Corriente I / dl</span>
+      <span class="leg-item"><i class="dot" style="background:#38bdf8"></i>Velocidad v / Torque τ</span>
+      <span class="leg-item"><i class="dot" style="background:#ef4444"></i>Fuerza F</span>
+      <span class="leg-item"><i class="dot" style="background:#e879f9"></i>Momento μ / Normal n̂</span>
+      <span class="leg-item"><i class="dot" style="background:#facc15"></i>Pulgar v × B</span>
+    </div>
+
+    <h2>Teoría y ecuaciones</h2>
     <p id="th"></p>
+
     <p class="mu">
-      Ejes: X rojo, Y verde (vertical), Z azul. Arrastra para rotar, rueda para zoom, clic derecho para desplazar. Unidades: SI.
+      Ejes: X rojo, Y verde (vertical), Z azul. Ratón: izq. rotar, rueda zoom, der. desplazar. <b id="fps">60 FPS</b>
     </p>
   </aside>
+
   <div id="cvw"></div>
+
+  <!-- Pantalla de inicio / Guía rápida con acceso a los 7 temas del laboratorio -->
+  <div id="welcome-modal" class="modal-backdrop" hidden>
+    <div class="modal">
+      <div class="modal-hdr">
+        <div>
+          <h2>Simulador 3D de Magnetismo — Los 7 Temas del Laboratorio</h2>
+          <p>Asignatura: Electromagnetismo · Unidad 4: Campo magnético independiente del tiempo (Unidades SI)</p>
+        </div>
+        <button id="btn-close-modal" class="on">Explorar 3D ✕</button>
+      </div>
+
+      <div class="topic-grid">
+        <div class="topic-card" data-goto="A" data-preset="ciclotron">
+          <b>1. Campo magnético y Mano Derecha</b>
+          <code>F_B = q (v × B)</code>
+          <span>Triedro 3D en vivo: índice (v), medio (B), pulgar (v×B) e inversión de signo para cargas negativas.</span>
+        </div>
+
+        <div class="topic-card" data-goto="A" data-preset="selector">
+          <b>2. Movimiento de partícula en E y B</b>
+          <code>F = q(E + v × B) · v_sel = E/B</code>
+          <span>Integrador de Boris: ciclotrón, hélice, selector de velocidades (F=0) y espectrómetro de masas.</span>
+        </div>
+
+        <div class="topic-card" data-goto="B">
+          <b>3. Fuentes de campo (Biot-Savart)</b>
+          <code>dB = (μ₀/4π) (I dl × r̂) / r²</code>
+          <span>Hilo recto, espira, bobinas de Helmholtz, solenoide, elemento dl y carga en movimiento q·v.</span>
+        </div>
+
+        <div class="topic-card" data-goto="C">
+          <b>4. Fuerza entre corrientes</b>
+          <code>F/L = μ₀ I₁ I₂ / (2π d)</code>
+          <span>Conductores paralelos, atracción (⇈) y repulsión (⇅), anillos de B y fuerza sobre segmento Δl.</span>
+        </div>
+
+        <div class="topic-card" data-goto="D">
+          <b>5. Momento de torsión sobre un lazo</b>
+          <code>τ = μ × B · |μ| = N·I·A</code>
+          <span>Espira rectangular o circular en campo B uniforme, par de fuerzas F₁, F₂ y rotación al equilibrio.</span>
+        </div>
+
+        <div class="topic-card" data-goto="E">
+          <b>6. Flujo magnético</b>
+          <code>Φ_B = ∫ B · dA = B·A·cos θ</code>
+          <span>Superficie plana orientable, área proyectada A·cos θ, conteo de líneas que atraviesan y signo de Φ.</span>
+        </div>
+
+        <div class="topic-card" data-goto="F">
+          <b>7. Ley de Gauss del magnetismo</b>
+          <code>∮_S B · dA = 0  (∇·B = 0)</code>
+          <span>Superficie cerrada (esfera o caja) sobre imán N–S y espira, con balance Φ_saliente + Φ_entrante = 0.</span>
+        </div>
+      </div>
+
+      <div class="modal-ftr">
+        <span>Haz clic en cualquiera de las 7 tarjetas para ir directamente al módulo o preset correspondiente.</span>
+        <span>Three.js · WebGL · 100% SI</span>
+      </div>
+    </div>
+  </div>
 
   <!-- Librerías Three.js -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
@@ -34,7 +122,7 @@
   <script src="js/core/scene.js"></script>
   <script src="js/core/ui.js"></script>
 
-  <!-- Módulos de simulación -->
+  <!-- Módulos de simulación (Los 7 temas) -->
   <script src="js/modules/mod1-lorentz.js"></script>
   <script src="js/modules/mod2-biot-savart.js"></script>
   <script src="js/modules/mod3-fuerza-conductores.js"></script>
