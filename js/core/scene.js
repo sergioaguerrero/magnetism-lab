@@ -16,18 +16,20 @@ const setBg = () => {
 setBg();
 dark.addEventListener('change', setBg);
 
-new ResizeObserver(() => {
+function syncSize() {
   const w = cvw.clientWidth;
   const h = cvw.clientHeight;
   if (!w || !h) return;
   renderer.setSize(w, h);
   cam.aspect = w / h;
   cam.updateProjectionMatrix();
-}).observe(cvw);
+}
+syncSize();
+new ResizeObserver(syncSize).observe(cvw);
 
 scene.add(new THREE.AmbientLight(0xffffff, 0.8));
 const dl = new THREE.DirectionalLight(0xffffff, 0.7);
 dl.position.set(5, 10, 7);
 scene.add(dl);
 
-Sim.scene = { cvw, renderer, scene, cam, ctl };
+Sim.scene = { cvw, renderer, scene, cam, ctl, syncSize };

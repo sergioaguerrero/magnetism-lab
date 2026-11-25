@@ -58,6 +58,10 @@
     const T = (2 * Math.PI * m) / (Math.abs(q) * B);
     const rc = (m * v) / (Math.abs(q) * B);
 
+    /* Escala espacial de referencia por tipo de partícula (v_ref = 5e6 m/s, B_ref = 2 mT)
+       con respuesta visual suave al variar v o B para observar el cambio de radio en 3D */
+    const rVis = 2.5 * Math.max(0.35, Math.min(2.6, Math.pow((SA.v / 5) * (2 / SA.B), 0.45)));
+
     sim = {
       q,
       m,
@@ -67,7 +71,7 @@
       v: V(v * Math.sin(th), v * Math.cos(th), 0),
       dt: T / 120,
       t: 0,
-      s: 2.5 / rc,
+      s: rVis / rc,
       Ek0: 0.5 * m * v * v,
       v0: v,
       th,
@@ -77,8 +81,10 @@
     trail.n = 0;
     ball.material.color.set(q > 0 ? 0xef4444 : 0x3b82f6);
     const off = cam.position.clone().sub(ctl.target);
-    ctl.target.set(0, 0, 0);
-    cam.position.copy(off);
+    if (off.lengthSq() > 0.01) {
+      ctl.target.set(0, 0, 0);
+      cam.position.copy(off);
+    }
     pushT();
     visA();
     roA();
@@ -113,15 +119,21 @@
     tg.attributes.position.needsUpdate = true;
     tg.setDrawRange(0, trail.n);
     ball.position.copy(p);
-    vA.position.copy(p);
-    vA.setDirection(s.v.clone().normalize());
+
+    const vLen = s.v.length();
+    vA.visible = vLen > 1e-9;
+    if (vA.visible) {
+      vA.position.copy(p);
+      vA.setDirection(s.v.clone().divideScalar(vLen));
+    }
 
     const F = s.E.clone().add(s.v.clone().cross(s.B)).multiplyScalar(s.q);
     const thr = 1e-6 * Math.abs(s.q) * (s.v0 * s.B.y + s.E.z);
-    fA.visible = F.length() > thr;
+    const fLen = F.length();
+    fA.visible = fLen > thr;
     if (fA.visible) {
       fA.position.copy(p);
-      fA.setDirection(F.normalize());
+      fA.setDirection(F.divideScalar(fLen));
     }
     Bg.position.set(p.x, 0, p.z);
   }
@@ -144,6 +156,7 @@
       ['Deriva E/B', fm(E / B) + ' m/s'],
       ['Energía cinética', fm(Ek / E_) + ' eV'],
       ['Variación de Ek', E ? '— (E realiza trabajo)' : fm((Ek / s.Ek0 - 1) * 100) + ' %'],
+      ['Escala 3D (1 unidad)', fm(1 / s.s) + ' m'],
       ['Tiempo simulado', fm(s.t) + ' s']
     ]);
   }
@@ -154,6 +167,7 @@
     group: gA,
     canPause: true,
     cameraPos: [7, 5, 8],
+    state: SA,
     theory:
       'Fuerza de Lorentz: F = q(E + v × B). En B uniforme la trayectoria es una hélice: radio r = m·v⊥/(|q|B), periodo T = 2πm/(|q|B) (no depende de v) y paso = v∥·T. Si se añade E ⊥ B, el centro de la órbita deriva con v = E×B/B², igual para cualquier carga y masa. Azul claro: v. Rojo: F. Verde: B. Integrador: Boris, que conserva la energía en B puro (mira la variación de Ek).',
     activate() {

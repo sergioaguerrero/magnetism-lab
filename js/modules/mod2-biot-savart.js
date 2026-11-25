@@ -39,6 +39,15 @@
         'Espira circular': 'espira',
         'Bobinas de Helmholtz': 'helmholtz',
         'Solenoide': 'solenoide'
+      },
+      onSelect(val) {
+        /* Coloca la sonda en la región donde aplica la fórmula analítica de cada geometría */
+        if (val === 'hilo' && Math.abs(SB.px) < 0.5) {
+          SB.px = 6;
+        } else if (val !== 'hilo') {
+          SB.px = 0;
+          SB.py = 0;
+        }
       }
     },
     { k: 'I', t: 'Corriente I', u: 'A', min: 0.1, max: 20, step: 0.1 },
@@ -61,9 +70,9 @@
     const R = SB.R;
     const g = SB.geo;
     const out = [];
-    const lp = (y) => path((t) => V(R * Math.cos(2 * Math.PI * t), y, -R * Math.sin(2 * Math.PI * t)), 72);
+    const lp = (y) => path((t) => V(R * Math.cos(2 * Math.PI * t), y, -R * Math.sin(2 * Math.PI * t)), 120);
 
-    if (g === 'hilo') out.push(path((t) => V(0, -60 + 120 * t, 0), 120));
+    if (g === 'hilo') out.push(path((t) => V(0, -120 + 240 * t, 0), 240));
     if (g === 'espira') out.push(lp(0));
     if (g === 'helmholtz') out.push(lp(-R / 2), lp(R / 2));
     if (g === 'solenoide') {
@@ -71,7 +80,7 @@
         path((t) => {
           const a = 2 * Math.PI * SB.N * t;
           return V(R * Math.cos(a), -SB.L / 2 + SB.L * t, -R * Math.sin(a));
-        }, 24 * SB.N)
+        }, 36 * SB.N)
       );
     }
     return out;
@@ -87,8 +96,10 @@
       const rx = p.x - m.x;
       const ry = p.y - m.y;
       const rz = p.z - m.z;
-      const r2 = rx * rx + ry * ry + rz * rz + 0.04;
-      const k = 1 / (r2 * Math.sqrt(r2));
+      const r2 = rx * rx + ry * ry + rz * rz;
+      if (r2 < 1e-4) return V(0, 0, 0);
+      const r2s = r2 + 1e-4;
+      const k = 1 / (r2s * Math.sqrt(r2s));
       x += (d.y * rz - d.z * ry) * k;
       y += (d.z * rx - d.x * rz) * k;
       z += (d.x * ry - d.y * rx) * k;
@@ -113,6 +124,12 @@
     return Math.abs(p.x) < SB.R * 0.7 && Math.abs(p.y) < SB.L * 0.3
       ? (MU0 * SB.N * I) / (SB.L * 1e-2)
       : null;
+  }
+
+  function anaHint() {
+    if (SB.geo === 'hilo') return '— (sobre el conductor, x = 0)';
+    if (SB.geo === 'espira' || SB.geo === 'helmholtz') return '— (válido en el eje x = 0)';
+    return '— (válido en región central)';
   }
 
   function onB() {
@@ -143,8 +160,13 @@
     const ref = sr[Math.floor(0.95 * sr.length)] || 1;
 
     arrows.forEach((a, i) => {
+      if (ms[i] < 1e-12) {
+        a.visible = false;
+        return;
+      }
+      a.visible = true;
       const t = Math.min(1, Math.max(0, (Math.log10(ms[i] / ref + 1e-12) + 2) / 2.3));
-      a.setDirection(bs[i].clone().normalize());
+      a.setDirection(bs[i].clone().divideScalar(ms[i]));
       a.setColor(new THREE.Color().setHSL((1 - t) * 0.67, 1, 0.5));
       a.setLength(1.5, 0.6, 0.4);
     });
@@ -158,36 +180,41 @@
           const b1 = Bf(p);
           if (b1.length() < 1e-12) break;
           b1.normalize().multiplyScalar(0.6 * dir);
-          const b2 = Bf(p.clone().addScaledVector(b1, 0.5))
-            .normalize()
-            .multiplyScalar(0.6 * dir);
+          const bMid = Bf(p.clone().addScaledVector(b1, 0.5));
+          if (bMid.length() < 1e-12) break;
+          const b2 = bMid.normalize().multiplyScalar(0.6 * dir);
           p = p.clone().add(b2);
           if (p.length() > 22) break;
           pts.push(p);
           if (k > 10 && p.distanceTo(s0) < 0.5) break;
         }
-        lines.add(
-          new THREE.Line(
-            new THREE.BufferGeometry().setFromPoints(pts),
-            new THREE.LineBasicMaterial({ color: 0x22c55e })
-          )
-        );
+        if (pts.length > 1) {
+          lines.add(
+            new THREE.Line(
+              new THREE.BufferGeometry().setFromPoints(pts),
+              new THREE.LineBasicMaterial({ color: 0x22c55e })
+            )
+          );
+        }
       })
     );
 
     const pp = V(SB.px, SB.py, 0);
     const b = Bf(pp);
-    probe.position.copy(pp);
-    pA.position.copy(pp);
-    pA.setDirection(b.clone().normalize());
-
     const m = b.length();
+    probe.position.copy(pp);
+    pA.visible = m > 1e-12;
+    if (pA.visible) {
+      pA.position.copy(pp);
+      pA.setDirection(b.clone().divideScalar(m));
+    }
+
     const a = ana(pp);
     ro([
       ['|B| numérico (Biot-Savart)', fm(m * 1e6) + ' μT'],
       ['Bx · By · Bz', [b.x, b.y, b.z].map((x) => fm(x * 1e6)).join(' · ') + ' μT'],
-      ['|B| analítico', a == null ? '— (no aplica aquí)' : fm(a * 1e6) + ' μT'],
-      ['Error relativo', a == null ? '—' : fm((Math.abs(m - a) / a) * 100) + ' %']
+      ['|B| analítico', a == null ? anaHint() : fm(a * 1e6) + ' μT'],
+      ['Error relativo', a == null || a === 0 ? '—' : fm((Math.abs(m - a) / a) * 100) + ' %']
     ]);
   }
 
@@ -197,6 +224,7 @@
     group: gB,
     canPause: false,
     cameraPos: [14, 10, 30],
+    state: SB,
     theory:
       'Ley de Biot-Savart: dB = (μ₀/4π)·I·dl × r̂ / r². El conductor (naranja, flecha = sentido de I) se divide en segmentos y se suman sus aportes. Flechas: |B| en el plano z = 0 (color en escala logarítmica, rojo = más intenso). Líneas verdes: líneas de campo. Esfera rosa: punto de medida; se compara con la fórmula analítica (hilo μ₀I/2πd, espira en su eje μ₀IR²/2(R²+y²)^(3/2), solenoide ideal μ₀NI/L).',
     activate() {

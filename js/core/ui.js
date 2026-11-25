@@ -9,13 +9,18 @@ function build(cfg, state, onChange) {
   const c = $('ctrls');
   c.innerHTML = '';
   const rows = [];
-  const vis = () => rows.forEach(([o, r]) => {
-    r.hidden = !!o.show && !o.show();
-  });
+
+  const vis = () => {
+    rows.forEach(([o, r, syncVal]) => {
+      r.hidden = !!o.show && !o.show();
+      if (syncVal) syncVal();
+    });
+  };
 
   cfg.forEach((o) => {
     const r = document.createElement('label');
     r.className = 'row';
+    let syncVal = null;
 
     if (o.opts) {
       r.innerHTML = `<div><span>${o.t}</span></div>`;
@@ -25,8 +30,13 @@ function build(cfg, state, onChange) {
         s.add(new Option(k, o.opts[k]));
       }
       s.value = state[o.k];
+      syncVal = () => {
+        s.value = state[o.k];
+      };
       s.oninput = () => {
+        const prev = state[o.k];
         state[o.k] = s.value;
+        if (o.onSelect) o.onSelect(s.value, prev);
         vis();
         onChange();
       };
@@ -40,6 +50,10 @@ function build(cfg, state, onChange) {
         b.textContent = fm(+i.value) + (o.u ? ' ' + o.u : '');
       };
       sh();
+      syncVal = () => {
+        i.value = state[o.k];
+        sh();
+      };
       i.oninput = () => {
         state[o.k] = +i.value;
         sh();
@@ -47,7 +61,7 @@ function build(cfg, state, onChange) {
       };
     }
 
-    rows.push([o, r]);
+    rows.push([o, r, syncVal]);
     c.append(r);
   });
 
