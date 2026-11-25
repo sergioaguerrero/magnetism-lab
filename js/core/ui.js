@@ -1,6 +1,10 @@
 /* ===== Gestor de interfaz: renderizado matemático KaTeX, variantes, sliders y lecturas ===== */
 let lastRoKey = '';
 let roValSpans = [];
+let sliderDefaults = {};
+let activeVis = null;
+let activeOnChange = null;
+let activeState = null;
 
 function renderMath(el) {
   if (!el || typeof window.renderMathInElement !== 'function') return;
@@ -31,11 +35,33 @@ function ro(list) {
   }
 }
 
+function captureSliderDefaults(cfg, state, baseDefaults) {
+  sliderDefaults = {};
+  cfg.forEach((o) => {
+    if (!o.opts) {
+      sliderDefaults[o.k] = baseDefaults && o.k in baseDefaults ? baseDefaults[o.k] : state[o.k];
+    }
+  });
+}
+
 function build(cfg, state, onChange) {
   const vContainer = $('variants');
   const cContainer = $('ctrls');
   if (vContainer) vContainer.innerHTML = '';
   if (cContainer) cContainer.innerHTML = '';
+
+  activeState = state;
+  activeOnChange = onChange;
+
+  const baseDefaults = Sim.activeMod && Sim.activeMod.defaultState ? Sim.activeMod.defaultState : null;
+  captureSliderDefaults(cfg, state, baseDefaults);
+  /* Si el módulo actual tiene un preset activo (ej. Selector de velocidades o Espira),
+     conserva los valores predeterminados de los sliders propios de esa variante */
+  cfg.forEach((o) => {
+    if (!o.opts) {
+      sliderDefaults[o.k] = state[o.k];
+    }
+  });
 
   const rows = [];
 
@@ -45,6 +71,7 @@ function build(cfg, state, onChange) {
       if (syncVal) syncVal();
     });
   };
+  activeVis = vis;
 
   cfg.forEach((o) => {
     const r = document.createElement('label');
@@ -67,7 +94,22 @@ function build(cfg, state, onChange) {
       s.oninput = () => {
         const prev = state[o.k];
         state[o.k] = s.value;
-        if (o.onSelect) o.onSelect(s.value, prev);
+        /* Si la variante cambia, primero restaura la base de los sliders y aplica los defaults de la nueva variante */
+        if (o.onSelect) {
+          if (baseDefaults) {
+            cfg.forEach((item) => {
+              if (!item.opts && item.k in baseDefaults) {
+                state[item.k] = baseDefaults[item.k];
+              }
+            });
+          }
+          o.onSelect(s.value, prev);
+          cfg.forEach((item) => {
+            if (!item.opts) {
+              sliderDefaults[item.k] = state[item.k];
+            }
+          });
+        }
         vis();
         onChange();
         if (Sim.explainer && Sim.activeMod) Sim.explainer.update(Sim.activeMod);
@@ -107,4 +149,15 @@ function build(cfg, state, onChange) {
   vis();
 }
 
-Sim.ui = { ro, build, renderMath };
+/* Restaura únicamente los sliders numéricos (Parámetros modificables) sin alterar las Variantes del tema */
+function resetSlidersOnly() {
+  if (!activeState) return;
+  for (const k in sliderDefaults) {
+    activeState[k] = sliderDefaults[k];
+  }
+  if (activeVis) activeVis();
+  if (activeOnChange) activeOnChange();
+  if (Sim.explainer && Sim.activeMod) Sim.explainer.update(Sim.activeMod);
+}
+
+Sim.ui = { ro, build, renderMath, resetSlidersOnly };

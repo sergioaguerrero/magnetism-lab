@@ -82,12 +82,10 @@ $('rs').onclick = () => {
 if ($('btn-defaults')) {
   $('btn-defaults').onclick = () => {
     if (!activeMod) return;
-    if (activeMod.defaultState && activeMod.state) {
-      Object.assign(activeMod.state, JSON.parse(JSON.stringify(activeMod.defaultState)));
-    }
     setPaused(true);
-    activeMod.activate();
-    if (Sim.explainer) Sim.explainer.update(activeMod);
+    if (Sim.ui && Sim.ui.resetSlidersOnly) {
+      Sim.ui.resetSlidersOnly();
+    }
   };
 }
 
