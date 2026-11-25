@@ -1,4 +1,4 @@
-# Simulador 3D de Magnetismo — Unidad 4 (Electromagnetismo)
+# Magnetism Lab — Electromagnetismo (Proyecto Final)
 
 Simulador interactivo 3D en tiempo real desarrollado con **Three.js** y **JavaScript puro (Vanilla JS)**, sin dependencias de backend. Todos los cálculos físicos y lecturas numéricas utilizan el **Sistema Internacional de Unidades (SI)** y se validan en vivo contra soluciones analíticas.
 
