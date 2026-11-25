@@ -1,4 +1,4 @@
-/* ===== Módulo 1: Carga en campos E y B (integrador de Boris) ===== */
+/* ===== Módulo 1 (RF-06 + B-06): Carga en campos E y B, Presets y Regla de la Mano Derecha ===== */
 (function () {
   const gA = new THREE.Group();
   scene.add(gA);
@@ -6,7 +6,7 @@
   gA.add(new THREE.AxesHelper(3.5));
 
   const ball = new THREE.Mesh(
-    new THREE.SphereGeometry(0.16, 24, 16),
+    new THREE.SphereGeometry(0.18, 24, 16),
     new THREE.MeshStandardMaterial({ color: 0x3b82f6 })
   );
   gA.add(ball);
@@ -22,9 +22,22 @@
   tl.frustumCulled = false;
   gA.add(tl);
 
-  const vA = new THREE.ArrowHelper(V(1, 0, 0), V(), 2, 0x38bdf8, 0.5, 0.3);
-  const fA = new THREE.ArrowHelper(V(1, 0, 0), V(), 2, 0xef4444, 0.5, 0.3);
-  gA.add(vA, fA);
+  /* Vectores principales sobre la partícula:
+     - vA (azul claro): velocidad v (dedo índice)
+     - bPartA (verde): campo B local en la partícula (dedo medio)
+     - vxbA (amarillo): producto cruz v × B (pulgar mano derecha)
+     - fA (rojo): fuerza magnética / total F = q(E + v × B)
+     - feA (magenta): fuerza eléctrica F_E = qE (visible cuando E > 0) */
+  const vA = new THREE.ArrowHelper(V(1, 0, 0), V(), 2.1, 0x38bdf8, 0.5, 0.3);
+  const bPartA = new THREE.ArrowHelper(V(0, 1, 0), V(), 1.9, 0x22c55e, 0.45, 0.28);
+  const vxbA = new THREE.ArrowHelper(V(0, 0, 1), V(), 1.9, 0xfacc15, 0.45, 0.28);
+  const fA = new THREE.ArrowHelper(V(1, 0, 0), V(), 2.1, 0xef4444, 0.5, 0.3);
+  const feA = new THREE.ArrowHelper(V(0, 0, -1), V(), 2.0, 0xe879f9, 0.48, 0.28);
+  gA.add(vA, bPartA, vxbA, fA, feA);
+
+  /* Grupo para órbita de referencia en preset de espectrómetro de masas */
+  const specGrp = new THREE.Group();
+  gA.add(specGrp);
 
   const Bg = new THREE.Group();
   [
@@ -37,17 +50,116 @@
   });
   gA.add(Bg);
 
-  const SA = { part: 'e', v: 5, th: 90, B: 2, E: 0, sp: 1 };
+  const SA = {
+    preset: 'ciclotron',
+    rhr: 'si',
+    part: 'e',
+    v: 5,
+    th: 90,
+    B: 2,
+    E: 0,
+    sp: 1
+  };
+
+  function applyPreset(val) {
+    if (val === 'ciclotron') {
+      SA.part = 'e';
+      SA.v = 5;
+      SA.th = 90;
+      SA.B = 2;
+      SA.E = 0;
+    } else if (val === 'helice') {
+      SA.part = 'p';
+      SA.v = 6;
+      SA.th = 55;
+      SA.B = 5;
+      SA.E = 0;
+    } else if (val === 'selector') {
+      /* Selector de velocidades: v = E / B => 5×10⁶ m/s = (50×10³ V/m) / (10×10⁻³ T) */
+      SA.part = 'p';
+      SA.v = 5;
+      SA.th = 90;
+      SA.B = 10;
+      SA.E = 50;
+    } else if (val === 'espectrometro') {
+      SA.part = 'a';
+      SA.v = 4;
+      SA.th = 90;
+      SA.B = 8;
+      SA.E = 0;
+    } else if (val === 'deriva') {
+      SA.part = 'e';
+      SA.v = 3;
+      SA.th = 90;
+      SA.B = 5;
+      SA.E = 25;
+    }
+  }
+
   const cfgA = [
-    { k: 'part', t: 'Partícula', opts: { 'Electrón': 'e', 'Protón': 'p', 'Partícula α': 'a' } },
-    { k: 'v', t: 'Rapidez v', u: '×10⁶ m/s', min: 0.1, max: 30, step: 0.1 },
+    {
+      k: 'preset',
+      t: 'Preset de ejercicio (B-06)',
+      opts: {
+        '1. Ciclotrón (órbita circular, θ = 90°)': 'ciclotron',
+        '2. Hélice magnética (θ = 55°)': 'helice',
+        '3. Selector de velocidades (v = E/B, F = 0)': 'selector',
+        '4. Espectrómetro de masas (α vs. protón)': 'espectrometro',
+        '5. Deriva E×B (cicloide)': 'deriva',
+        'Personalizado (ajuste libre)': 'libre'
+      },
+      onSelect(val) {
+        applyPreset(val);
+      }
+    },
+    {
+      k: 'rhr',
+      t: 'Regla de la mano derecha 3D',
+      opts: {
+        'Mostrar triedro (v, B, v×B y F)': 'si',
+        'Solo vectores v y F': 'no'
+      }
+    },
+    { k: 'part', t: 'Partícula', opts: { 'Electrón (q = −e)': 'e', 'Protón (q = +e)': 'p', 'Partícula α (q = +2e)': 'a' } },
+    { k: 'v', t: 'Rapidez inicial v', u: '×10⁶ m/s', min: 0.1, max: 30, step: 0.1 },
     { k: 'th', t: 'Ángulo θ entre v y B', u: '°', min: 0, max: 180, step: 1 },
-    { k: 'B', t: 'Campo magnético B (eje Y)', u: 'mT', min: 0.1, max: 20, step: 0.1 },
-    { k: 'E', t: 'Campo eléctrico E (eje Z, ⊥ B)', u: 'kV/m', min: 0, max: 200, step: 1 },
+    { k: 'B', t: 'Campo magnético B (+Y)', u: 'mT', min: 0.1, max: 20, step: 0.1 },
+    { k: 'E', t: 'Campo eléctrico E (−Z, ⊥ B)', u: 'kV/m', min: 0, max: 200, step: 1 },
     { k: 'sp', t: 'Velocidad de simulación', u: '×', min: 0.1, max: 4, step: 0.1 }
   ];
 
   let sim;
+
+  function buildSpectrometerReference(s) {
+    specGrp.clear();
+    if (SA.preset !== 'espectrometro') return;
+
+    /* En el espectrómetro de masas comparamos el radio del protón (r_p) y de la partícula α (r_α ≈ 2·r_p)
+       entrando en el mismo punto (0,0,0) con velocidad +X en campo B (+Y).
+       Para q > 0, v(+X) × B(+Y) = +Z, así que el centro de giro está en (0, 0, +r). */
+    const B = SA.B * 1e-3;
+    const v = SA.v * 1e6;
+    const [qp, mp] = P.p;
+    const [qa, ma] = P.a;
+    const rpVis = ((mp * v) / (qp * B)) * s.s;
+    const raVis = ((ma * v) / (qa * B)) * s.s;
+
+    const makeOrbitCircle = (rVis, color) => {
+      const pts = [];
+      const N = 72;
+      for (let i = 0; i <= N; i++) {
+        const a = (2 * Math.PI * i) / N;
+        pts.push(V(rVis * Math.sin(a), 0, rVis * (1 - Math.cos(a))));
+      }
+      return new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints(pts),
+        new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.45 })
+      );
+    };
+
+    specGrp.add(makeOrbitCircle(rpVis, 0x38bdf8)); // Órbita de referencia del protón (azul)
+    specGrp.add(makeOrbitCircle(raVis, 0xef4444)); // Órbita de referencia de partícula α (roja)
+  }
 
   function initA() {
     const [q, m] = P[SA.part];
@@ -58,15 +170,15 @@
     const T = (2 * Math.PI * m) / (Math.abs(q) * B);
     const rc = (m * v) / (Math.abs(q) * B);
 
-    /* Escala espacial de referencia por tipo de partícula (v_ref = 5e6 m/s, B_ref = 2 mT)
-       con respuesta visual suave al variar v o B para observar el cambio de radio en 3D */
     const rVis = 2.5 * Math.max(0.35, Math.min(2.6, Math.pow((SA.v / 5) * (2 / SA.B), 0.45)));
 
+    /* E apunta en -Z para que E × B apunte en +X (la misma dirección de v₀ cuando θ = 90°).
+       Así, cuando v = E/B, la fuerza eléctrica qE (-Z) cancela exactamente a la magnética q(v×B) (+Z) */
     sim = {
       q,
       m,
       B: V(0, B, 0),
-      E: V(0, 0, E),
+      E: V(0, 0, -E),
       x: V(),
       v: V(v * Math.sin(th), v * Math.cos(th), 0),
       dt: T / 120,
@@ -85,6 +197,7 @@
       ctl.target.set(0, 0, 0);
       cam.position.copy(off);
     }
+    buildSpectrometerReference(sim);
     pushT();
     visA();
     roA();
@@ -127,8 +240,31 @@
       vA.setDirection(s.v.clone().divideScalar(vLen));
     }
 
-    const F = s.E.clone().add(s.v.clone().cross(s.B)).multiplyScalar(s.q);
-    const thr = 1e-6 * Math.abs(s.q) * (s.v0 * s.B.y + s.E.z);
+    const showRhr = SA.rhr === 'si';
+    bPartA.visible = showRhr;
+    if (showRhr) {
+      bPartA.position.copy(p);
+      bPartA.setDirection(V(0, 1, 0));
+    }
+
+    const vxb = s.v.clone().cross(s.B);
+    const vxbLen = vxb.length();
+    vxbA.visible = showRhr && vxbLen > 1e-12;
+    if (vxbA.visible) {
+      vxbA.position.copy(p);
+      vxbA.setDirection(vxb.clone().divideScalar(vxbLen));
+    }
+
+    const FE = s.E.clone().multiplyScalar(s.q);
+    const feLen = FE.length();
+    feA.visible = showRhr && feLen > 1e-20;
+    if (feA.visible) {
+      feA.position.copy(p);
+      feA.setDirection(FE.clone().divideScalar(feLen));
+    }
+
+    const F = s.E.clone().add(vxb).multiplyScalar(s.q);
+    const thr = 1e-5 * Math.abs(s.q) * (s.v0 * s.B.y + Math.abs(s.E.z));
     const fLen = F.length();
     fA.visible = fLen > thr;
     if (fA.visible) {
@@ -144,19 +280,25 @@
     const vp = v * Math.sin(s.th);
     const vl = v * Math.cos(s.th);
     const B = s.B.y;
-    const E = s.E.z;
+    const E = Math.abs(s.E.z);
     const T = (2 * Math.PI * s.m) / (Math.abs(s.q) * B);
     const Ek = 0.5 * s.m * s.v.lengthSq();
+    const rGyro = (s.m * vp) / (Math.abs(s.q) * B);
+    const mqRatio = s.m / Math.abs(s.q);
+    const rhrNote =
+      s.q > 0
+        ? 'q > 0: F_B (roja) ∥ pulgar (v×B, amarilla)'
+        : 'q < 0: F_B (roja) opuesta al pulgar (v×B)';
 
     ro([
-      ['Radio r = m·v⊥/(|q|B)', fm((s.m * vp) / (Math.abs(s.q) * B)) + ' m'],
-      ['Periodo T = 2πm/(|q|B)', fm(T) + ' s'],
-      ['Frecuencia ciclotrón f', fm(1 / T) + ' Hz'],
-      ['Paso de hélice v∥·T', fm(vl * T) + ' m'],
-      ['Deriva E/B', fm(E / B) + ' m/s'],
-      ['Energía cinética', fm(Ek / E_) + ' eV'],
-      ['Variación de Ek', E ? '— (E realiza trabajo)' : fm((Ek / s.Ek0 - 1) * 100) + ' %'],
-      ['Escala 3D (1 unidad)', fm(1 / s.s) + ' m'],
+      ['Regla mano derecha', rhrNote],
+      ['Radio r = m·v⊥/(|q|B)', fm(rGyro) + ' m'],
+      ['Relación masa/carga m/|q|', fm(mqRatio) + ' kg/C'],
+      ['Periodo T = 2πm/(|q|B)', fm(T) + ' s (f = ' + fm(1 / T) + ' Hz)'],
+      ['Paso de hélice p = v∥·T', fm(vl * T) + ' m'],
+      ['Velocidad de selector / deriva E/B', fm(E / B) + ' m/s'],
+      ['Energía cinética Ek', fm(Ek / E_) + ' eV'],
+      ['Variación de Ek (Boris)', E ? '— (E realiza trabajo)' : fm((Ek / s.Ek0 - 1) * 100) + ' %'],
       ['Tiempo simulado', fm(s.t) + ' s']
     ]);
   }
@@ -168,8 +310,14 @@
     canPause: true,
     cameraPos: [7, 5, 8],
     state: SA,
+    applyPreset(p) {
+      SA.preset = p;
+      applyPreset(p);
+      build(cfgA, SA, initA);
+      initA();
+    },
     theory:
-      'Fuerza de Lorentz: F = q(E + v × B). En B uniforme la trayectoria es una hélice: radio r = m·v⊥/(|q|B), periodo T = 2πm/(|q|B) (no depende de v) y paso = v∥·T. Si se añade E ⊥ B, el centro de la órbita deriva con v = E×B/B², igual para cualquier carga y masa. Azul claro: v. Rojo: F. Verde: B. Integrador: Boris, que conserva la energía en B puro (mira la variación de Ek).',
+      'Fuerza de Lorentz: F = q(E + v × B). Regla de la mano derecha (triedro 3D sobre la partícula): dedo índice = velocidad v (azul claro), dedo medio = campo B (verde), pulgar = v × B (amarillo). Si la carga es positiva (protón, α), la fuerza magnética F_B (roja) apunta como el pulgar; si es negativa (electrón), apunta en sentido opuesto. Presets incluidos: Ciclotrón (θ = 90°), Hélice (θ = 55°), Selector de velocidades (E = v·B ⇒ F_E + F_B = 0, movimiento rectilíneo sin desviación) y Espectrómetro de masas (separa iones según m/|q|, comparando α en rojo vs. protón en azul).',
     activate() {
       build(cfgA, SA, initA);
       initA();
