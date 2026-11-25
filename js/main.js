@@ -79,6 +79,18 @@ $('rs').onclick = () => {
   }
 };
 
+if ($('btn-defaults')) {
+  $('btn-defaults').onclick = () => {
+    if (!activeMod) return;
+    if (activeMod.defaultState && activeMod.state) {
+      Object.assign(activeMod.state, JSON.parse(JSON.stringify(activeMod.defaultState)));
+    }
+    setPaused(true);
+    activeMod.activate();
+    if (Sim.explainer) Sim.explainer.update(activeMod);
+  };
+}
+
 $('pz').onclick = () => {
   setPaused(!paused);
 };
@@ -88,7 +100,7 @@ if ($('btn-free')) {
   $('btn-free').onclick = () => {
     Sim.freeCam = !Sim.freeCam;
     $('btn-free').classList.toggle('on', Sim.freeCam);
-    $('btn-free').textContent = Sim.freeCam ? 'Modo libre: ON' : 'Modo libre';
+    $('btn-free').textContent = Sim.freeCam ? 'Libre: ON' : 'Modo libre';
   };
 }
 

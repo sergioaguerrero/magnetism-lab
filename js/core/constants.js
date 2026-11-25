@@ -3,6 +3,9 @@ window.Sim = window.Sim || {
   modules: [],
   modulesById: {},
   registerModule(modDef) {
+    if (modDef.state) {
+      modDef.defaultState = JSON.parse(JSON.stringify(modDef.state));
+    }
     this.modules.push(modDef);
     this.modulesById[modDef.id] = modDef;
   }
