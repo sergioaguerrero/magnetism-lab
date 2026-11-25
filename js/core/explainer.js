@@ -38,8 +38,10 @@
     const [q, m] = P[S.part];
     const v0 = S.v * 1e6;
     const thRad = (S.th * Math.PI) / 180;
-    const vp = v0 * Math.sin(thRad);
-    const vl = v0 * Math.cos(thRad);
+    const sTh = Math.abs(Math.sin(thRad)) < 1e-12 ? 0 : Math.sin(thRad);
+    const cTh = Math.abs(Math.cos(thRad)) < 1e-12 ? 0 : Math.cos(thRad);
+    const vp = v0 * sTh;
+    const vl = v0 * cTh;
     const B = S.B * 1e-3;
     const E = S.E * 1e3;
     const FB = Math.abs(q) * vp * B;
@@ -77,13 +79,15 @@
 
         <p><b>B · Radio de curvatura ($r$) y Periodo de ciclotrón ($T$):</b></p>
         $$r = \\frac{m\\,v_\\perp}{|q|\\,B} = ${fmTex(r)}\\text{ m}$$
-        $$T = \\frac{2\\pi\\,m}{|q|\\,B} = ${fmTex(T)}\\text{ s}, \\qquad f = \\frac{1}{T} = ${fmTex(f)}\\text{ Hz}$$
+        $$T = \\frac{2\\pi\\,m}{|q|\\,B} = ${fmTex(T)}\\text{ s}$$
+        $$f = \\frac{1}{T} = ${fmTex(f)}\\text{ Hz}$$
         $$p = v_\\parallel\\,T = ${fmTex(pitch)}\\text{ m}$$
 
         ${
           E > 0
             ? `<p><b>C · Balance eléctrico-magnético y velocidad de deriva:</b></p>
-               $$|\\vec{F}_E| = |q|\\,E = ${fmTex(FE)}\\text{ N}, \\qquad v_d = \\frac{E}{B} = ${fmTex(vd)}\\text{ m/s}$$
+               $$|\\vec{F}_E| = |q|\\,E = ${fmTex(FE)}\\text{ N}$$
+               $$v_d = \\frac{E}{B} = ${fmTex(vd)}\\text{ m/s}$$
                <p>${Math.abs(v0 - vd) / (vd || 1) < 0.03 ? 'Como $v_0 = v_d$, se cumple $|\\vec{F}_E| = |\\vec{F}_B|$ y la partícula avanza en línea recta.' : `Como $v_0 \\neq v_d$, la resultante curva la trayectoria mientras deriva a razón de $${fmTex(vd)}\\text{ m/s}$.`}</p>`
             : `<p><b>C · Energía cinética constante:</b> Como $\\vec{F}_B \\perp \\vec{v}$, el campo magnético no realiza trabajo mecánico y la energía se conserva en $E_k = ${fmTex(EkeV)}\\text{ eV}$.</p>`
         }
@@ -234,7 +238,8 @@
       <div class="exp-sec">
         <h3>3. Desarrollo matemático y resultados en vivo</h3>
         <p><b>A · Área de la espira y Momento Dipolar Magnético ($|\\vec{\\mu}|$):</b></p>
-        $$A = ${fmTex(A)}\\text{ m}^2, \\qquad |\\vec{\\mu}| = N\\,I\\,A = ${fmTex(mu)}\\text{ A}\\cdot\\text{m}^2$$
+        $$A = ${fmTex(A)}\\text{ m}^2$$
+        $$|\\vec{\\mu}| = N\\,I\\,A = ${fmTex(mu)}\\text{ A}\\cdot\\text{m}^2$$
 
         <p><b>B · Magnitud del Torque ($|\\vec{\\tau}|$) y Fuerzas en los brazos:</b></p>
         $$|\\vec{\\tau}| = \\mu\\,B\\,|\\sin\\theta| = ${fmTex(tau)}\\text{ N}\\cdot\\text{m}$$

@@ -277,8 +277,10 @@
   function roA() {
     const s = sim;
     const v = s.v0;
-    const vp = v * Math.sin(s.th);
-    const vl = v * Math.cos(s.th);
+    const sTh = Math.abs(Math.sin(s.th)) < 1e-12 ? 0 : Math.sin(s.th);
+    const cTh = Math.abs(Math.cos(s.th)) < 1e-12 ? 0 : Math.cos(s.th);
+    const vp = v * sTh;
+    const vl = v * cTh;
     const B = s.B.y;
     const E = Math.abs(s.E.z);
     const T = (2 * Math.PI * s.m) / (Math.abs(s.q) * B);

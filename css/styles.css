@@ -376,11 +376,11 @@ aside#explain-sidebar {
 }
 
 aside#explain-sidebar > * {
-  min-width: 420px;
+  min-width: 470px;
 }
 
 body.explain-open aside#explain-sidebar {
-  width: 460px;
+  width: 510px;
   padding: 16px 18px;
   border-width: 1.5px;
   margin-left: 0;
@@ -468,13 +468,13 @@ body.explain-open aside#explain-sidebar {
 }
 
 .exp-sec .katex-display {
-  margin: 9px 0;
-  padding: 8px 10px;
+  margin: 12px 0;
+  padding: 14px 16px;
   text-align: center;
-  font-size: 0.94em;
+  font-size: 1.16em;
   background: var(--pn);
   border: 1.5px solid var(--bd);
-  border-radius: 8px;
+  border-radius: 10px;
   overflow-x: auto;
   overflow-y: hidden;
 }
@@ -674,13 +674,13 @@ input[type="range"]::-webkit-slider-thumb:hover {
 }
 
 #th .katex-display {
-  margin: 10px 0;
-  padding: 8px 10px;
+  margin: 11px 0;
+  padding: 12px 14px;
   text-align: center;
-  font-size: 0.94em;
+  font-size: 1.08em;
   background: var(--pn);
   border: 1.5px solid var(--bd);
-  border-radius: 8px;
+  border-radius: 9px;
   overflow-x: auto;
   overflow-y: hidden;
 }
