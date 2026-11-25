@@ -414,6 +414,7 @@ input[type="range"] {
   overflow-y: auto;
   font-size: 13px;
   line-height: 1.6;
+  text-align: justify;
   background: var(--card);
   padding: 12px 14px;
   border-radius: 9px;
@@ -423,6 +424,8 @@ input[type="range"] {
 #th .katex-display {
   margin: 10px 0;
   padding: 8px 10px;
+  text-align: center;
+  font-size: 0.94em;
   background: var(--pn);
   border: 1.5px solid var(--bd);
   border-radius: 8px;
