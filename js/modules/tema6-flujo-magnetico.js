@@ -36,7 +36,7 @@
       t: 'Modo de orientación',
       opts: {
         'Manual (ajustar ángulo θ)': 'manual',
-        'Rotación continua ω (Φ(t) = B·A·cos ωt)': 'rotacion'
+        'Rotación continua (Φ = B·A·cos ωt)': 'rotacion'
       }
     },
     { k: 'th', t: 'Ángulo $\\theta$ (entre $\\hat{n}$ y $\\vec{B}$)', u: '°', min: -180, max: 180, step: 1 },
@@ -278,7 +278,7 @@
 
   Sim.registerModule({
     id: 'E',
-    title: '5 · Flujo magnético',
+    title: '6 · Flujo magnético',
     group: gE,
     canPause: true,
     cameraPos: [12, 11, 18],

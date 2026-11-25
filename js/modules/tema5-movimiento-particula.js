@@ -99,12 +99,12 @@
   const cfgA = [
     {
       k: 'preset',
-      t: 'Preset de ejercicio (B-06)',
+      t: 'Caso de movimiento',
       opts: {
-        '1. Ciclotrón (órbita circular, θ = 90°)': 'ciclotron',
+        '1. Ciclotrón (órbita circular)': 'ciclotron',
         '2. Hélice magnética (θ = 55°)': 'helice',
-        '3. Selector de velocidades (v = E/B, F = 0)': 'selector',
-        '4. Espectrómetro de masas (α vs. protón)': 'espectrometro',
+        '3. Selector de velocidades (v = E/B)': 'selector',
+        '4. Espectrómetro de masas (α vs. p)': 'espectrometro',
         '5. Deriva E×B (cicloide)': 'deriva',
         'Personalizado (ajuste libre)': 'libre'
       },
@@ -310,7 +310,7 @@
 
   Sim.registerModule({
     id: 'A',
-    title: '1 · Carga en E y B',
+    title: '5 · Movimiento de partícula cargada',
     group: gA,
     canPause: true,
     canFollow: true,

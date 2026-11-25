@@ -12,6 +12,73 @@
     return `${mant}\\times 10^{${exp}}`;
   }
 
+  function buildMod0(S) {
+    if (S.modo === 'iman') {
+      return `
+        <div class="exp-sec">
+          <h3>1. Planteamiento del problema actual</h3>
+          <p>Se explora la estructura espacial del <b>campo magnético $\\vec{B}$</b> generado por un <b>imán permanente de barra</b> (Polo Norte en $+Y$, Polo Sur en $-Y$) utilizando una <b>brújula magnética 3D</b> situada en las coordenadas $(x, y, z) = (${S.px}\\text{ cm},\\, ${S.py}\\text{ cm},\\, 0)$.</p>
+        </div>
+
+        <div class="exp-sec">
+          <h3>2. Explicación visual de lo que ocurre en la escena 3D</h3>
+          <ul>
+            <li><b>Polos del imán (Norte rojo y Sur azul):</b> Las líneas verdes de campo magnético emergen del Polo Norte ($+Y$) y curvan por el espacio exterior hasta entrar por el Polo Sur ($-Y$).</li>
+            <li><b>Aguja de la brújula en $(x, y)$:</b> La punta norte de la brújula (flecha roja sobre la esfera amarilla) experimenta un par magnético que la alinea siempre de forma <b>tangente al vector campo magnético local $\\vec{B}(x,y)$</b> (flecha verde).</li>
+          </ul>
+        </div>
+
+        <div class="exp-sec">
+          <h3>3. Desarrollo matemático paso a paso</h3>
+          <p><b>Paso 1 · Distancia desde la brújula al centro del dipolo ($r$):</b></p>
+          $$r = \\sqrt{x^2 + y^2} = \\sqrt{(${S.px}\\text{ cm})^2 + (${S.py}\\text{ cm})^2} = ${fmTex(Math.hypot(S.px, S.py))}\\text{ cm}$$
+          <p><b>Paso 2 · Dirección tangencial de la aguja magnética:</b> En cada punto del espacio, el ángulo de orientación $\\alpha$ de la brújula queda definido por las componentes cartesianas del campo:</p>
+          $$\\tan\\alpha = \\frac{B_y(x,y)}{B_x(x,y)} \\implies \\vec{B}(x,y) = B_x\\,\\hat{i} + B_y\\,\\hat{j}$$
+        </div>
+      `;
+    }
+
+    const qSign = S.signo === 'pos' ? 1 : -1;
+    const qC = qSign * S.q * 1e-6;
+    const absQ = Math.abs(qC);
+    const v = S.v;
+    const B = S.B * 1e-3;
+    const thRad = (S.th * Math.PI) / 180;
+    const sTh = Math.abs(Math.sin(thRad)) < 1e-12 ? 0 : Math.sin(thRad);
+    const vxb = v * B * sTh;
+    const FB = absQ * vxb;
+
+    return `
+      <div class="exp-sec">
+        <h3>1. Planteamiento del problema actual</h3>
+        <p>Se analiza la definición operacional del <b>campo magnético $\\vec{B}$</b> a través de la fuerza que ejerce sobre una carga puntual de prueba $q = ${qSign > 0 ? '+' : '-'}${S.q}\\text{ }\\mu\\text{C}$ que se mueve con rapidez $v = ${v}\\text{ m/s}$ formando un ángulo $\\theta = ${S.th}^\\circ$ respecto a un campo uniforme $B = ${S.B}\\text{ mT}$.</p>
+      </div>
+
+      <div class="exp-sec">
+        <h3>2. Explicación visual de lo que ocurre en la escena 3D</h3>
+        <ul>
+          <li><b>Vectores en el plano $XY$:</b> El campo magnético $\\vec{B}$ (flecha verde vertical) y la velocidad $\\vec{v}$ (flecha azul claro) definen un plano; el área del <b>paralelogramo amarillo sombreado</b> es geométricamente igual a $|\\vec{v}\\times\\vec{B}| = v\\,B\\,\\sin\\theta$.</li>
+          <li><b>Pulgar de la mano derecha ($\\vec{v}\\times\\vec{B}$, flecha amarilla):</b> Es perpendicular tanto a $\\vec{v}$ como a $\\vec{B}$ (apunta en $+Z$).</li>
+          <li><b>Fuerza magnética $\\vec{F}_B$ (flecha roja):</b> ${qSign > 0 ? 'Como la carga es <b>positiva ($q > 0$)</b>, la fuerza roja apunta en el mismo sentido que el pulgar amarillo ($+Z$).' : 'Como la carga es <b>negativa ($q < 0$)</b>, la fuerza roja apunta en sentido opuesto al pulgar amarillo ($-Z$).'}</li>
+        </ul>
+      </div>
+
+      <div class="exp-sec">
+        <h3>3. Desarrollo matemático paso a paso</h3>
+
+        <p><b>Paso 1 · Evaluación del módulo del producto cruz $|\\vec{v}\\times\\vec{B}|$:</b></p>
+        $$|\\vec{v}\\times\\vec{B}| = v\\,B\\,\\sin\\theta$$
+        $$|\\vec{v}\\times\\vec{B}| = (${v}\\text{ m/s})\\,(${fmTex(B)}\\text{ T})\\,\\sin(${S.th}^\\circ)$$
+        $$|\\vec{v}\\times\\vec{B}| = (${fmTex(v * B)})\\,(${sTh.toFixed(4)}) = ${fmTex(vxb)}\\text{ V/m}$$
+
+        <p><b>Paso 2 · Cálculo de la magnitud de la fuerza magnética $|\\vec{F}_B|$:</b></p>
+        $$|\\vec{F}_B| = |q|\\,|\\vec{v}\\times\\vec{B}| = |q|\\,v\\,B\\,\\sin\\theta$$
+        $$|\\vec{F}_B| = (${fmTex(absQ)}\\text{ C})\\,(${fmTex(vxb)}\\text{ V/m})$$
+        $$|\\vec{F}_B| = ${fmTex(FB)}\\text{ N} = ${fmTex(FB * 1e6)}\\text{ }\\mu\\text{N}$$
+      </div>
+    `;
+  }
+
   function buildModA(S) {
     const pNames = {
       e: 'un <b>electrón</b> ($q = -1.602\\times 10^{-19}\\text{ C}$, $m = 9.11\\times 10^{-31}\\text{ kg}$)',
@@ -448,7 +515,8 @@
     }
 
     let html = '';
-    if (mod.id === 'A') html = buildModA(S);
+    if (mod.id === 'M0') html = buildMod0(S);
+    else if (mod.id === 'A') html = buildModA(S);
     else if (mod.id === 'B') html = buildModB(S);
     else if (mod.id === 'C') html = buildModC(S);
     else if (mod.id === 'D') html = buildModD(S);

@@ -54,7 +54,78 @@
     if (!mod) return null;
     const S = mod.state || {};
 
-    /* ===== Módulo 1: Carga en E y B ===== */
+    /* ===== Tema 1: Campo magnético ===== */
+    if (mod.id === 'M0') {
+      const thRad = (S.th * Math.PI) / 180;
+      const sTh = Math.sin(thRad);
+      const cTh = Math.cos(thRad);
+      const qSign = S.signo === 'pos' ? 1 : -1;
+      const vxb = S.v * (S.B * 1e-3) * Math.abs(sTh);
+      const FB = S.q * 1e-6 * vxb;
+
+      if (key === 'B') {
+        return {
+          pos: V(0, 3.2, 0),
+          offset: V(7, 5, 10),
+          color: '#22c55e',
+          title: 'Vector Campo Magnético $\\vec{B}$ (Dedo medio)',
+          val: `|B| = ${S.B} mT (${fm(S.B * 1e-3)} T) en dirección +Y`,
+          desc: 'Define la dirección de las líneas de fuerza magnética en la región.'
+        };
+      }
+      if (key === 'I') {
+        return {
+          pos: S.modo === 'iman' ? V(0, 0, 0) : V(0, 0, 0),
+          offset: V(8, 5, 11),
+          color: '#f59e0b',
+          title: S.modo === 'iman' ? 'Imán permanente (Polos Norte y Sur)' : 'Carga eléctrica de prueba $q$',
+          val: S.modo === 'iman' ? 'Dipolo magnético N (+Y) – S (−Y)' : `q = ${qSign > 0 ? '+' : '−'}${S.q} μC`,
+          desc: 'Partícula o dipolo magnético situado en el origen del sistema de coordenadas.'
+        };
+      }
+      if (key === 'v') {
+        return {
+          pos: V(3.2 * sTh, 3.2 * cTh, 0),
+          offset: V(7, 5, 10),
+          color: '#38bdf8',
+          title: 'Vector velocidad $\\vec{v}$ (Dedo índice)',
+          val: `|v| = ${S.v} m/s  ·  Ángulo θ = ${S.th}° con B`,
+          desc: 'Vector velocidad de la carga de prueba contenido en el plano XY.'
+        };
+      }
+      if (key === 'F') {
+        return {
+          pos: S.modo === 'iman' ? V(S.px, S.py, 0) : V(0, 0, 3.2 * qSign),
+          offset: V(7, 5, 10),
+          color: '#ef4444',
+          title: S.modo === 'iman' ? 'Aguja Norte de la brújula 3D' : 'Fuerza magnética $\\vec{F}_B = q(\\vec{v}\\times\\vec{B})$',
+          val: S.modo === 'iman' ? `Posición (${S.px} cm, ${S.py} cm)` : `|F_B| = ${fm(FB * 1e6)} μN (${qSign > 0 ? '+Z' : '−Z'})`,
+          desc: S.modo === 'iman' ? 'Se orienta tangencialmente a las líneas de campo magnético local.' : 'Perpendicular tanto al campo B como a la velocidad v de la partícula.'
+        };
+      }
+      if (key === 'mu') {
+        return {
+          pos: S.modo === 'iman' ? V(S.px, S.py, 0) : V(0, 0, 0),
+          offset: V(7, 5, 10),
+          color: '#e879f9',
+          title: 'Orientación dipolar / Normal al plano $(\\vec{v}, \\vec{B})$',
+          val: `Plano de interacción XY ⊥ eje Z`,
+          desc: 'Dirección normal al plano formado por los vectores de velocidad y campo magnético.'
+        };
+      }
+      if (key === 'vxb') {
+        return {
+          pos: V(0, 0, 3.0),
+          offset: V(7, 5, 10),
+          color: '#facc15',
+          title: 'Producto cruz $\\vec{v}\\times\\vec{B}$ y paralelogramo',
+          val: `|v × B| = v·B·sin(${S.th}°) = ${fm(vxb)} V/m`,
+          desc: 'El área del paralelogramo amarillo representa la magnitud del producto vectorial v × B.'
+        };
+      }
+    }
+
+    /* ===== Módulo 5 (ID A): Movimiento de partícula en E y B ===== */
     if (mod.id === 'A') {
       const live = mod.getLive ? mod.getLive() : { p: V(), v: V(1, 0, 0), B: V(0, 1, 0), E: V(), F: V(), q: -E_, m: 9.1e-31, s: 1 };
       const p = live.p.clone();

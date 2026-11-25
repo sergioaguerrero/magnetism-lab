@@ -39,8 +39,8 @@
         'Espira circular': 'espira',
         'Bobinas de Helmholtz': 'helmholtz',
         'Solenoide': 'solenoide',
-        'Elemento diferencial I·dl (B-08)': 'elemento_dl',
-        'Carga puntual en movimiento q·v (B-08)': 'carga_mov'
+        'Elemento diferencial I·dl': 'elemento_dl',
+        'Carga en movimiento (q·v)': 'carga_mov'
       },
       onSelect(val) {
         if (val === 'hilo' || val === 'elemento_dl' || val === 'carga_mov') {
@@ -283,7 +283,7 @@
 
   Sim.registerModule({
     id: 'B',
-    title: '2 · Biot-Savart',
+    title: '2 · Fuentes de campo magnético',
     group: gB,
     canPause: false,
     cameraPos: [14, 10, 30],

@@ -147,34 +147,34 @@
       </div>
 
       <div class="topic-grid">
-        <div class="topic-card" data-goto="A" data-preset="ciclotron">
-          <b>1. Campo magnético y Mano Derecha</b>
+        <div class="topic-card" data-goto="M0">
+          <b>1. Campo magnético</b>
           <div class="eq-box">$\vec{F}_B = q\,(\vec{v} \times \vec{B})$</div>
-          <span>Triedro 3D en vivo: índice ($\vec{v}$), medio ($\vec{B}$), pulgar ($\vec{v}\times\vec{B}$) e inversión de signo para $q < 0$.</span>
-        </div>
-
-        <div class="topic-card" data-goto="A" data-preset="selector">
-          <b>2. Movimiento de partícula en $\vec{E}$ y $\vec{B}$</b>
-          <div class="eq-box">$r = \dfrac{m v_\perp}{|q|B}, \quad v_{\text{sel}} = \dfrac{E}{B}$</div>
-          <span>Integrador de Boris: ciclotrón, hélice, selector de velocidades ($\vec{F}=\vec{0}$) y espectrómetro de masas.</span>
+          <span>Definición vectorial del campo $\vec{B}$, paralelogramo del producto cruz, regla de la mano derecha e imán con brújula 3D.</span>
         </div>
 
         <div class="topic-card" data-goto="B">
-          <b>3. Fuentes de campo (Biot-Savart)</b>
+          <b>2. Fuentes de campo magnético</b>
           <div class="eq-box">$d\vec{B} = \dfrac{\mu_0}{4\pi}\dfrac{I\,d\vec{l} \times \hat{r}}{r^2}$</div>
-          <span>Hilo recto, espira, bobinas de Helmholtz, solenoide, elemento $I\,d\vec{l}$ y carga en movimiento $q\vec{v}$.</span>
+          <span>Ley de Biot-Savart para hilo recto, espira circular, bobinas de Helmholtz, solenoide, elemento $I\,d\vec{l}$ y carga en movimiento.</span>
         </div>
 
         <div class="topic-card" data-goto="C">
-          <b>4. Fuerza entre corrientes</b>
+          <b>3. Fuerza entre elementos de corriente</b>
           <div class="eq-box">$\dfrac{F}{L} = \dfrac{\mu_0 I_1 I_2}{2\pi d}$</div>
-          <span>Conductores paralelos, atracción ($\uparrow\uparrow$) y repulsión ($\uparrow\downarrow$), anillos de $\vec{B}$ y fuerza en $\Delta\vec{l}$.</span>
+          <span>Dos conductores paralelos, atracción ($\uparrow\uparrow$) y repulsión ($\uparrow\downarrow$), anillos de $\vec{B}$ y fuerza en segmento $\Delta\vec{l}$.</span>
         </div>
 
         <div class="topic-card" data-goto="D">
-          <b>5. Momento de torsión sobre un lazo</b>
+          <b>4. Momento de torsión sobre un lazo</b>
           <div class="eq-box">$\vec{\tau} = \vec{\mu} \times \vec{B}, \quad \vec{\mu} = N I A\,\hat{n}$</div>
-          <span>Espira rectangular o circular en campo $\vec{B}$ uniforme, par de fuerzas y rotación al equilibrio.</span>
+          <span>Espira rectangular o circular en campo $\vec{B}$ uniforme, par de fuerzas y rotación hacia el equilibrio.</span>
+        </div>
+
+        <div class="topic-card" data-goto="A" data-preset="ciclotron">
+          <b>5. Movimiento de una partícula cargada</b>
+          <div class="eq-box">$r = \dfrac{m v_\perp}{|q|B}, \quad v_{\text{sel}} = \dfrac{E}{B}$</div>
+          <span>Integrador de Boris: órbita de ciclotrón, hélice magnética, selector de velocidades ($\vec{F}=\vec{0}$) y espectrómetro de masas.</span>
         </div>
 
         <div class="topic-card" data-goto="E">
@@ -210,13 +210,14 @@
   <script src="js/core/explainer.js"></script>
   <script src="js/core/inspector.js"></script>
 
-  <!-- Módulos de simulación (Los 7 temas) -->
-  <script src="js/modules/mod1-lorentz.js"></script>
-  <script src="js/modules/mod2-biot-savart.js"></script>
-  <script src="js/modules/mod3-fuerza-conductores.js"></script>
-  <script src="js/modules/mod4-torque-espira.js"></script>
-  <script src="js/modules/mod5-flujo-magnetico.js"></script>
-  <script src="js/modules/mod6-gauss-magnetismo.js"></script>
+  <!-- Módulos de simulación (Los 7 temas exactos en el orden del temario) -->
+  <script src="js/modules/tema1-campo-magnetico.js"></script>
+  <script src="js/modules/tema2-fuentes-campo-magnetico.js"></script>
+  <script src="js/modules/tema3-fuerza-entre-corrientes.js"></script>
+  <script src="js/modules/tema4-momento-torsion-lazo.js"></script>
+  <script src="js/modules/tema5-movimiento-particula.js"></script>
+  <script src="js/modules/tema6-flujo-magnetico.js"></script>
+  <script src="js/modules/tema7-ley-gauss-magnetismo.js"></script>
 
   <!-- Punto de entrada -->
   <script src="js/main.js"></script>
