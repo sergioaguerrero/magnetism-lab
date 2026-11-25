@@ -149,16 +149,27 @@ button.on {
   margin-bottom: 3px;
 }
 
+.dock-ctrls {
+  display: flex;
+  flex-direction: column;
+}
+
+.scene-ctrl-bar {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--bd);
+}
+
 .btns {
   display: flex;
-  gap: 5px;
+  gap: 8px;
 }
 
 .btns button {
   flex: 1;
-  font-size: 12.5px;
-  padding: 6px 6px;
-  font-weight: 500;
+  font-size: 13px;
+  padding: 8px 10px;
+  font-weight: 600;
 }
 
 .btns button[hidden] {
