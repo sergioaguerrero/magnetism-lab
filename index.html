@@ -3,40 +3,220 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Simulador 3D de Magnetismo</title>
+  <title>Magnetism Lab</title>
+  <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-  <aside>
-    <h1>Simulador 3D de Magnetismo</h1>
-    <div id="tabs"></div>
-    <div id="ctrls"></div>
-    <div class="btns">
-      <button id="rs">Reiniciar</button>
-      <button id="pz">Pausar</button>
+  <!-- Barra lateral izquierda: solo selección de Tema, Variantes y control rápido de escena -->
+  <aside id="sidebar">
+    <div class="hdr">
+      <div class="brand">
+        <img src="assets/logo.svg" alt="Magnetism Lab Logo" class="brand-logo">
+        <div>
+          <h1>Magnetism Lab</h1>
+          <p class="sub">Proyecto Final</p>
+        </div>
+      </div>
+      <div class="hdr-actions">
+        <button id="btn-home" title="Ver los 7 temas del laboratorio">7 Temas</button>
+      </div>
     </div>
-    <h2>Lecturas en vivo</h2>
-    <div id="ro"></div>
-    <h2>Teoría</h2>
-    <p id="th"></p>
-    <p class="mu">
-      Ejes: X rojo, Y verde (vertical), Z azul. Arrastra para rotar, rueda para zoom, clic derecho para desplazar. Unidades: SI.
-    </p>
-  </aside>
-  <div id="cvw"></div>
 
-  <!-- Librerías Three.js -->
+    <h2>Temas del laboratorio</h2>
+    <div id="tabs"></div>
+
+    <h2>Variantes del tema</h2>
+    <div id="variants"></div>
+
+    <h2>Código de colores 3D (clic para inspeccionar)</h2>
+    <div class="legend">
+      <button type="button" class="leg-item" data-vec="B"><i class="dot" style="background:#22c55e"></i><span>Campo $\vec{B}$</span></button>
+      <button type="button" class="leg-item" data-vec="I"><i class="dot" style="background:#f59e0b"></i><span>Corriente $I\,d\vec{l}$</span></button>
+      <button type="button" class="leg-item" data-vec="v"><i class="dot" style="background:#38bdf8"></i><span>Velocidad $\vec{v}$ / $\vec{\tau}$</span></button>
+      <button type="button" class="leg-item" data-vec="F"><i class="dot" style="background:#ef4444"></i><span>Fuerza $\vec{F}$</span></button>
+      <button type="button" class="leg-item" data-vec="mu"><i class="dot" style="background:#e879f9"></i><span>Dipolo $\vec{\mu}$ / $\hat{n}$</span></button>
+      <button type="button" class="leg-item" data-vec="vxb"><i class="dot" style="background:#facc15"></i><span>Pulgar $\vec{v} \times \vec{B}$</span></button>
+    </div>
+
+    <h2>Guía de ejes y controles 3D</h2>
+    <div class="guide-box">
+      <div class="guide-line"><i class="dot" style="background:#ef4444"></i><span><b>Eje X:</b> Línea roja (horizontal)</span></div>
+      <div class="guide-line"><i class="dot" style="background:#22c55e"></i><span><b>Eje Y:</b> Línea verde (vertical)</span></div>
+      <div class="guide-line"><i class="dot" style="background:#3b82f6"></i><span><b>Eje Z:</b> Línea azul (profundidad)</span></div>
+      <hr class="guide-sep">
+      <div class="guide-line"><span><b>Clic izquierdo y arrastrar:</b> Rotar la cámara 3D</span></div>
+      <div class="guide-line"><span><b>Rueda del ratón:</b> Acercar o alejar la vista (zoom)</span></div>
+      <div class="guide-line"><span><b>Clic derecho y arrastrar:</b> Desplazar la escena</span></div>
+      <hr class="guide-sep">
+      <div class="guide-line"><span><b>Fluidez de simulación:</b> <b id="fps">60 FPS</b></span></div>
+    </div>
+  </aside>
+
+  <!-- Área principal derecha: arriba visor 3D y abajo panel de parámetros modificables, lecturas y teoría -->
+  <main class="workspace">
+    <div id="cvw">
+      <button id="btn-theme" class="theme-fab" title="Alternar modo claro / oscuro" aria-label="Alternar tema">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+      </button>
+      <button id="btn-explain" class="explain-fab" title="Abrir explicación detallada del problema actual">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+        </svg>
+        <span>Explicación</span>
+      </button>
+
+      <!-- Tarjeta flotante 3D sobre el vector o referencia seleccionado -->
+      <div id="vec-hud" class="vec-hud" hidden>
+        <div class="vec-hud-hdr">
+          <div class="vec-hud-title-wrap">
+            <i id="vec-hud-dot" class="dot"></i>
+            <b id="vec-hud-title"></b>
+          </div>
+          <button type="button" id="vec-hud-close" title="Cerrar inspección">✕</button>
+        </div>
+        <div id="vec-hud-val" class="vec-hud-val"></div>
+        <div id="vec-hud-desc" class="vec-hud-desc"></div>
+      </div>
+    </div>
+
+    <section id="bottom-dock">
+      <div class="dock-col dock-ctrls">
+        <div class="dock-hdr">
+          <h2>Parámetros modificables</h2>
+          <button type="button" id="btn-defaults" class="btn-defaults" title="Restaurar parámetros a sus valores predeterminados">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 12a9 9 0 1 0 3-6.7L3 8"></path>
+              <path d="M3 3v5h5"></path>
+            </svg>
+            <span>Predeterminados</span>
+          </button>
+        </div>
+        <div id="ctrls" class="ctrls-grid"></div>
+        <div class="scene-ctrl-bar">
+          <div class="btns">
+            <button id="pz" class="on">Iniciar</button>
+            <button id="rs">Reiniciar</button>
+            <button id="btn-free" title="Mover la cámara libremente sin seguir a la partícula">Modo libre</button>
+            <button id="btn-cam" title="Restaurar vista 3D inicial">Centrar</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="dock-col dock-ro">
+        <h2>Lecturas en vivo (SI)</h2>
+        <div id="ro"></div>
+      </div>
+
+      <div class="dock-col dock-th">
+        <h2>Teoría y ecuaciones</h2>
+        <div id="th"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Barra lateral derecha: Explicación pedagógica paso a paso en vivo -->
+  <aside id="explain-sidebar">
+    <div class="explain-hdr">
+      <div>
+        <span id="explain-mod-title" class="explain-badge">1 · Carga en E y B</span>
+        <h2>Explicación del Problema</h2>
+        <p class="sub">Resolución paso a paso en vivo con tus parámetros actuales</p>
+      </div>
+      <button id="btn-close-explain" title="Cerrar explicación y volver a los temas">← Temas</button>
+    </div>
+    <div id="explain-body"></div>
+  </aside>
+
+  <!-- Pantalla de inicio / Guía rápida con acceso a los 7 temas del laboratorio -->
+  <div id="welcome-modal" class="modal-backdrop" hidden>
+    <div class="modal">
+      <div class="modal-hdr">
+        <div class="brand">
+          <img src="assets/logo.svg" alt="Magnetism Lab Logo" class="brand-logo">
+          <div>
+            <h2>Magnetism Lab — Los 7 Temas del Laboratorio</h2>
+            <p>Proyecto Final · Sistema Internacional de Unidades (SI)</p>
+          </div>
+        </div>
+        <button id="btn-close-modal" class="on">Explorar 3D ✕</button>
+      </div>
+
+      <div class="topic-grid">
+        <div class="topic-card" data-goto="A" data-preset="ciclotron">
+          <b>1. Campo magnético y Mano Derecha</b>
+          <div class="eq-box">$\vec{F}_B = q\,(\vec{v} \times \vec{B})$</div>
+          <span>Triedro 3D en vivo: índice ($\vec{v}$), medio ($\vec{B}$), pulgar ($\vec{v}\times\vec{B}$) e inversión de signo para $q < 0$.</span>
+        </div>
+
+        <div class="topic-card" data-goto="A" data-preset="selector">
+          <b>2. Movimiento de partícula en $\vec{E}$ y $\vec{B}$</b>
+          <div class="eq-box">$r = \dfrac{m v_\perp}{|q|B}, \quad v_{\text{sel}} = \dfrac{E}{B}$</div>
+          <span>Integrador de Boris: ciclotrón, hélice, selector de velocidades ($\vec{F}=\vec{0}$) y espectrómetro de masas.</span>
+        </div>
+
+        <div class="topic-card" data-goto="B">
+          <b>3. Fuentes de campo (Biot-Savart)</b>
+          <div class="eq-box">$d\vec{B} = \dfrac{\mu_0}{4\pi}\dfrac{I\,d\vec{l} \times \hat{r}}{r^2}$</div>
+          <span>Hilo recto, espira, bobinas de Helmholtz, solenoide, elemento $I\,d\vec{l}$ y carga en movimiento $q\vec{v}$.</span>
+        </div>
+
+        <div class="topic-card" data-goto="C">
+          <b>4. Fuerza entre corrientes</b>
+          <div class="eq-box">$\dfrac{F}{L} = \dfrac{\mu_0 I_1 I_2}{2\pi d}$</div>
+          <span>Conductores paralelos, atracción ($\uparrow\uparrow$) y repulsión ($\uparrow\downarrow$), anillos de $\vec{B}$ y fuerza en $\Delta\vec{l}$.</span>
+        </div>
+
+        <div class="topic-card" data-goto="D">
+          <b>5. Momento de torsión sobre un lazo</b>
+          <div class="eq-box">$\vec{\tau} = \vec{\mu} \times \vec{B}, \quad \vec{\mu} = N I A\,\hat{n}$</div>
+          <span>Espira rectangular o circular en campo $\vec{B}$ uniforme, par de fuerzas y rotación al equilibrio.</span>
+        </div>
+
+        <div class="topic-card" data-goto="E">
+          <b>6. Flujo magnético</b>
+          <div class="eq-box">$\Phi_B = \int \vec{B}\cdot d\vec{A} = B A \cos\theta$</div>
+          <span>Superficie plana orientable, área proyectada $A\cos\theta$, conteo de líneas que atraviesan y signo de $\Phi_B$.</span>
+        </div>
+
+        <div class="topic-card" data-goto="F">
+          <b>7. Ley de Gauss del magnetismo</b>
+          <div class="eq-box">$\oint_S \vec{B}\cdot d\vec{A} = 0 \iff \nabla\cdot\vec{B} = 0$</div>
+          <span>Superficie cerrada (esfera o caja) sobre imán N–S y espira, con balance $\Phi_{\text{sal}} + \Phi_{\text{ent}} = 0$.</span>
+        </div>
+      </div>
+
+      <div class="modal-ftr">
+        <span>Haz clic en cualquiera de las 7 tarjetas para ir directamente al módulo o preset correspondiente.</span>
+        <span>Three.js · KaTeX · 100% SI</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Librerías Three.js y KaTeX -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
 
   <!-- Núcleo del simulador -->
   <script src="js/core/constants.js"></script>
   <script src="js/core/scene.js"></script>
   <script src="js/core/ui.js"></script>
+  <script src="js/core/explainer.js"></script>
+  <script src="js/core/inspector.js"></script>
 
-  <!-- Módulos de simulación -->
+  <!-- Módulos de simulación (Los 7 temas) -->
   <script src="js/modules/mod1-lorentz.js"></script>
   <script src="js/modules/mod2-biot-savart.js"></script>
+  <script src="js/modules/mod3-fuerza-conductores.js"></script>
+  <script src="js/modules/mod4-torque-espira.js"></script>
+  <script src="js/modules/mod5-flujo-magnetico.js"></script>
+  <script src="js/modules/mod6-gauss-magnetismo.js"></script>
 
   <!-- Punto de entrada -->
   <script src="js/main.js"></script>
