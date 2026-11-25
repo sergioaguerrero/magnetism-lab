@@ -58,10 +58,10 @@ body {
 
 /* ===== Barra lateral izquierda: Temas y Variantes ===== */
 aside#sidebar {
-  width: 295px;
+  width: 360px;
   flex: none;
   overflow-y: auto;
-  padding: 16px 16px;
+  padding: 16px 18px;
   background: var(--pn);
   border: 1.5px solid var(--sep);
   border-radius: 12px;
