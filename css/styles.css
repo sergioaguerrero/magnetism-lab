@@ -271,6 +271,8 @@ main.workspace {
 
 #cvw canvas {
   display: block;
+  width: 100% !important;
+  height: 100% !important;
 }
 
 /* Botón de tema en la esquina superior derecha y botón Explicación en la esquina inferior derecha del visor 3D */

@@ -312,16 +312,21 @@
     `;
   }
 
+  let lastSig = '';
+
   function update(mod) {
     const bodyEl = $('explain-body');
     const titleEl = $('explain-mod-title');
     if (!bodyEl || !mod) return;
 
+    const S = mod.state || {};
+    const sig = mod.id + ':' + JSON.stringify(S);
+    if (sig === lastSig) return;
+    lastSig = sig;
+
     if (titleEl) {
       titleEl.textContent = mod.title;
     }
-
-    const S = mod.state || {};
     let html = '';
     if (mod.id === 'A') html = buildModA(S);
     else if (mod.id === 'B') html = buildModB(S);
