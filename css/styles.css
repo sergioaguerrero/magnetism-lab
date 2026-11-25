@@ -247,19 +247,12 @@ main.workspace {
   display: block;
 }
 
-/* Controles flotantes en la esquina superior derecha del visor 3D */
-.top-right-controls {
+/* Botón de tema en la esquina superior derecha y botón Explicación en la esquina inferior derecha del visor 3D */
+.theme-fab,
+.explain-fab {
   position: absolute;
-  top: 14px;
   right: 14px;
   z-index: 20;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.explain-fab,
-.theme-fab {
   height: 38px;
   display: inline-flex;
   align-items: center;
@@ -274,13 +267,15 @@ main.workspace {
   font-size: 13px;
 }
 
-.explain-fab {
-  padding: 0 13px;
-}
-
 .theme-fab {
+  top: 14px;
   width: 38px;
   padding: 0;
+}
+
+.explain-fab {
+  bottom: 14px;
+  padding: 0 14px;
 }
 
 .explain-fab:hover,
