@@ -33,6 +33,9 @@ function setMode(id, presetName) {
   $('th').innerHTML = mod.theory;
   Sim.ui.renderMath($('th'));
   $('pz').hidden = !mod.canPause;
+  if ($('btn-free')) {
+    $('btn-free').hidden = !mod.canFollow;
+  }
 
   if (presetName && mod.applyPreset) {
     mod.applyPreset(presetName);
@@ -66,6 +69,15 @@ $('pz').onclick = () => {
   paused = !paused;
   $('pz').textContent = paused ? 'Continuar' : 'Pausar';
 };
+
+Sim.freeCam = false;
+if ($('btn-free')) {
+  $('btn-free').onclick = () => {
+    Sim.freeCam = !Sim.freeCam;
+    $('btn-free').classList.toggle('on', Sim.freeCam);
+    $('btn-free').textContent = Sim.freeCam ? 'Modo libre: ON' : 'Modo libre';
+  };
+}
 
 if ($('btn-cam')) {
   $('btn-cam').onclick = centerCamera;

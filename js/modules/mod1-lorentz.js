@@ -192,10 +192,12 @@
 
     trail.n = 0;
     ball.material.color.set(q > 0 ? 0xef4444 : 0x3b82f6);
-    const off = cam.position.clone().sub(ctl.target);
-    if (off.lengthSq() > 0.01) {
-      ctl.target.set(0, 0, 0);
-      cam.position.copy(off);
+    if (!Sim.freeCam) {
+      const off = cam.position.clone().sub(ctl.target);
+      if (off.lengthSq() > 0.01) {
+        ctl.target.set(0, 0, 0);
+        cam.position.copy(off);
+      }
     }
     buildSpectrometerReference(sim);
     pushT();
@@ -311,6 +313,7 @@
     title: '1 · Carga en E y B',
     group: gA,
     canPause: true,
+    canFollow: true,
     cameraPos: [7, 5, 8],
     state: SA,
     applyPreset(p) {
@@ -340,9 +343,11 @@
           boris(sim, sim.dt);
           pushT();
         }
-        const o = ctl.target.clone();
-        ctl.target.lerp(ball.position, 0.03);
-        cam.position.add(ctl.target.clone().sub(o));
+        if (!Sim.freeCam) {
+          const o = ctl.target.clone();
+          ctl.target.lerp(ball.position, 0.03);
+          cam.position.add(ctl.target.clone().sub(o));
+        }
       }
       visA();
       if (fr % 6 === 0) roA();
