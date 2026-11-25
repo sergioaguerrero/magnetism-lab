@@ -318,8 +318,8 @@
     },
     theory:
       '<b>Fuerza de Lorentz y movimiento en campos $\\vec{E}$ y $\\vec{B}$:</b>' +
-      '$$\\vec{F} = q\\,(\\vec{E} + \\vec{v} \\times \\vec{B})$$' +
-      '$$r = \\frac{m\\,v_\\perp}{|q|\\,B}, \\quad T = \\frac{2\\pi\\,m}{|q|\\,B}, \\quad p = v_\\parallel\\,T, \\quad \\vec{v}_d = \\frac{\\vec{E}\\times\\vec{B}}{B^2}$$' +
+      '$$\\vec{F} = q\\,(\\vec{E} + \\vec{v} \\times \\vec{B}), \\qquad \\vec{v}_d = \\frac{\\vec{E}\\times\\vec{B}}{B^2}$$' +
+      '$$r = \\frac{m\\,v_\\perp}{|q|\\,B}, \\qquad T = \\frac{2\\pi\\,m}{|q|\\,B}, \\qquad p = v_\\parallel\\,T$$' +
       '<b>Regla de la mano derecha (triedro 3D):</b> índice $= \\vec{v}$ (azul), medio $= \\vec{B}$ (verde), pulgar $= \\vec{v}\\times\\vec{B}$ (amarillo). Si $q > 0$, $\\vec{F}_B$ (roja) apunta como el pulgar; si $q < 0$, se invierte. En el <b>Selector de velocidades</b> ($v = \\frac{E}{B}$), $\\vec{F}_E = -\\vec{F}_B$ y la trayectoria es rectilínea.',
     activate() {
       build(cfgA, SA, initA);
