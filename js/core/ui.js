@@ -70,6 +70,7 @@ function build(cfg, state, onChange) {
         if (o.onSelect) o.onSelect(s.value, prev);
         vis();
         onChange();
+        if (Sim.explainer && Sim.activeMod) Sim.explainer.update(Sim.activeMod);
       };
       r.append(s);
       if (vContainer) vContainer.append(r);
@@ -93,6 +94,7 @@ function build(cfg, state, onChange) {
         state[o.k] = +i.value;
         sh();
         onChange();
+        if (Sim.explainer && Sim.activeMod) Sim.explainer.update(Sim.activeMod);
       };
       if (cContainer) cContainer.append(r);
     }
