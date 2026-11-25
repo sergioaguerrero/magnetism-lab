@@ -227,9 +227,9 @@
 
     ro([
       ['Interacción magnética', s2 > 0 ? 'Atracción (⇈)' : 'Repulsión (⇅)'],
-      ['Campo $|\\vec{B}_1| = \\tfrac{\\mu_0 I_1}{2\\pi d}$', fm(B1_ana * 1e6) + ' μT'],
-      ['Campo $|\\vec{B}_2| = \\tfrac{\\mu_0 I_2}{2\\pi d}$', fm(B2_ana * 1e6) + ' μT'],
-      ['Fuerza $\\tfrac{F}{L} = \\tfrac{\\mu_0 I_1 I_2}{2\\pi d}$', fm(F_per_L_ana * 1e6) + ' μN/m'],
+      ['Campo $|\\vec{B}_1| = \\dfrac{\\mu_0 I_1}{2\\pi d}$', fm(B1_ana * 1e6) + ' μT'],
+      ['Campo $|\\vec{B}_2| = \\dfrac{\\mu_0 I_2}{2\\pi d}$', fm(B2_ana * 1e6) + ' μT'],
+      ['Fuerza $\\dfrac{F}{L} = \\dfrac{\\mu_0 I_1 I_2}{2\\pi d}$', fm(F_per_L_ana * 1e6) + ' μN/m'],
       ['Fuerza analítica $\\Delta F$', fm(dF_ana * 1e6) + ' μN'],
       ['Fuerza numérica $\\sum d\\vec{F}$', fm(dF_num * 1e6) + ' μN'],
       ['Error relativo', fm(errRel) + ' %']

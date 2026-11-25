@@ -292,13 +292,13 @@
 
     ro([
       ['Sentido de $\\vec{F}_B$', rhrNote],
-      ['Radio $r = \\tfrac{m v_\\perp}{|q|B}$', fm(rGyro) + ' m'],
-      ['Relación $\\tfrac{m}{|q|}$', fm(mqRatio) + ' kg/C'],
-      ['Periodo $T = \\tfrac{2\\pi m}{|q|B}$', fm(T) + ' s'],
-      ['Frecuencia $f = \\tfrac{1}{T}$', fm(1 / T) + ' Hz'],
+      ['Radio $r = \\dfrac{m v_\\perp}{|q|B}$', fm(rGyro) + ' m'],
+      ['Relación $\\dfrac{m}{|q|}$', fm(mqRatio) + ' kg/C'],
+      ['Periodo $T = \\dfrac{2\\pi m}{|q|B}$', fm(T) + ' s'],
+      ['Frecuencia $f = \\dfrac{1}{T}$', fm(1 / T) + ' Hz'],
       ['Paso hélice $p = v_\\parallel T$', fm(vl * T) + ' m'],
-      ['Velocidad $v_d = \\tfrac{E}{B}$', fm(E / B) + ' m/s'],
-      ['Energía $E_k = \\tfrac{1}{2}mv^2$', fm(Ek / E_) + ' eV'],
+      ['Velocidad $v_d = \\dfrac{E}{B}$', fm(E / B) + ' m/s'],
+      ['Energía $E_k = \\dfrac{1}{2}mv^2$', fm(Ek / E_) + ' eV'],
       ['Conservación de $E_k$', E ? 'E realiza trabajo' : fm((Ek / s.Ek0 - 1) * 100) + ' %'],
       ['Tiempo simulado $t$', fm(s.t) + ' s']
     ]);
