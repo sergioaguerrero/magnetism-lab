@@ -236,13 +236,13 @@
 
     ro([
       ['Área del lazo $A$', fm(A * 1e4) + ' cm² (' + fm(A) + ' m²)'],
-      ['Momento dipolar $|\\vec{\\mu}| = N I A$', fm(mu) + ' A·m²'],
-      ['Ángulo actual $\\theta$ ($\\vec{\\mu}, \\vec{B}$)', deg + ' °'],
-      ['Torque $|\\vec{\\tau}| = \\mu B |\\sin\\theta|$ (analítico)', fm(tauAna) + ' N·m'],
-      ['Torque $|\\vec{\\tau}|$ numérico ($\\sum \\vec{r}_i \\times d\\vec{F}_i$)', fm(tauNum) + ' N·m'],
+      ['Momento $|\\vec{\\mu}| = N I A$', fm(mu) + ' A·m²'],
+      ['Ángulo $\\theta$ ($\\vec{\\mu}, \\vec{B}$)', deg + ' °'],
+      ['Torque $|\\vec{\\tau}| = \\mu B |\\sin\\theta|$', fm(tauAna) + ' N·m'],
+      ['Torque numérico $|\\sum \\vec{r}\\times d\\vec{F}|$', fm(tauNum) + ' N·m'],
       ['Error relativo', tauAna > 1e-12 ? fm(errRel) + ' %' : '0 %'],
-      ['Par de fuerzas $F_1 = F_2 = N I L B$', fm(Farm) + ' N (F_neta = 0)'],
-      ['Energía potencial $U = -\\vec{\\mu}\\cdot\\vec{B}$', fm(U) + ' J']
+      ['Par lateral $F_1 = F_2$', fm(Farm) + ' N (∑F = 0)'],
+      ['Energía $U = -\\vec{\\mu}\\cdot\\vec{B}$', fm(U) + ' J']
     ]);
   }
 

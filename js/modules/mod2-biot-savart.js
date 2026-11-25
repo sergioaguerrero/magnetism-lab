@@ -269,14 +269,14 @@
     const a = ana(pp);
     const rows = [
       ['$|\\vec{B}|$ numérico ($\\sum \\Delta\\vec{B}_i$)', fm(m * 1e6) + ' μT'],
-      ['Componentes $B_x \\cdot B_y \\cdot B_z$', [b.x, b.y, b.z].map((x) => fm(x * 1e6)).join(' · ') + ' μT'],
+      ['Componentes $B_x, B_y, B_z$', [b.x, b.y, b.z].map((x) => fm(x * 1e6)).join(' · ') + ' μT'],
       ['$|\\vec{B}|$ analítico exacto', a == null ? anaHint() : fm(a * 1e6) + ' μT'],
-      ['Error relativo $\\dfrac{|B_{\\text{num}}-B_{\\text{ana}}|}{B_{\\text{ana}}}$', a == null || a === 0 ? '—' : fm((Math.abs(m - a) / a) * 100) + ' %']
+      ['Error relativo', a == null || a === 0 ? '—' : fm((Math.abs(m - a) / a) * 100) + ' %']
     ];
     if (SB.geo === 'carga_mov') {
-      rows.unshift(['Fuente $q\\vec{v}$ equivalente', fm(SB.I * 0.01) + ' C·m/s (+Y)']);
+      rows.unshift(['Fuente $q\\vec{v}$ equiv.', fm(SB.I * 0.01) + ' C·m/s (+Y)']);
     } else if (SB.geo === 'elemento_dl') {
-      rows.unshift(['Elemento $I\\,\\Delta l$ ($\\Delta l = 1\\text{ cm}$)', fm(SB.I * 0.01) + ' A·m (+Y)']);
+      rows.unshift(['Elemento $I\\,\\Delta l$', fm(SB.I * 0.01) + ' A·m (+Y)']);
     }
     ro(rows);
   }

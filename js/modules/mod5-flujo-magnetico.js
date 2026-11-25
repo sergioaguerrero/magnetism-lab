@@ -256,18 +256,18 @@
     const phiNum = SE.shape === 'rect' ? calcNumericalFlux(curTh) : phiAna;
     const deg = ((curTh * 180) / Math.PI).toFixed(1);
 
-    let signLabel = '0 · Nulo (B ⊥ n̂, ninguna línea atraviesa)';
-    if (cTh > 0.01) signLabel = '+ Positivo (B sale por la cara +n̂)';
-    else if (cTh < -0.01) signLabel = '− Negativo (B entra en sentido opuesto a +n̂)';
+    let signLabel = 'Nulo (0 Wb, B ⊥ n̂)';
+    if (cTh > 0.01) signLabel = 'Positivo (+Φ_B, θ < 90°)';
+    else if (cTh < -0.01) signLabel = 'Negativo (−Φ_B, θ > 90°)';
 
     ro([
       ['Signo del flujo $\\Phi_B$', signLabel],
       ['Área total $A$', fm(A * 1e4) + ' cm² (' + fm(A) + ' m²)'],
-      ['Ángulo $\\theta$ y factor $\\cos\\theta$', deg + '°  (cos θ = ' + cTh.toFixed(3) + ')'],
-      ['Área proyectada $A_\\perp = A\\cos\\theta$', fm(Aeff * 1e4) + ' cm²'],
-      ['Flujo analítico $\\Phi_B = B A \\cos\\theta$', fm(phiAna * 1e6) + ' μWb (' + fm(phiAna) + ' Wb)'],
-      ['Flujo numérico $\\sum \\vec{B}\\cdot\\Delta\\vec{A}_{ij}$', fm(phiNum * 1e6) + ' μWb'],
-      ['Líneas de $\\vec{B}$ que atraviesan', piercingLines + ' de ' + totalLines + ' líneas']
+      ['Ángulo $\\theta$ ($\\cos\\theta$)', deg + '° (' + cTh.toFixed(3) + ')'],
+      ['Área proyectada $A\\cos\\theta$', fm(Aeff * 1e4) + ' cm²'],
+      ['Flujo $\\Phi_B = B A \\cos\\theta$', fm(phiAna * 1e6) + ' μWb'],
+      ['Flujo numérico $\\sum \\vec{B}\\cdot\\Delta\\vec{A}$', fm(phiNum * 1e6) + ' μWb'],
+      ['Líneas que atraviesan', piercingLines + ' de ' + totalLines]
     ]);
   }
 

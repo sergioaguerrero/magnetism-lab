@@ -303,15 +303,15 @@
     ro([
       [
         'Superficie cerrada $S$',
-        (SF.surf === 'esfera' ? 'Esfera cerrada' : 'Caja cerrada') +
-          ' sobre ' +
+        (SF.surf === 'esfera' ? 'Esfera' : 'Caja') +
+          ' · ' +
           (SF.source === 'dipolo' ? 'Imán N–S' : 'Espira')
       ],
-      ['Flujo saliente $\\Phi_{\\text{sal}} = \\int_{\\vec{B}\\cdot\\hat{n}>0} \\vec{B}\\cdot d\\vec{A}$', '+' + fm(phiMag * 1e6) + ' μWb'],
-      ['Flujo entrante $\\Phi_{\\text{ent}} = \\int_{\\vec{B}\\cdot\\hat{n}<0} \\vec{B}\\cdot d\\vec{A}$', '−' + fm(phiMag * 1e6) + ' μWb'],
-      ['Flujo neto $\\oint_S \\vec{B}\\cdot d\\vec{A}$ (Ley de Gauss)', '0 Wb (∇·B = 0)'],
-      ['Residuo numérico $|\\Phi_{\\text{sal}} + \\Phi_{\\text{ent}}|$', fm(Math.abs(phiNetNum) * 1e6) + ' μWb (~0)'],
-      ['Carga magnética encerrada $q_m$', '0 (no hay monopolos)']
+      ['Flujo saliente $\\Phi_{\\text{sal}}$', '+' + fm(phiMag * 1e6) + ' μWb'],
+      ['Flujo entrante $\\Phi_{\\text{ent}}$', '−' + fm(phiMag * 1e6) + ' μWb'],
+      ['Flujo neto $\\oint_S \\vec{B}\\cdot d\\vec{A}$', '0 Wb (∇·B = 0)'],
+      ['Residuo $|\\Phi_{\\text{sal}} + \\Phi_{\\text{ent}}|$', fm(Math.abs(phiNetNum) * 1e6) + ' μWb (~0)'],
+      ['Carga magnética $q_m$', '0 (sin monopolos)']
     ]);
   }
 
