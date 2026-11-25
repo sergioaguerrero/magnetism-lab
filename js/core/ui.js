@@ -1,8 +1,34 @@
-/* ===== Gestor de interfaz: lecturas en vivo y controles dinámicos ===== */
+/* ===== Gestor de interfaz: renderizado matemático KaTeX, lecturas y controles ===== */
+let lastRoKey = '';
+let roValSpans = [];
+
+function renderMath(el) {
+  if (!el || typeof window.renderMathInElement !== 'function') return;
+  window.renderMathInElement(el, {
+    delimiters: [
+      { left: '$$', right: '$$', display: true },
+      { left: '$', right: '$', display: false }
+    ],
+    throwOnError: false
+  });
+}
+
 function ro(list) {
-  $('ro').innerHTML = list
-    .map(([label, val]) => `<div class="kv"><span>${label}</span><span>${val}</span></div>`)
-    .join('');
+  const roEl = $('ro');
+  const key = list.map((item) => item[0]).join('||');
+
+  if (key !== lastRoKey || roValSpans.length !== list.length) {
+    lastRoKey = key;
+    roEl.innerHTML = list
+      .map(([label]) => `<div class="kv"><span class="kv-lbl">${label}</span><span class="kv-val"></span></div>`)
+      .join('');
+    roValSpans = Array.from(roEl.querySelectorAll('.kv-val'));
+    renderMath(roEl);
+  }
+
+  for (let i = 0; i < list.length; i++) {
+    roValSpans[i].textContent = list[i][1];
+  }
 }
 
 function build(cfg, state, onChange) {
@@ -65,7 +91,8 @@ function build(cfg, state, onChange) {
     c.append(r);
   });
 
+  renderMath(c);
   vis();
 }
 
-Sim.ui = { ro, build };
+Sim.ui = { ro, build, renderMath };

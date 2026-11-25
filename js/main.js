@@ -29,7 +29,8 @@ function setMode(id, presetName) {
     t.btn.classList.toggle('on', t.id === id);
   });
 
-  $('th').textContent = mod.theory;
+  $('th').innerHTML = mod.theory;
+  Sim.ui.renderMath($('th'));
   $('pz').hidden = !mod.canPause;
 
   if (presetName && mod.applyPreset) {
@@ -115,4 +116,5 @@ function loop(now) {
 if (Sim.modules.length > 0) {
   setMode(Sim.modules[0].id);
 }
+Sim.ui.renderMath(document.body);
 requestAnimationFrame(loop);

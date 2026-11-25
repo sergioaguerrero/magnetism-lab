@@ -39,12 +39,12 @@
         'Rotación continua ω (Φ(t) = B·A·cos ωt)': 'rotacion'
       }
     },
-    { k: 'th', t: 'Ángulo θ (entre n̂ y B)', u: '°', min: -180, max: 180, step: 1 },
-    { k: 'B', t: 'Campo magnético B (+X)', u: 'mT', min: 10, max: 200, step: 5 },
-    { k: 'L', t: 'Dimensión superficie L', u: 'cm', min: 4, max: 14, step: 0.5 },
+    { k: 'th', t: 'Ángulo $\\theta$ (entre $\\hat{n}$ y $\\vec{B}$)', u: '°', min: -180, max: 180, step: 1 },
+    { k: 'B', t: 'Campo magnético $B$ ($+X$)', u: 'mT', min: 10, max: 200, step: 5 },
+    { k: 'L', t: 'Dimensión superficie $L$', u: 'cm', min: 4, max: 14, step: 0.5 },
     {
       k: 'w',
-      t: 'Velocidad angular ω',
+      t: 'Velocidad angular $\\omega$',
       u: 'rad/s',
       min: 0.2,
       max: 3,
@@ -261,13 +261,13 @@
     else if (cTh < -0.01) signLabel = '− Negativo (B entra en sentido opuesto a +n̂)';
 
     ro([
-      ['Signo del flujo Φ_B', signLabel],
-      ['Área total A', fm(A * 1e4) + ' cm² (' + fm(A) + ' m²)'],
-      ['Ángulo θ y factor cos θ', deg + '°  (cos θ = ' + cTh.toFixed(3) + ')'],
-      ['Área efectiva proyectada A·cos θ', fm(Aeff * 1e4) + ' cm²'],
-      ['Flujo Φ_B = B·A·cos θ (analítico)', fm(phiAna * 1e6) + ' μWb (' + fm(phiAna) + ' Wb)'],
-      ['Flujo numérico ∑ B·ΔA (malla 24×24)', fm(phiNum * 1e6) + ' μWb'],
-      ['Líneas de campo que atraviesan', piercingLines + ' de ' + totalLines + ' líneas']
+      ['Signo del flujo $\\Phi_B$', signLabel],
+      ['Área total $A$', fm(A * 1e4) + ' cm² (' + fm(A) + ' m²)'],
+      ['Ángulo $\\theta$ y factor $\\cos\\theta$', deg + '°  (cos θ = ' + cTh.toFixed(3) + ')'],
+      ['Área proyectada $A_\\perp = A\\cos\\theta$', fm(Aeff * 1e4) + ' cm²'],
+      ['Flujo analítico $\\Phi_B = B A \\cos\\theta$', fm(phiAna * 1e6) + ' μWb (' + fm(phiAna) + ' Wb)'],
+      ['Flujo numérico $\\sum \\vec{B}\\cdot\\Delta\\vec{A}_{ij}$', fm(phiNum * 1e6) + ' μWb'],
+      ['Líneas de $\\vec{B}$ que atraviesan', piercingLines + ' de ' + totalLines + ' líneas']
     ]);
   }
 
@@ -284,7 +284,10 @@
     cameraPos: [12, 11, 18],
     state: SE,
     theory:
-      'Flujo magnético a través de una superficie plana de área A: Φ_B = ∫ B · dA = B · A · cos θ (en webers, 1 Wb = 1 T·m²), donde θ es el ángulo entre el campo B (verde, eje +X) y el vector normal unitario n̂ de la superficie (magenta). El flujo es proporcional al número de líneas de campo que atraviesan la superficie y a su área proyectada A·cos θ (contorno proyectado al fondo): es máximo (+B·A) cuando θ = 0° ( verdes/esmeralda), nulo (0 Wb) cuando θ = ±90° (B paralelo a la superficie) y negativo (−B·A) cuando |θ| > 90° (rojo coral).',
+      '<b>Flujo magnético a través de una superficie orientable:</b>' +
+      '$$\\Phi_B = \\int_S \\vec{B} \\cdot d\\vec{A} = \\vec{B} \\cdot \\vec{A} = B\\,A\\,\\cos\\theta \\quad [\\text{Wb} = \\text{T}\\cdot\\text{m}^2]$$' +
+      '$$A_\\perp = A\\,\\cos\\theta, \\qquad \\Phi_B(t) = B\\,A\\,\\cos(\\omega t)$$' +
+      'El flujo es proporcional al área proyectada $A\\cos\\theta$ y al número de líneas de campo que atraviesan la superficie: es <b>positivo</b> ($\\Phi_B > 0$, verde) si $|\\theta| < 90^\\circ$, <b>nulo</b> ($\\Phi_B = 0$) si $\\theta = \\pm 90^\\circ$ y <b>negativo</b> ($\\Phi_B < 0$, rojo) si $|\\theta| > 90^\\circ$.',
     activate() {
       build(cfgE, SE, initE);
       initE();

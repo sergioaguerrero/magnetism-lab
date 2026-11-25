@@ -67,11 +67,11 @@
         omega = 0;
       }
     },
-    { k: 'th0', t: 'Ángulo inicial θ (entre μ y B)', u: '°', min: -175, max: 175, step: 1 },
-    { k: 'I', t: 'Corriente I', u: 'A', min: 0.5, max: 20, step: 0.5 },
-    { k: 'B', t: 'Campo magnético B (+X)', u: 'mT', min: 5, max: 200, step: 5 },
-    { k: 'L', t: 'Dimensión de espira L', u: 'cm', min: 4, max: 14, step: 0.5 },
-    { k: 'N', t: 'Número de vueltas N', u: '', min: 1, max: 50, step: 1 },
+    { k: 'th0', t: 'Ángulo inicial $\\theta$ (entre $\\vec{\\mu}$ y $\\vec{B}$)', u: '°', min: -175, max: 175, step: 1 },
+    { k: 'I', t: 'Corriente $I$', u: 'A', min: 0.5, max: 20, step: 0.5 },
+    { k: 'B', t: 'Campo magnético $B$ ($+X$)', u: 'mT', min: 5, max: 200, step: 5 },
+    { k: 'L', t: 'Dimensión de espira $L$', u: 'cm', min: 4, max: 14, step: 0.5 },
+    { k: 'N', t: 'Número de vueltas $N$', u: '', min: 1, max: 50, step: 1 },
     {
       k: 'dmp',
       t: 'Amortiguamiento',
@@ -235,14 +235,14 @@
     const deg = ((curTh * 180) / Math.PI).toFixed(1);
 
     ro([
-      ['Área del lazo A', fm(A * 1e4) + ' cm² (' + fm(A) + ' m²)'],
-      ['Momento magnético |μ| = N·I·A', fm(mu) + ' A·m²'],
-      ['Ángulo actual θ (entre μ y B)', deg + ' °'],
-      ['Torque |τ| = μ·B·|sin θ| (analítico)', fm(tauAna) + ' N·m'],
-      ['Torque |τ| numérico (∑ r × dF)', fm(tauNum) + ' N·m'],
-      ['Error relativo (numérico vs. analítico)', tauAna > 1e-12 ? fm(errRel) + ' %' : '0 %'],
-      ['Fuerza en brazos laterales (par F₁, F₂)', fm(Farm) + ' N (F_neta = 0 N)'],
-      ['Energía potencial U = −μ·B·cos θ', fm(U) + ' J']
+      ['Área del lazo $A$', fm(A * 1e4) + ' cm² (' + fm(A) + ' m²)'],
+      ['Momento dipolar $|\\vec{\\mu}| = N I A$', fm(mu) + ' A·m²'],
+      ['Ángulo actual $\\theta$ ($\\vec{\\mu}, \\vec{B}$)', deg + ' °'],
+      ['Torque $|\\vec{\\tau}| = \\mu B |\\sin\\theta|$ (analítico)', fm(tauAna) + ' N·m'],
+      ['Torque $|\\vec{\\tau}|$ numérico ($\\sum \\vec{r}_i \\times d\\vec{F}_i$)', fm(tauNum) + ' N·m'],
+      ['Error relativo', tauAna > 1e-12 ? fm(errRel) + ' %' : '0 %'],
+      ['Par de fuerzas $F_1 = F_2 = N I L B$', fm(Farm) + ' N (F_neta = 0)'],
+      ['Energía potencial $U = -\\vec{\\mu}\\cdot\\vec{B}$', fm(U) + ' J']
     ]);
   }
 
@@ -261,7 +261,10 @@
     cameraPos: [11, 12, 16],
     state: SD,
     theory:
-      'Momento de torsión sobre un lazo de corriente: τ = μ × B, con magnitud |τ| = N·I·A·B·sin θ, donde μ = N·I·A·n̂ es el momento dipolar magnético (flecha magenta, normal al plano de la espira por la regla de la mano derecha). En un campo B uniforme (verde, eje +X), la fuerza neta sobre la espira es cero (F₁ + F₂ = 0, flechas rojas), pero el par de fuerzas genera un torque τ (flecha azul en el eje Y) que hace girar la espira hacia el equilibrio estable θ = 0° (μ ∥ B, energía mínima U = −μ·B).',
+      '<b>Momento de torsión sobre un lazo de corriente en $\\vec{B}$ uniforme:</b>' +
+      '$$\\vec{\\mu} = N\\,I\\,A\\,\\hat{n}, \\qquad \\vec{\\tau} = \\vec{\\mu} \\times \\vec{B}, \\qquad |\\vec{\\tau}| = N\\,I\\,A\\,B\\,|\\sin\\theta|$$' +
+      '$$\\sum \\vec{F} = \\vec{F}_1 + \\vec{F}_2 = \\vec{0}, \\qquad U = -\\vec{\\mu}\\cdot\\vec{B} = -\\mu\\,B\\,\\cos\\theta$$' +
+      'El par de fuerzas $\\vec{F}_1$ y $\\vec{F}_2$ (rojas) sobre los brazos de la espira produce un torque $\\vec{\\tau}$ (azul, eje $Y$) que alinea a $\\vec{\\mu}$ (magenta) con $\\vec{B}$ (verde) en el equilibrio estable $\\theta = 0^\\circ$.',
     activate() {
       build(cfgD, SD, initD);
       initD();

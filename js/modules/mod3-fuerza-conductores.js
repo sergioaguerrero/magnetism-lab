@@ -30,11 +30,11 @@
         'Sentidos opuestos (repulsión)': 'opuesto'
       }
     },
-    { k: 'I1', t: 'Corriente conductor 1 (I₁)', u: 'A', min: 0.5, max: 20, step: 0.5 },
-    { k: 'I2', t: 'Corriente conductor 2 (I₂)', u: 'A', min: 0.5, max: 20, step: 0.5 },
-    { k: 'd', t: 'Separación entre hilos (d)', u: 'cm', min: 2, max: 14, step: 0.5 },
-    { k: 'dl', t: 'Longitud del segmento (Δl)', u: 'cm', min: 1, max: 8, step: 0.5 },
-    { k: 'y0', t: 'Posición vertical segmento (y₀)', u: 'cm', min: -6, max: 6, step: 0.5 }
+    { k: 'I1', t: 'Corriente conductor 1 ($I_1$)', u: 'A', min: 0.5, max: 20, step: 0.5 },
+    { k: 'I2', t: 'Corriente conductor 2 ($I_2$)', u: 'A', min: 0.5, max: 20, step: 0.5 },
+    { k: 'd', t: 'Separación entre hilos ($d$)', u: 'cm', min: 2, max: 14, step: 0.5 },
+    { k: 'dl', t: 'Longitud del segmento ($\\Delta l$)', u: 'cm', min: 1, max: 8, step: 0.5 },
+    { k: 'y0', t: 'Posición vertical segmento ($y_0$)', u: 'cm', min: -6, max: 6, step: 0.5 }
   ];
 
   const WIRE_LEN = 20; // Longitud visual en cm (-10 a +10)
@@ -226,13 +226,13 @@
     const errRel = dF_ana > 0 ? (Math.abs(dF_num - dF_ana) / dF_ana) * 100 : 0;
 
     ro([
-      ['Interacción', s2 > 0 ? 'Atracción (corrientes ⇈)' : 'Repulsión (corrientes ⇅)'],
-      ['|B₁| en hilo 2 = μ₀I₁/(2πd)', fm(B1_ana * 1e6) + ' μT'],
-      ['|B₂| en hilo 1 = μ₀I₂/(2πd)', fm(B2_ana * 1e6) + ' μT'],
-      ['Fuerza por longitud F/L (analítica)', fm(F_per_L_ana * 1e6) + ' μN/m'],
-      ['Fuerza sobre Δl (analítica)', fm(dF_ana * 1e6) + ' μN'],
-      ['Fuerza sobre Δl (numérica Biot-Savart)', fm(dF_num * 1e6) + ' μN'],
-      ['Error relativo (numérico vs. analítico)', fm(errRel) + ' %']
+      ['Interacción magnética', s2 > 0 ? 'Atracción (corrientes ⇈)' : 'Repulsión (corrientes ⇅)'],
+      ['Campo $|\\vec{B}_1| = \\dfrac{\\mu_0 I_1}{2\\pi d}$', fm(B1_ana * 1e6) + ' μT'],
+      ['Campo $|\\vec{B}_2| = \\dfrac{\\mu_0 I_2}{2\\pi d}$', fm(B2_ana * 1e6) + ' μT'],
+      ['Fuerza por longitud $\\dfrac{F}{L} = \\dfrac{\\mu_0 I_1 I_2}{2\\pi d}$', fm(F_per_L_ana * 1e6) + ' μN/m'],
+      ['Fuerza analítica $\\Delta F = \\dfrac{F}{L}\\,\\Delta l$', fm(dF_ana * 1e6) + ' μN'],
+      ['Fuerza numérica $\\sum I_2\\,d\\vec{l}_2\\times\\vec{B}_1$', fm(dF_num * 1e6) + ' μN'],
+      ['Error relativo', fm(errRel) + ' %']
     ]);
   }
 
@@ -244,7 +244,10 @@
     cameraPos: [14, 11, 22],
     state: SC,
     theory:
-      'Fuerza magnética sobre un elemento de corriente: dF = I·dl × B. Entre dos conductores rectos y paralelos separados una distancia d, el hilo 1 crea en el hilo 2 un campo B₁ = μ₀I₁/(2πd) (anillos verdes). La fuerza sobre un tramo Δl del hilo 2 es ΔF = I₂·Δl·B₁, por lo que la fuerza por unidad de longitud es F/L = μ₀I₁I₂/(2πd). Corrientes en el mismo sentido se atraen y en sentidos opuestos se repelen (cumpliendo F₁→₂ = −F₂→₁).',
+      '<b>Fuerza magnética entre elementos de corriente:</b>' +
+      '$$d\\vec{F}_{1\\to 2} = I_2\\,d\\vec{l}_2 \\times \\vec{B}_1, \\qquad B_1 = \\frac{\\mu_0 I_1}{2\\pi d}$$' +
+      '$$\\frac{F}{L} = \\frac{\\mu_0\\,I_1\\,I_2}{2\\pi\\,d}, \\qquad \\Delta F = \\frac{\\mu_0\\,I_1\\,I_2}{2\\pi\\,d}\\,\\Delta l$$' +
+      'Corrientes paralelas ($\\uparrow\\uparrow$) se <b>atraen</b> y corrientes antiparalelas ($\\uparrow\\downarrow$) se <b>repelen</b>, cumpliendo la tercera ley de Newton ($\\vec{F}_{1\\to 2} = -\\vec{F}_{2\\to 1}$).',
     activate() {
       build(cfgC, SC, onC);
       onC();

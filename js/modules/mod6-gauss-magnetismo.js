@@ -36,10 +36,10 @@
         'Caja / Cubo cerrado (lado 2·R_g)': 'caja'
       }
     },
-    { k: 'I', t: 'Intensidad de fuente (I / μ)', u: 'A', min: 1, max: 20, step: 0.5 },
-    { k: 'Rg', t: 'Tamaño superficie cerrada R_g', u: 'cm', min: 3, max: 9, step: 0.5 },
-    { k: 'gx', t: 'Posición X superficie (x_g)', u: 'cm', min: -7, max: 7, step: 0.5 },
-    { k: 'gy', t: 'Posición Y superficie (y_g)', u: 'cm', min: -7, max: 7, step: 0.5 }
+    { k: 'I', t: 'Intensidad de fuente ($I$ / $\\mu$)', u: 'A', min: 1, max: 20, step: 0.5 },
+    { k: 'Rg', t: 'Tamaño superficie cerrada $R_g$', u: 'cm', min: 3, max: 9, step: 0.5 },
+    { k: 'gx', t: 'Posición $X$ superficie ($x_g$)', u: 'cm', min: -7, max: 7, step: 0.5 },
+    { k: 'gy', t: 'Posición $Y$ superficie ($y_g$)', u: 'cm', min: -7, max: 7, step: 0.5 }
   ];
 
   let SG = { m: [], d: [] };
@@ -302,16 +302,16 @@
 
     ro([
       [
-        'Configuración',
+        'Superficie cerrada $S$',
         (SF.surf === 'esfera' ? 'Esfera cerrada' : 'Caja cerrada') +
           ' sobre ' +
           (SF.source === 'dipolo' ? 'Imán N–S' : 'Espira')
       ],
-      ['Flujo saliente Φ_sal (B·n̂ > 0, verde)', '+' + fm(phiMag * 1e6) + ' μWb'],
-      ['Flujo entrante Φ_ent (B·n̂ < 0, rojo)', '−' + fm(phiMag * 1e6) + ' μWb'],
-      ['Flujo neto analítico ∮ B·dA', '0 Wb (∇·B = 0 siempre)'],
-      ['Residuo numérico de malla (Φ_sal + Φ_ent)', fm(Math.abs(phiNetNum) * 1e6) + ' μWb (~0)'],
-      ['Monopolos magnéticos encerrados', '0 (las líneas de B son cerradas)']
+      ['Flujo saliente $\\Phi_{\\text{sal}} = \\int_{\\vec{B}\\cdot\\hat{n}>0} \\vec{B}\\cdot d\\vec{A}$', '+' + fm(phiMag * 1e6) + ' μWb'],
+      ['Flujo entrante $\\Phi_{\\text{ent}} = \\int_{\\vec{B}\\cdot\\hat{n}<0} \\vec{B}\\cdot d\\vec{A}$', '−' + fm(phiMag * 1e6) + ' μWb'],
+      ['Flujo neto $\\oint_S \\vec{B}\\cdot d\\vec{A}$ (Ley de Gauss)', '0 Wb (∇·B = 0)'],
+      ['Residuo numérico $|\\Phi_{\\text{sal}} + \\Phi_{\\text{ent}}|$', fm(Math.abs(phiNetNum) * 1e6) + ' μWb (~0)'],
+      ['Carga magnética encerrada $q_m$', '0 (no hay monopolos)']
     ]);
   }
 
@@ -323,7 +323,10 @@
     cameraPos: [15, 11, 22],
     state: SF,
     theory:
-      'Ley de Gauss del magnetismo: ∮_S B · dA = 0 para cualquier superficie cerrada S (forma diferencial: ∇ · B = 0). A diferencia de las cargas eléctricas aisladas, no existen monopolos magnéticos: todas las líneas de campo magnético son curvas cerradas (continúan por el interior del imán de Sur a Norte). Por ello, incluso si la superficie cerrada (esfera o caja azul) encierra un solo polo del imán, todo el flujo que sale de ella (Φ_sal > 0, flechas verdes) es exactamente igual en magnitud al flujo que entra en ella (Φ_ent < 0, flechas rojas), dando un flujo neto nulo.',
+      '<b>Ley de Gauss del magnetismo (ausencia de monopolos magnéticos):</b>' +
+      '$$\\oint_S \\vec{B} \\cdot d\\vec{A} = \\Phi_{\\text{saliente}} + \\Phi_{\\text{entrante}} = 0 \\iff \\nabla \\cdot \\vec{B} = 0$$' +
+      '$$\\Phi_{\\text{saliente}} = -\\Phi_{\\text{entrante}}$$' +
+      'Todas las líneas de campo magnético son curvas cerradas (continúan por el interior del imán de Sur a Norte). Incluso cuando la superficie cerrada $S$ (esfera o caja azul) encierra un solo polo del imán, todo el flujo que sale ($\\Phi_{\\text{sal}} > 0$, flechas verdes) iguala al que entra ($\\Phi_{\\text{ent}} < 0$, flechas rojas).',
     activate() {
       build(cfgF, SF, onF);
       onF();

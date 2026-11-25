@@ -51,20 +51,20 @@
         }
       }
     },
-    { k: 'I', t: 'Corriente I (o prod. q·v equiv.)', u: 'A', min: 0.1, max: 20, step: 0.1 },
+    { k: 'I', t: 'Corriente $I$ (o $q\\cdot v$ equiv.)', u: 'A', min: 0.1, max: 20, step: 0.1 },
     {
       k: 'R',
-      t: 'Radio R',
+      t: 'Radio $R$',
       u: 'cm',
       min: 1,
       max: 10,
       step: 0.5,
       show: () => SB.geo === 'espira' || SB.geo === 'helmholtz' || SB.geo === 'solenoide'
     },
-    { k: 'N', t: 'Vueltas N', u: '', min: 2, max: 30, step: 1, show: () => SB.geo === 'solenoide' },
-    { k: 'L', t: 'Longitud L', u: 'cm', min: 4, max: 30, step: 1, show: () => SB.geo === 'solenoide' },
-    { k: 'px', t: 'Punto de medida x', u: 'cm', min: -12, max: 12, step: 0.5 },
-    { k: 'py', t: 'Punto de medida y', u: 'cm', min: -12, max: 12, step: 0.5 }
+    { k: 'N', t: 'Número de vueltas $N$', u: '', min: 2, max: 30, step: 1, show: () => SB.geo === 'solenoide' },
+    { k: 'L', t: 'Longitud $L$', u: 'cm', min: 4, max: 30, step: 1, show: () => SB.geo === 'solenoide' },
+    { k: 'px', t: 'Punto de medida $x$', u: 'cm', min: -12, max: 12, step: 0.5 },
+    { k: 'py', t: 'Punto de medida $y$', u: 'cm', min: -12, max: 12, step: 0.5 }
   ];
 
   let SG = { m: [], d: [] };
@@ -268,15 +268,15 @@
 
     const a = ana(pp);
     const rows = [
-      ['|B| numérico (Biot-Savart)', fm(m * 1e6) + ' μT'],
-      ['Bx · By · Bz', [b.x, b.y, b.z].map((x) => fm(x * 1e6)).join(' · ') + ' μT'],
-      ['|B| analítico', a == null ? anaHint() : fm(a * 1e6) + ' μT'],
-      ['Error relativo', a == null || a === 0 ? '—' : fm((Math.abs(m - a) / a) * 100) + ' %']
+      ['$|\\vec{B}|$ numérico ($\\sum \\Delta\\vec{B}_i$)', fm(m * 1e6) + ' μT'],
+      ['Componentes $B_x \\cdot B_y \\cdot B_z$', [b.x, b.y, b.z].map((x) => fm(x * 1e6)).join(' · ') + ' μT'],
+      ['$|\\vec{B}|$ analítico exacto', a == null ? anaHint() : fm(a * 1e6) + ' μT'],
+      ['Error relativo $\\dfrac{|B_{\\text{num}}-B_{\\text{ana}}|}{B_{\\text{ana}}}$', a == null || a === 0 ? '—' : fm((Math.abs(m - a) / a) * 100) + ' %']
     ];
     if (SB.geo === 'carga_mov') {
-      rows.unshift(['Producto fuente q·v equivalente', fm(SB.I * 0.01) + ' C·m/s (沿 +Y)']);
+      rows.unshift(['Fuente $q\\vec{v}$ equivalente', fm(SB.I * 0.01) + ' C·m/s (+Y)']);
     } else if (SB.geo === 'elemento_dl') {
-      rows.unshift(['Elemento fuente I·Δl (Δl = 1 cm)', fm(SB.I * 0.01) + ' A·m (沿 +Y)']);
+      rows.unshift(['Elemento $I\\,\\Delta l$ ($\\Delta l = 1\\text{ cm}$)', fm(SB.I * 0.01) + ' A·m (+Y)']);
     }
     ro(rows);
   }
@@ -289,7 +289,10 @@
     cameraPos: [14, 10, 30],
     state: SB,
     theory:
-      'Fuentes de campo magnético y Ley de Biot-Savart: dB = (μ₀/4π)·I·dl × r̂ / r² (para una carga puntual en movimiento: B = (μ₀/4π)·q·v × r̂ / r²). El conductor (naranja, flecha = sentido de I) se divide en segmentos y se suman sus aportes. Flechas: |B| en el plano z = 0 (escala logarítmica, rojo = más intenso). Líneas verdes: líneas de campo. Esfera rosa: sonda de medida comparada con la solución analítica (hilo μ₀I/2πd, espira en su eje μ₀IR²/2(R²+y²)^(3/2), solenoide μ₀NI/L, elemento dl y carga q·v).',
+      '<b>Ley de Biot-Savart y fuentes de campo magnético:</b>' +
+      '$$d\\vec{B} = \\frac{\\mu_0}{4\\pi}\\,\\frac{I\\,d\\vec{l} \\times \\hat{r}}{r^2}, \\qquad \\vec{B}_q = \\frac{\\mu_0}{4\\pi}\\,\\frac{q\\,\\vec{v} \\times \\hat{r}}{r^2}$$' +
+      '$$B_{\\text{hilo}} = \\frac{\\mu_0 I}{2\\pi d}, \\qquad B_{\\text{espira}} = \\frac{\\mu_0 I R^2}{2\\,(R^2+y^2)^{3/2}}, \\qquad B_{\\text{sol}} = \\frac{\\mu_0 N I}{L}$$' +
+      'El conductor (naranja) se divide en segmentos diferenciales $d\\vec{l}$ y se integran sus aportes. La esfera rosa mide $\\vec{B}(x,y,0)$ y valida el resultado numérico frente a la fórmula analítica.',
     activate() {
       build(cfgB, SB, onB);
       onB();

@@ -120,11 +120,11 @@
         'Solo vectores v y F': 'no'
       }
     },
-    { k: 'part', t: 'Partícula', opts: { 'Electrón (q = −e)': 'e', 'Protón (q = +e)': 'p', 'Partícula α (q = +2e)': 'a' } },
-    { k: 'v', t: 'Rapidez inicial v', u: '×10⁶ m/s', min: 0.1, max: 30, step: 0.1 },
-    { k: 'th', t: 'Ángulo θ entre v y B', u: '°', min: 0, max: 180, step: 1 },
-    { k: 'B', t: 'Campo magnético B (+Y)', u: 'mT', min: 0.1, max: 20, step: 0.1 },
-    { k: 'E', t: 'Campo eléctrico E (−Z, ⊥ B)', u: 'kV/m', min: 0, max: 200, step: 1 },
+    { k: 'part', t: 'Partícula ($q, m$)', opts: { 'Electrón (q = −e)': 'e', 'Protón (q = +e)': 'p', 'Partícula α (q = +2e)': 'a' } },
+    { k: 'v', t: 'Rapidez inicial $v_0$', u: '×10⁶ m/s', min: 0.1, max: 30, step: 0.1 },
+    { k: 'th', t: 'Ángulo $\\theta$ entre $\\vec{v}$ y $\\vec{B}$', u: '°', min: 0, max: 180, step: 1 },
+    { k: 'B', t: 'Campo magnético $B$ ($+Y$)', u: 'mT', min: 0.1, max: 20, step: 0.1 },
+    { k: 'E', t: 'Campo eléctrico $E$ ($-Z, \\perp \\vec{B}$)', u: 'kV/m', min: 0, max: 200, step: 1 },
     { k: 'sp', t: 'Velocidad de simulación', u: '×', min: 0.1, max: 4, step: 0.1 }
   ];
 
@@ -292,14 +292,14 @@
 
     ro([
       ['Regla mano derecha', rhrNote],
-      ['Radio r = m·v⊥/(|q|B)', fm(rGyro) + ' m'],
-      ['Relación masa/carga m/|q|', fm(mqRatio) + ' kg/C'],
-      ['Periodo T = 2πm/(|q|B)', fm(T) + ' s (f = ' + fm(1 / T) + ' Hz)'],
-      ['Paso de hélice p = v∥·T', fm(vl * T) + ' m'],
-      ['Velocidad de selector / deriva E/B', fm(E / B) + ' m/s'],
-      ['Energía cinética Ek', fm(Ek / E_) + ' eV'],
-      ['Variación de Ek (Boris)', E ? '— (E realiza trabajo)' : fm((Ek / s.Ek0 - 1) * 100) + ' %'],
-      ['Tiempo simulado', fm(s.t) + ' s']
+      ['Radio $r = \\dfrac{m v_\\perp}{|q|B}$', fm(rGyro) + ' m'],
+      ['Relación $\\dfrac{m}{|q|}$', fm(mqRatio) + ' kg/C'],
+      ['Periodo $T = \\dfrac{2\\pi m}{|q|B}$', fm(T) + ' s (' + fm(1 / T) + ' Hz)'],
+      ['Paso de hélice $p = v_\\parallel T$', fm(vl * T) + ' m'],
+      ['Velocidad de selector $v_d = \\dfrac{E}{B}$', fm(E / B) + ' m/s'],
+      ['Energía cinética $E_k = \\tfrac{1}{2}mv^2$', fm(Ek / E_) + ' eV'],
+      ['Conservación de $E_k$ (Boris)', E ? '— (E realiza trabajo)' : fm((Ek / s.Ek0 - 1) * 100) + ' %'],
+      ['Tiempo simulado $t$', fm(s.t) + ' s']
     ]);
   }
 
@@ -317,7 +317,10 @@
       initA();
     },
     theory:
-      'Fuerza de Lorentz: F = q(E + v × B). Regla de la mano derecha (triedro 3D sobre la partícula): dedo índice = velocidad v (azul claro), dedo medio = campo B (verde), pulgar = v × B (amarillo). Si la carga es positiva (protón, α), la fuerza magnética F_B (roja) apunta como el pulgar; si es negativa (electrón), apunta en sentido opuesto. Presets incluidos: Ciclotrón (θ = 90°), Hélice (θ = 55°), Selector de velocidades (E = v·B ⇒ F_E + F_B = 0, movimiento rectilíneo sin desviación) y Espectrómetro de masas (separa iones según m/|q|, comparando α en rojo vs. protón en azul).',
+      '<b>Fuerza de Lorentz y movimiento en campos $\\vec{E}$ y $\\vec{B}$:</b>' +
+      '$$\\vec{F} = q\\,(\\vec{E} + \\vec{v} \\times \\vec{B})$$' +
+      '$$r = \\frac{m\\,v_\\perp}{|q|\\,B}, \\qquad T = \\frac{2\\pi\\,m}{|q|\\,B}, \\qquad p = v_\\parallel\\,T, \\qquad \\vec{v}_d = \\frac{\\vec{E}\\times\\vec{B}}{B^2}$$' +
+      '<b>Regla de la mano derecha (triedro 3D):</b> índice $= \\vec{v}$ (azul), medio $= \\vec{B}$ (verde), pulgar $= \\vec{v}\\times\\vec{B}$ (amarillo). Si $q > 0$, $\\vec{F}_B$ (roja) apunta como el pulgar; si $q < 0$, se invierte. En el <b>Selector de velocidades</b> ($v = \\frac{E}{B}$), $\\vec{F}_E = -\\vec{F}_B$ y la trayectoria es rectilínea.',
     activate() {
       build(cfgA, SA, initA);
       initA();
