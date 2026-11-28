@@ -1,17 +1,25 @@
-/* ===== Módulo 2 (RF-07 + B-08): Fuentes de campo magnético (Biot-Savart, elemento dl y carga en movimiento) ===== */
+/* ===== Tema 2: Fuentes de campo magnético (Biot-Savart, elemento dl y carga en movimiento) ===== */
 (function () {
+  if (!Sim.scene || !Sim.scene.webglReady) return;
+
   const gB = new THREE.Group();
   scene.add(gB);
 
   gB.add(new THREE.AxesHelper(14));
 
-  const gr = new THREE.GridHelper(24, 12);
-  gr.rotation.x = Math.PI / 2;
-  gB.add(gr);
-
+  const gridGrp = new THREE.Group();
   const cond = new THREE.Group();
   const lines = new THREE.Group();
-  gB.add(cond, lines);
+  gB.add(gridGrp, cond, lines);
+
+  function rebuildGrid() {
+    Sim.scene.clearGroup(gridGrp);
+    const pal = Sim.scene.getPalette();
+    const gr = new THREE.GridHelper(24, 12, pal.gridMain, pal.gridSub);
+    gr.rotation.x = Math.PI / 2;
+    gridGrp.add(gr);
+  }
+  rebuildGrid();
 
   const arrows = [];
   for (let i = -6; i <= 6; i++) {
@@ -22,11 +30,13 @@
     }
   }
 
-  const probe = new THREE.Mesh(
-    new THREE.SphereGeometry(0.35, 16, 12),
-    new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xe879f9 })
-  );
-  const pA = new THREE.ArrowHelper(V(0, 1, 0), V(), 4, 0xe879f9, 1, 0.6);
+  const probeMat = new THREE.MeshStandardMaterial({
+    color: Sim.scene.getPalette().probe,
+    emissive: Sim.scene.getPalette().probeEmissive,
+    emissiveIntensity: 0.45
+  });
+  const probe = new THREE.Mesh(new THREE.SphereGeometry(0.35, 16, 12), probeMat);
+  const pA = new THREE.ArrowHelper(V(0, 1, 0), V(), 4, Sim.scene.getPalette().mu, 1, 0.6);
   gB.add(probe, pA);
 
   const SB = { geo: 'hilo', I: 5, R: 5, N: 10, L: 15, px: 6, py: 0 };
@@ -68,6 +78,7 @@
   ];
 
   let SG = { m: [], d: [] };
+  let liveB = { bVec: V(), bMag: 0, bAna: null, errRel: null };
 
   const path = (f, n) => {
     const a = [];
@@ -93,16 +104,15 @@
       );
     }
     if (g === 'elemento_dl' || g === 'carga_mov') {
-      /* Elemento diferencial Δl = 1 cm centrado en el origen a lo largo de +Y (o q·v = I·Δl) */
       out.push([V(0, -0.5, 0), V(0, 0.5, 0)]);
     }
     return out;
   }
 
   function Bf(p) {
-    let x = 0,
-      y = 0,
-      z = 0;
+    let x = 0;
+    let y = 0;
+    let z = 0;
     for (let i = 0; i < SG.m.length; i++) {
       const m = SG.m[i];
       const d = SG.d[i];
@@ -117,7 +127,6 @@
       y += (d.z * rx - d.x * rz) * k;
       z += (d.x * ry - d.y * rx) * k;
     }
-    /* cm→m: factor 1e4; resultado en tesla */
     const c = ((MU0 * SB.I) / (4 * Math.PI)) * 1e4;
     return V(x * c, y * c, z * c);
   }
@@ -138,7 +147,7 @@
       const r = Math.hypot(d, y);
       if (r < 0.005) return null;
       const sinTh = d / r;
-      const dlMeters = 0.01; // Δl = 1 cm = 0.01 m (o q·v = I · 0.01 C·m/s)
+      const dlMeters = 0.01;
       return ((MU0 / (4 * Math.PI)) * (I * dlMeters * sinTh)) / (r * r);
     }
     return Math.abs(p.x) < SB.R * 0.7 && Math.abs(p.y) < SB.L * 0.3
@@ -155,21 +164,26 @@
   }
 
   function onB() {
-    cond.clear();
-    lines.clear();
+    Sim.scene.clearGroup(cond);
+    Sim.scene.clearGroup(lines);
+    const pal = Sim.scene.getPalette();
     SG = { m: [], d: [] };
+
+    probeMat.color.setHex(pal.probe);
+    probeMat.emissive.setHex(pal.probeEmissive);
+    pA.setColor(pal.mu);
 
     geoPaths().forEach((pts) => {
       cond.add(
         new THREE.Line(
           new THREE.BufferGeometry().setFromPoints(pts),
-          new THREE.LineBasicMaterial({ color: 0xf59e0b })
+          new THREE.LineBasicMaterial({ color: pal.I })
         )
       );
       if (pts.length > 2) {
         const k = Math.floor(pts.length * 0.25);
         cond.add(
-          new THREE.ArrowHelper(pts[k + 1].clone().sub(pts[k]).normalize(), pts[k], 2.5, 0xf59e0b, 1, 0.7)
+          new THREE.ArrowHelper(pts[k + 1].clone().sub(pts[k]).normalize(), pts[k], 2.5, pal.I, 1, 0.7)
         );
       }
       for (let i = 0; i < pts.length - 1; i++) {
@@ -180,34 +194,30 @@
 
     const pp = V(SB.px, SB.py, 0);
 
-    /* Representación 3D especial para Elemento diferencial I·dl y Carga en movimiento q·v */
     if (SB.geo === 'elemento_dl') {
       const cyl = new THREE.Mesh(
         new THREE.CylinderGeometry(0.32, 0.32, 1.8, 20),
-        new THREE.MeshStandardMaterial({ color: 0xf59e0b, emissive: 0xd97706, emissiveIntensity: 0.4 })
+        new THREE.MeshStandardMaterial({ color: pal.I, emissive: 0xd97706, emissiveIntensity: 0.35 })
       );
       cond.add(cyl);
-      cond.add(new THREE.ArrowHelper(V(0, 1, 0), V(0, 0, 0), 3.6, 0xf59e0b, 0.9, 0.55));
-      /* Vector posición r desde el elemento dl hasta la sonda */
+      cond.add(new THREE.ArrowHelper(V(0, 1, 0), V(0, 0, 0), 3.6, pal.I, 0.9, 0.55));
       cond.add(
         new THREE.Line(
           new THREE.BufferGeometry().setFromPoints([V(0, 0, 0), pp]),
-          new THREE.LineBasicMaterial({ color: 0xe879f9, transparent: true, opacity: 0.65 })
+          new THREE.LineBasicMaterial({ color: pal.mu, transparent: true, opacity: 0.65 })
         )
       );
     } else if (SB.geo === 'carga_mov') {
       const qMesh = new THREE.Mesh(
         new THREE.SphereGeometry(0.55, 24, 16),
-        new THREE.MeshStandardMaterial({ color: 0xef4444, emissive: 0x991b1b, emissiveIntensity: 0.4 })
+        new THREE.MeshStandardMaterial({ color: pal.F, emissive: 0x991b1b, emissiveIntensity: 0.35 })
       );
       cond.add(qMesh);
-      /* Vector velocidad v de la carga puntual (azul claro, eje +Y) */
-      cond.add(new THREE.ArrowHelper(V(0, 1, 0), V(0, 0, 0), 3.8, 0x38bdf8, 0.9, 0.55));
-      /* Vector posición r desde la carga hasta la sonda */
+      cond.add(new THREE.ArrowHelper(V(0, 1, 0), V(0, 0, 0), 3.8, pal.v, 0.9, 0.55));
       cond.add(
         new THREE.Line(
           new THREE.BufferGeometry().setFromPoints([V(0, 0, 0), pp]),
-          new THREE.LineBasicMaterial({ color: 0xe879f9, transparent: true, opacity: 0.65 })
+          new THREE.LineBasicMaterial({ color: pal.mu, transparent: true, opacity: 0.65 })
         )
       );
     }
@@ -216,6 +226,8 @@
     const ms = bs.map((b) => b.length());
     const sr = [...ms].sort((a, b) => a - b);
     const ref = sr[Math.floor(0.95 * sr.length)] || 1;
+    const isDark = Sim.scene.isDarkTheme();
+    const arrowLightness = isDark ? 0.52 : 0.42;
 
     arrows.forEach((a, i) => {
       if (ms[i] < 1e-12) {
@@ -225,10 +237,11 @@
       a.visible = true;
       const t = Math.min(1, Math.max(0, (Math.log10(ms[i] / ref + 1e-12) + 2) / 2.3));
       a.setDirection(bs[i].clone().divideScalar(ms[i]));
-      a.setColor(new THREE.Color().setHSL((1 - t) * 0.67, 1, 0.5));
+      a.setColor(new THREE.Color().setHSL((1 - t) * 0.67, 0.92, arrowLightness));
       a.setLength(1.5, 0.6, 0.4);
     });
 
+    const fieldLineMat = new THREE.LineBasicMaterial({ color: pal.B });
     [-9, -6, -3, -1.5, 1.5, 3, 6, 9].forEach((x) =>
       [1, -1].forEach((dir) => {
         const s0 = V(x, 0, 0);
@@ -247,12 +260,7 @@
           if (k > 10 && p.distanceTo(s0) < 0.5) break;
         }
         if (pts.length > 1) {
-          lines.add(
-            new THREE.Line(
-              new THREE.BufferGeometry().setFromPoints(pts),
-              new THREE.LineBasicMaterial({ color: 0x22c55e })
-            )
-          );
+          lines.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), fieldLineMat));
         }
       })
     );
@@ -267,11 +275,14 @@
     }
 
     const a = ana(pp);
+    const errRel = a == null || a === 0 ? null : (Math.abs(m - a) / a) * 100;
+    liveB = { bVec: b, bMag: m, bAna: a, errRel };
+
     const rows = [
       ['$|\\vec{B}|$ numérico ($\\sum \\Delta\\vec{B}_i$)', fm(m * 1e6) + ' μT'],
       ['Componentes $B_x, B_y, B_z$', [b.x, b.y, b.z].map((x) => fm(x * 1e6)).join(' · ') + ' μT'],
       ['$|\\vec{B}|$ analítico exacto', a == null ? anaHint() : fm(a * 1e6) + ' μT'],
-      ['Error relativo', a == null || a === 0 ? '—' : fm((Math.abs(m - a) / a) * 100) + ' %']
+      ['Error relativo', errRel == null ? '—' : fm(errRel) + ' %']
     ];
     if (SB.geo === 'carga_mov') {
       rows.unshift(['Fuente $q\\vec{v}$ equiv.', fm(SB.I * 0.01) + ' C·m/s (+Y)']);
@@ -282,12 +293,15 @@
   }
 
   Sim.registerModule({
-    id: 'B',
+    id: 'fuentes-campo',
     title: '2 · Fuentes de campo magnético',
     group: gB,
     canPause: false,
     cameraPos: [14, 10, 30],
     state: SB,
+    getLive() {
+      return liveB;
+    },
     theory:
       '<b>Ley de Biot-Savart y fuentes de campo magnético:</b>' +
       '$$d\\vec{B} = \\frac{\\mu_0}{4\\pi}\\,\\frac{I\\,d\\vec{l} \\times \\hat{r}}{r^2}, \\qquad \\vec{B}_q = \\frac{\\mu_0}{4\\pi}\\,\\frac{q\\,\\vec{v} \\times \\hat{r}}{r^2}$$' +
@@ -302,6 +316,10 @@
       onB();
     },
     reset() {
+      onB();
+    },
+    onThemeChange() {
+      rebuildGrid();
       onB();
     }
   });

@@ -1,5 +1,7 @@
 /* ===== Tema 1: Campo magnético (F_B = q v × B, paralelogramo del producto cruz e imán con brújula 3D) ===== */
 (function () {
+  if (!Sim.scene || !Sim.scene.webglReady) return;
+
   const g0 = new THREE.Group();
   scene.add(g0);
 
@@ -101,12 +103,15 @@
     const bVec = rPlus
       .divideScalar(d1 * d1 * d1)
       .sub(rMinus.divideScalar(d2 * d2 * d2));
-    const scale = (S0.B * 1e-3) * 18;
+    const scale = S0.B * 1e-3 * 18;
     return bVec.multiplyScalar(scale);
   }
 
+  let liveMagnet = { pp: V(S0.px, S0.py, 0), bLocal: V(0, 1, 0), bMag: 0, angDeg: 0 };
+
   function on0() {
-    mainGrp.clear();
+    Sim.scene.clearGroup(mainGrp);
+    const pal = Sim.scene.getPalette();
 
     if (S0.modo === 'vectorial') {
       const qSign = S0.signo === 'pos' ? 1 : -1;
@@ -120,7 +125,7 @@
       /* Fondo de líneas de campo magnético B uniforme (+Y) */
       [-5, 0, 5].forEach((x) => {
         [-5, 5].forEach((z) => {
-          mainGrp.add(new THREE.ArrowHelper(V(0, 1, 0), V(x, -4, z), 8, 0x22c55e, 0.55, 0.32));
+          mainGrp.add(new THREE.ArrowHelper(V(0, 1, 0), V(x, -4, z), 8, pal.B, 0.55, 0.32));
         });
       });
 
@@ -128,25 +133,20 @@
       const chargeMesh = new THREE.Mesh(
         new THREE.SphereGeometry(0.45, 24, 16),
         new THREE.MeshStandardMaterial({
-          color: qSign > 0 ? 0xef4444 : 0x3b82f6,
+          color: qSign > 0 ? pal.F : pal.v,
           roughness: 0.3,
           metalness: 0.15
         })
       );
       mainGrp.add(chargeMesh);
 
-      /* Vectores del triedro en el origen:
-         - B en +Y (verde)
-         - v en el plano XY formando ángulo θ con +Y: vDir = (sin θ, cos θ, 0) (azul claro)
-         - v × B en +Z cuando sin θ > 0 (amarillo)
-         - F_B = q(v × B) en ±Z (rojo) */
       const bLen = 4.6;
       const vLen = 4.6;
       const bDir = V(0, 1, 0);
       const vDir = V(sTh, cTh, 0);
 
-      mainGrp.add(new THREE.ArrowHelper(bDir, V(0, 0, 0), bLen, 0x22c55e, 0.85, 0.5));
-      mainGrp.add(new THREE.ArrowHelper(vDir, V(0, 0, 0), vLen, 0x38bdf8, 0.85, 0.5));
+      mainGrp.add(new THREE.ArrowHelper(bDir, V(0, 0, 0), bLen, pal.B, 0.85, 0.5));
+      mainGrp.add(new THREE.ArrowHelper(vDir, V(0, 0, 0), vLen, pal.v, 0.85, 0.5));
 
       /* Paralelogramo sombreado que representa geométricamente |v × B| = v·B·sin θ */
       if (sTh > 0.02) {
@@ -165,9 +165,9 @@
         const paraMesh = new THREE.Mesh(
           paraGeo,
           new THREE.MeshBasicMaterial({
-            color: 0xfacc15,
+            color: pal.vxb,
             transparent: true,
-            opacity: 0.18,
+            opacity: 0.2,
             side: THREE.DoubleSide
           })
         );
@@ -175,18 +175,18 @@
 
         const paraBorder = new THREE.Line(
           new THREE.BufferGeometry().setFromPoints([V(0, 0, 0), pV, pSum, pB, V(0, 0, 0)]),
-          new THREE.LineBasicMaterial({ color: 0xfacc15, transparent: true, opacity: 0.6 })
+          new THREE.LineBasicMaterial({ color: pal.vxb, transparent: true, opacity: 0.7 })
         );
         mainGrp.add(paraBorder);
 
-        /* Vector pulgar v × B (amarillo en +Z) */
+        /* Vector pulgar v × B (+Z) */
         const vxbLen = Math.max(1.2, 4.8 * sTh);
-        mainGrp.add(new THREE.ArrowHelper(V(0, 0, 1), V(0, 0, 0), vxbLen, 0xfacc15, 0.85, 0.5));
+        mainGrp.add(new THREE.ArrowHelper(V(0, 0, 1), V(0, 0, 0), vxbLen, pal.vxb, 0.85, 0.5));
 
-        /* Vector Fuerza Magnética F_B = q(v × B) (rojo, en +Z si q>0 o en -Z si q<0) */
+        /* Vector Fuerza Magnética F_B = q(v × B) */
         const fDir = V(0, 0, qSign);
         const fOrigin = qSign > 0 ? V(0, 0.25, 0) : V(0, 0, 0);
-        mainGrp.add(new THREE.ArrowHelper(fDir, fOrigin, vxbLen * 1.08, 0xef4444, 0.9, 0.55));
+        mainGrp.add(new THREE.ArrowHelper(fDir, fOrigin, vxbLen * 1.08, pal.F, 0.9, 0.55));
       }
 
       /* Arco del ángulo θ entre B (+Y) y v */
@@ -199,7 +199,7 @@
         mainGrp.add(
           new THREE.Line(
             new THREE.BufferGeometry().setFromPoints(arcPts),
-            new THREE.LineBasicMaterial({ color: 0xfef08a })
+            new THREE.LineBasicMaterial({ color: pal.arc })
           )
         );
       }
@@ -220,7 +220,7 @@
       const geoHalf = new THREE.BoxGeometry(2.2, 3.0, 1.4);
       const north = new THREE.Mesh(
         geoHalf,
-        new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.35 })
+        new THREE.MeshStandardMaterial({ color: pal.F, roughness: 0.35 })
       );
       north.position.set(0, 1.5, 0);
       const south = new THREE.Mesh(
@@ -231,6 +231,8 @@
       mainGrp.add(north, south);
 
       /* Líneas de campo saliendo del Polo Norte (+Y) y entrando al Polo Sur (-Y) */
+      const lineMat = new THREE.LineBasicMaterial({ color: pal.B, transparent: true, opacity: 0.7 });
+      lineMat._shared = true;
       [-2.8, -1.6, -0.7, 0.7, 1.6, 2.8].forEach((x0) => {
         const s0 = V(x0, 0, 0);
         [1, -1].forEach((dir) => {
@@ -244,17 +246,13 @@
             pts.push(p);
           }
           if (pts.length > 1) {
-            mainGrp.add(
-              new THREE.Line(
-                new THREE.BufferGeometry().setFromPoints(pts),
-                new THREE.LineBasicMaterial({ color: 0x22c55e, transparent: true, opacity: 0.65 })
-              )
-            );
+            mainGrp.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), lineMat));
           }
         });
       });
+      lineMat._shared = false;
 
-      /* Brújula 3D en la posición (px, py, 0) que se alinea con el vector B local */
+      /* Brújula 3D en la posición (px, py, 0) alineada con el vector B local */
       const pp = V(S0.px, S0.py, 0);
       const bLocal = calcMagnetField(pp);
       const bMag = bLocal.length();
@@ -262,17 +260,17 @@
 
       const compassPivot = new THREE.Mesh(
         new THREE.SphereGeometry(0.32, 16, 12),
-        new THREE.MeshStandardMaterial({ color: 0xfef08a })
+        new THREE.MeshStandardMaterial({ color: pal.vxb })
       );
       compassPivot.position.copy(pp);
       mainGrp.add(compassPivot);
 
-      /* Aguja norte de la brújula (roja, apunta en la dirección de B) y aguja sur (azul, en -B) */
-      mainGrp.add(new THREE.ArrowHelper(bDir, pp, 2.6, 0xef4444, 0.75, 0.48));
+      mainGrp.add(new THREE.ArrowHelper(bDir, pp, 2.6, pal.F, 0.75, 0.48));
       mainGrp.add(new THREE.ArrowHelper(bDir.clone().negate(), pp, 2.2, 0x3b82f6, 0.6, 0.35));
-      mainGrp.add(new THREE.ArrowHelper(bDir, pp, 3.8, 0x22c55e, 0.8, 0.5));
+      mainGrp.add(new THREE.ArrowHelper(bDir, pp, 3.8, pal.B, 0.8, 0.5));
 
-      const angDeg = ((Math.atan2(bDir.y, bDir.x) * 180) / Math.PI).toFixed(1);
+      const angDeg = Number(((Math.atan2(bDir.y, bDir.x) * 180) / Math.PI).toFixed(1));
+      liveMagnet = { pp, bLocal, bMag, angDeg };
 
       ro([
         ['Posición de la brújula $(x, y)$', `(${S0.px} cm, ${S0.py} cm)`],
@@ -285,12 +283,15 @@
   }
 
   Sim.registerModule({
-    id: 'M0',
+    id: 'campo-magnetico',
     title: '1 · Campo magnético',
     group: g0,
     canPause: false,
     cameraPos: [10, 8, 16],
     state: S0,
+    getLive() {
+      return liveMagnet;
+    },
     theory:
       '<b>Definición del campo magnético $\\vec{B}$ y fuerza sobre una carga:</b>' +
       '$$\\vec{F}_B = q\\,(\\vec{v} \\times \\vec{B}), \\qquad |\\vec{F}_B| = |q|\\,v\\,B\\,\\sin\\theta \\quad [1\\text{ T} = 1\\text{ N}/(\\text{A}\\cdot\\text{m})]$$' +
@@ -305,6 +306,9 @@
       on0();
     },
     reset() {
+      on0();
+    },
+    onThemeChange() {
       on0();
     }
   });

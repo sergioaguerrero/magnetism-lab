@@ -1,10 +1,13 @@
-/* ===== Módulo 1 (RF-06 + B-06): Carga en campos E y B, Presets y Regla de la Mano Derecha ===== */
+/* ===== Tema 5: Movimiento de una partícula cargada en campos E y B (Integrador de Boris) ===== */
 (function () {
+  if (!Sim.scene || !Sim.scene.webglReady) return;
+
   const gA = new THREE.Group();
   scene.add(gA);
 
   gA.add(new THREE.AxesHelper(3.5));
 
+  const initPal = Sim.scene.getPalette();
   const ball = new THREE.Mesh(
     new THREE.SphereGeometry(0.18, 24, 16),
     new THREE.MeshStandardMaterial({ color: 0x3b82f6 })
@@ -18,35 +21,32 @@
   tg.setAttribute('position', new THREE.BufferAttribute(tp, 3));
   tg.setDrawRange(0, 0);
 
-  const tl = new THREE.Line(tg, new THREE.LineBasicMaterial({ color: 0xf59e0b }));
+  const trailMat = new THREE.LineBasicMaterial({ color: initPal.I });
+  const tl = new THREE.Line(tg, trailMat);
   tl.frustumCulled = false;
   gA.add(tl);
 
-  /* Vectores principales sobre la partícula:
-     - vA (azul claro): velocidad v (dedo índice)
-     - bPartA (verde): campo B local en la partícula (dedo medio)
-     - vxbA (amarillo): producto cruz v × B (pulgar mano derecha)
-     - fA (rojo): fuerza magnética / total F = q(E + v × B)
-     - feA (magenta): fuerza eléctrica F_E = qE (visible cuando E > 0) */
-  const vA = new THREE.ArrowHelper(V(1, 0, 0), V(), 2.1, 0x38bdf8, 0.5, 0.3);
-  const bPartA = new THREE.ArrowHelper(V(0, 1, 0), V(), 1.9, 0x22c55e, 0.45, 0.28);
-  const vxbA = new THREE.ArrowHelper(V(0, 0, 1), V(), 1.9, 0xfacc15, 0.45, 0.28);
-  const fA = new THREE.ArrowHelper(V(1, 0, 0), V(), 2.1, 0xef4444, 0.5, 0.3);
-  const feA = new THREE.ArrowHelper(V(0, 0, -1), V(), 2.0, 0xe879f9, 0.48, 0.28);
+  const vA = new THREE.ArrowHelper(V(1, 0, 0), V(), 2.1, initPal.v, 0.5, 0.3);
+  const bPartA = new THREE.ArrowHelper(V(0, 1, 0), V(), 1.9, initPal.B, 0.45, 0.28);
+  const vxbA = new THREE.ArrowHelper(V(0, 0, 1), V(), 1.9, initPal.vxb, 0.45, 0.28);
+  const fA = new THREE.ArrowHelper(V(1, 0, 0), V(), 2.1, initPal.F, 0.5, 0.3);
+  const feA = new THREE.ArrowHelper(V(0, 0, -1), V(), 2.0, initPal.mu, 0.48, 0.28);
   gA.add(vA, bPartA, vxbA, fA, feA);
 
-  /* Grupo para órbita de referencia en preset de espectrómetro de masas */
   const specGrp = new THREE.Group();
   gA.add(specGrp);
 
   const Bg = new THREE.Group();
+  const bgArrows = [];
   [
     [-3, -3],
     [3, -3],
     [-3, 3],
     [3, 3]
   ].forEach(([x, z]) => {
-    Bg.add(new THREE.ArrowHelper(V(0, 1, 0), V(x, -1.5, z), 3, 0x22c55e, 0.5, 0.3));
+    const arr = new THREE.ArrowHelper(V(0, 1, 0), V(x, -1.5, z), 3, initPal.B, 0.5, 0.3);
+    bgArrows.push(arr);
+    Bg.add(arr);
   });
   gA.add(Bg);
 
@@ -75,7 +75,6 @@
       SA.B = 5;
       SA.E = 0;
     } else if (val === 'selector') {
-      /* Selector de velocidades: v = E / B => 5×10⁶ m/s = (50×10³ V/m) / (10×10⁻³ T) */
       SA.part = 'p';
       SA.v = 5;
       SA.th = 90;
@@ -130,13 +129,22 @@
 
   let sim;
 
+  function syncThemeColors() {
+    const pal = Sim.scene.getPalette();
+    trailMat.color.setHex(pal.I);
+    vA.setColor(pal.v);
+    bPartA.setColor(pal.B);
+    vxbA.setColor(pal.vxb);
+    fA.setColor(pal.F);
+    feA.setColor(pal.mu);
+    bgArrows.forEach((a) => a.setColor(pal.B));
+  }
+
   function buildSpectrometerReference(s) {
-    specGrp.clear();
+    Sim.scene.clearGroup(specGrp);
     if (SA.preset !== 'espectrometro') return;
 
-    /* En el espectrómetro de masas comparamos el radio del protón (r_p) y de la partícula α (r_α ≈ 2·r_p)
-       entrando en el mismo punto (0,0,0) con velocidad +X en campo B (+Y).
-       Para q > 0, v(+X) × B(+Y) = +Z, así que el centro de giro está en (0, 0, +r). */
+    const pal = Sim.scene.getPalette();
     const B = SA.B * 1e-3;
     const v = SA.v * 1e6;
     const [qp, mp] = P.p;
@@ -153,15 +161,26 @@
       }
       return new THREE.Line(
         new THREE.BufferGeometry().setFromPoints(pts),
-        new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.45 })
+        new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.5 })
       );
     };
 
-    specGrp.add(makeOrbitCircle(rpVis, 0x38bdf8)); // Órbita de referencia del protón (azul)
-    specGrp.add(makeOrbitCircle(raVis, 0xef4444)); // Órbita de referencia de partícula α (roja)
+    specGrp.add(makeOrbitCircle(rpVis, pal.v));
+    specGrp.add(makeOrbitCircle(raVis, pal.F));
   }
 
-  function initA() {
+  const MANUAL_KEYS = new Set(['part', 'v', 'th', 'B', 'E']);
+
+  function initA(changedKey) {
+    /* Si el usuario modifica manualmente parámetros físicos mientras un preset está activo,
+       pasa a 'libre' para no mostrar un nombre de preset ni órbitas de referencia incoherentes */
+    if (changedKey && MANUAL_KEYS.has(changedKey) && SA.preset !== 'libre') {
+      SA.preset = 'libre';
+      if (Sim.ui && Sim.ui.syncControls) Sim.ui.syncControls();
+    }
+
+    syncThemeColors();
+
     const [q, m] = P[SA.part];
     const B = SA.B * 1e-3;
     const E = SA.E * 1e3;
@@ -172,8 +191,6 @@
 
     const rVis = 2.5 * Math.max(0.35, Math.min(2.6, Math.pow((SA.v / 5) * (2 / SA.B), 0.45)));
 
-    /* E apunta en -Z para que E × B apunte en +X (la misma dirección de v₀ cuando θ = 90°).
-       Así, cuando v = E/B, la fuerza eléctrica qE (-Z) cancela exactamente a la magnética q(v×B) (+Z) */
     sim = {
       q,
       m,
@@ -191,7 +208,7 @@
     };
 
     trail.n = 0;
-    ball.material.color.set(q > 0 ? 0xef4444 : 0x3b82f6);
+    ball.material.color.set(q > 0 ? Sim.scene.getPalette().F : 0x3b82f6);
     if (!Sim.freeCam) {
       const off = cam.position.clone().sub(ctl.target);
       if (off.lengthSq() > 0.01) {
@@ -289,10 +306,7 @@
     const Ek = 0.5 * s.m * s.v.lengthSq();
     const rGyro = (s.m * vp) / (Math.abs(s.q) * B);
     const mqRatio = s.m / Math.abs(s.q);
-    const rhrNote =
-      s.q > 0
-        ? 'Igual a v × B (q > 0)'
-        : 'Opuesto a v × B (q < 0)';
+    const rhrNote = s.q > 0 ? 'Igual a v × B (q > 0)' : 'Opuesto a v × B (q < 0)';
 
     ro([
       ['Sentido de $\\vec{F}_B$', rhrNote],
@@ -309,7 +323,7 @@
   }
 
   Sim.registerModule({
-    id: 'A',
+    id: 'movimiento-particula',
     title: '5 · Movimiento de partícula cargada',
     group: gA,
     canPause: true,
@@ -345,10 +359,18 @@
     reset() {
       initA();
     },
-    update(paused, fr) {
+    onThemeChange() {
+      syncThemeColors();
+      if (sim) {
+        ball.material.color.set(sim.q > 0 ? Sim.scene.getPalette().F : 0x3b82f6);
+        buildSpectrometerReference(sim);
+      }
+    },
+    update(paused, fr, dt) {
       if (!paused) {
-        sim.acc += 2 * SA.sp;
-        let n = Math.floor(sim.acc);
+        const step = Math.min(dt || 1 / 60, 0.05);
+        sim.acc += 120 * SA.sp * step;
+        let n = Math.min(20, Math.floor(sim.acc));
         sim.acc -= n;
         while (n--) {
           boris(sim, sim.dt);
