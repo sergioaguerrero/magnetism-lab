@@ -234,6 +234,25 @@
     canPause: true,
     cameraPos: [13, 10, 21],
     state: SC,
+    getPlotData() {
+      const c = Sim.scene.getPalette().css;
+      const pts = [];
+      for (let d = 2; d <= 14; d += 0.3) {
+        const fL = ((MU0 * SC.I1 * SC.I2) / (2 * Math.PI * (d * 1e-2))) * 1e6;
+        pts.push([+d.toFixed(2), fL]);
+      }
+      const curFL = ((MU0 * SC.I1 * SC.I2) / (2 * Math.PI * (SC.d * 1e-2))) * 1e6;
+      return {
+        title: 'Fuerza por longitud F/L(d)',
+        xLabel: 'd (cm)',
+        yUnit: 'μN/m',
+        xMin: 2,
+        xMax: 14,
+        yMin: 0,
+        series: [{ label: 'F/L ∝ 1/d', color: c.F, pts }],
+        marker: { x: SC.d, y: curFL, color: c.F }
+      };
+    },
     theory:
       '<p>Cada conductor se halla inmerso en el campo magnético producido por el otro, experimentando la fuerza de Laplace:</p>' +
       '$$d\\vec{F}_{1\\to 2} = I_2\\,d\\vec{l}_2 \\times \\vec{B}_1, \\qquad \\frac{F}{L} = \\frac{\\mu_0\\,I_1\\,I_2}{2\\pi\\,d}$$' +

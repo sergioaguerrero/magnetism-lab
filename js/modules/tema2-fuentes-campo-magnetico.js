@@ -37,6 +37,11 @@
     metalness: 0.15
   });
   const probe = new THREE.Mesh(new THREE.SphereGeometry(0.32, 16, 12), probeMat);
+  const probeHandle = new THREE.Mesh(
+    new THREE.SphereGeometry(1.25, 12, 10),
+    new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })
+  );
+  probe.add(probeHandle);
   const pA = Sim.viz.createVector(V(0, 1, 0), V(), 3.6, Sim.scene.getPalette().mu, {
     radius: 0.078,
     label: 'B(P)'
@@ -322,6 +327,75 @@
     state: SB,
     getLive() {
       return liveB;
+    },
+    getDragTarget() {
+      return {
+        object: probeHandle,
+        hint: 'Arrastra la sonda en el plano XY',
+        getPos: () => V(SB.px, SB.py, 0),
+        setPos: (x, y) => {
+          SB.px = x;
+          SB.py = y;
+          onB();
+        },
+        bounds: { minX: -12, maxX: 12, minY: -12, maxY: 12, step: 0.5 }
+      };
+    },
+    getPlotData() {
+      const c = Sim.scene.getPalette().css;
+      const isAxial = SB.geo === 'espira' || SB.geo === 'helmholtz' || SB.geo === 'solenoide';
+      const numPts = [];
+      const anaPts = [];
+
+      if (isAxial) {
+        for (let y = -12; y <= 12; y += 0.5) {
+          const p = V(0, y, 0);
+          const bn = Bf(p).y * 1e6;
+          const ba = ana(p);
+          numPts.push([y, bn]);
+          anaPts.push([y, ba != null ? ba * 1e6 : NaN]);
+        }
+        const curY = Bf(V(0, SB.py, 0)).y * 1e6;
+        return {
+          title: 'Perfil axial B_y(y) en x = 0',
+          xLabel: 'y (cm)',
+          yUnit: 'μT',
+          xMin: -12,
+          xMax: 12,
+          yMin: 0,
+          series: [
+            { label: 'Biot-Savart', color: c.B, pts: numPts },
+            { label: 'Analítico', color: c.I, pts: anaPts, dashed: true }
+          ],
+          marker: { x: SB.py, y: curY, color: c.mu }
+        };
+      }
+
+      for (let x = -12; x <= 12; x += 0.4) {
+        if (Math.abs(x) < 1.2) {
+          numPts.push([+x.toFixed(2), NaN]);
+          anaPts.push([+x.toFixed(2), NaN]);
+          continue;
+        }
+        const p = V(x, SB.py, 0);
+        const bn = Bf(p).length() * 1e6;
+        const ba = ana(p);
+        numPts.push([+x.toFixed(2), bn]);
+        anaPts.push([+x.toFixed(2), ba != null ? ba * 1e6 : NaN]);
+      }
+      return {
+        title: `Perfil |B(x)| en y = ${SB.py} cm`,
+        xLabel: 'x (cm)',
+        yUnit: 'μT',
+        xMin: -12,
+        xMax: 12,
+        yMin: 0,
+        series: [
+          { label: 'Biot-Savart', color: c.B, pts: numPts },
+          { label: 'Analítico', color: c.I, pts: anaPts, dashed: true }
+        ],
+        marker: Math.abs(SB.px) >= 1.2 ? { x: SB.px, y: liveB.bMag * 1e6, color: c.mu } : null
+      };
     },
     theory:
       '<p>Cada elemento diferencial de corriente $I\\,d\\vec{l}$ (o una carga en movimiento $q\\vec{v}$) contribuye al campo magnético según la ley de Biot-Savart:</p>' +

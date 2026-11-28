@@ -141,6 +141,8 @@
   ];
 
   let sim;
+  let ekHist = [];
+  const EK_MAX = 160;
 
   function syncThemeColors() {
     const pal = Sim.scene.getPalette();
@@ -219,6 +221,7 @@
     };
 
     trail.n = 0;
+    ekHist = [[0, sim.Ek0 / E_]];
     const pal = Sim.scene.getPalette();
     ball.material.color.setHex(q > 0 ? pal.F : pal.south);
     if (!Sim.freeCam) {
@@ -344,6 +347,23 @@
       const F = sim.E.clone().add(sim.v.clone().cross(sim.B)).multiplyScalar(sim.q);
       return { p: ball.position, v: sim.v, B: sim.B, E: sim.E, F, q: sim.q, m: sim.m, s: sim.s };
     },
+    getPlotData() {
+      if (!sim) return null;
+      const c = Sim.scene.getPalette().css;
+      const tScale = sim.t > 1e-6 ? 1e6 : 1e9;
+      const tUnit = sim.t > 1e-6 ? 'μs' : 'ns';
+      const pts = ekHist.map(([t, ek]) => [t * tScale, ek]);
+      const last = pts[pts.length - 1] || [0, sim.Ek0 / E_];
+      return {
+        title: 'Energía cinética E_k(t)',
+        xLabel: `t (${tUnit})`,
+        yUnit: 'eV',
+        xMin: pts.length > 1 ? pts[0][0] : 0,
+        xMax: pts.length > 1 ? Math.max(pts[pts.length - 1][0], pts[0][0] + 1e-3) : 1,
+        series: [{ label: 'E_k(t)', color: c.I, pts }],
+        marker: { x: last[0], y: last[1], color: c.F }
+      };
+    },
     applyPreset(p) {
       SA.preset = p;
       applyPreset(p);
@@ -380,6 +400,11 @@
           boris(sim, sim.dt);
           pushT();
         }
+        if (fr % 3 === 0) {
+          const ekEv = (0.5 * sim.m * sim.v.lengthSq()) / E_;
+          ekHist.push([sim.t, ekEv]);
+          if (ekHist.length > EK_MAX) ekHist.shift();
+        }
         if (!Sim.freeCam) {
           const o = ctl.target.clone();
           ctl.target.lerp(ball.position, 0.03);
@@ -387,7 +412,10 @@
         }
       }
       visA();
-      if (fr % 6 === 0) roA();
+      if (fr % 6 === 0) {
+        roA();
+        if (!paused && Sim.plot && Sim.activeMod) Sim.plot.render(Sim.activeMod);
+      }
     }
   });
 })();

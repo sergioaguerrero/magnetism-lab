@@ -265,6 +265,35 @@
         omega
       };
     },
+    getPlotData() {
+      const c = Sim.scene.getPalette().css;
+      const Lm = SD.L * 1e-2;
+      const A = SD.shape === 'rect' ? Lm * Lm : Math.PI * (Lm / 2) * (Lm / 2);
+      const muB = SD.N * SD.I * A * (SD.B * 1e-3);
+      const uPts = [];
+      const tauPts = [];
+      for (let deg = -180; deg <= 180; deg += 4) {
+        const rad = (deg * Math.PI) / 180;
+        uPts.push([deg, -muB * Math.cos(rad) * 1e3]);
+        tauPts.push([deg, muB * Math.abs(Math.sin(rad)) * 1e3]);
+      }
+      let curDeg = ((curTh * 180) / Math.PI) % 360;
+      if (curDeg > 180) curDeg -= 360;
+      if (curDeg < -180) curDeg += 360;
+      const curU = -muB * Math.cos(curTh) * 1e3;
+      return {
+        title: 'Energía U(θ) y torque |τ(θ)|',
+        xLabel: 'θ (°)',
+        yUnit: 'mJ · mN·m',
+        xMin: -180,
+        xMax: 180,
+        series: [
+          { label: 'U(θ)', color: c.mu, pts: uPts },
+          { label: '|τ(θ)|', color: c.v, pts: tauPts, dashed: true }
+        ],
+        marker: { x: curDeg, y: curU, color: c.F }
+      };
+    },
     theory:
       '<p>Una espira plana de $N$ vueltas, área $A$ y corriente $I$ posee un momento dipolar $\\vec{\\mu} = N I A\\,\\hat{n}$. Dentro de un campo uniforme $\\vec{B}$ la fuerza neta es nula, pero aparece un par restaurador:</p>' +
       '$$\\vec{\\tau} = \\vec{\\mu} \\times \\vec{B}, \\qquad U = -\\vec{\\mu}\\cdot\\vec{B} = -\\mu\\,B\\,\\cos\\theta$$' +
@@ -294,6 +323,9 @@
         omega += alpha * step;
         curTh += omega * step;
         updateVisualsAndReadouts(fr % 4 === 0);
+        if (fr % 4 === 0 && Sim.plot && Sim.activeMod) {
+          Sim.plot.render(Sim.activeMod);
+        }
         if (fr % 15 === 0 && Sim.explainer && Sim.activeMod) {
           Sim.explainer.scheduleUpdate(Sim.activeMod);
         }

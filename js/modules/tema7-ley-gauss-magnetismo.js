@@ -52,6 +52,7 @@
 
   let SG = { m: [], d: [] };
   let liveGauss = { phiOut: 0, phiIn: 0, phiNet: 0 };
+  let gaussHandle = null;
 
   function buildSourceSegments() {
     SG = { m: [], d: [] };
@@ -279,6 +280,7 @@
       const wire = new THREE.Mesh(sphGeo, wireMat);
       mesh.position.set(cx, cy, 0);
       wire.position.set(cx, cy, 0);
+      gaussHandle = mesh;
       gaussGrp.add(mesh, wire);
     } else {
       const boxGeo = new THREE.BoxGeometry(2 * R, 2 * R, 2 * R);
@@ -289,6 +291,7 @@
       );
       mesh.position.set(cx, cy, 0);
       edges.position.set(cx, cy, 0);
+      gaussHandle = mesh;
       gaussGrp.add(mesh, edges);
     }
 
@@ -331,6 +334,36 @@
     state: SF,
     getLive() {
       return liveGauss;
+    },
+    getDragTarget() {
+      if (!gaussHandle) return null;
+      return {
+        object: gaussHandle,
+        hint: 'Arrastra la superficie S en el plano XY',
+        getPos: () => V(SF.gx, SF.gy, 0),
+        setPos: (x, y) => {
+          SF.gx = x;
+          SF.gy = y;
+          onF();
+        },
+        bounds: { minX: -7, maxX: 7, minY: -7, maxY: 7, step: 0.5 }
+      };
+    },
+    getPlotData() {
+      const c = Sim.scene.getPalette().css;
+      const outU = liveGauss.phiOut * 1e6;
+      const inU = liveGauss.phiIn * 1e6;
+      const netU = liveGauss.phiNet * 1e6;
+      return {
+        kind: 'balance',
+        title: 'Balance de flujo en superficie S',
+        unit: 'μWb',
+        bars: [
+          { label: 'Φ saliente', val: outU, color: c.B, text: '+' + fm(outU) },
+          { label: 'Φ entrante', val: inU, color: c.F, text: '−' + fm(Math.abs(inU)) },
+          { label: 'Φ neto', val: netU, color: c.v, text: fm(netU) }
+        ]
+      };
     },
     theory:
       '<p>Las líneas de campo magnético son curvas cerradas sin principio ni fin. Por ello, el flujo magnético neto a través de cualquier superficie cerrada $S$ es idénticamente nulo:</p>' +

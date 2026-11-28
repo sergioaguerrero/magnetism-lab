@@ -351,6 +351,29 @@
         deg: (curTh * 180) / Math.PI
       };
     },
+    getPlotData() {
+      const c = Sim.scene.getPalette().css;
+      const Lm = SE.L * 1e-2;
+      const A = SE.shape === 'disco' ? Math.PI * (Lm / 2) * (Lm / 2) : Lm * Lm;
+      const phiMax = SE.B * 1e-3 * A * 1e6;
+      const pts = [];
+      for (let deg = -180; deg <= 180; deg += 4) {
+        pts.push([deg, phiMax * Math.cos((deg * Math.PI) / 180)]);
+      }
+      const curDeg = (curTh * 180) / Math.PI;
+      const curPhi = phiMax * Math.cos(curTh);
+      return {
+        title: 'Flujo magnético Φ_B(θ)',
+        xLabel: 'θ (°)',
+        yUnit: 'μWb',
+        xMin: -180,
+        xMax: 180,
+        yMin: -phiMax * 1.15,
+        yMax: phiMax * 1.15,
+        series: [{ label: 'Φ_B = BA·cos θ', color: c.B, pts }],
+        marker: { x: curDeg, y: curPhi, color: curPhi >= 0 ? c.B : c.F }
+      };
+    },
     theory:
       '<p>El flujo magnético a través de una superficie abierta $S$ mide el paso neto de líneas de campo respecto a la orientación definida por $\\hat{n}$:</p>' +
       '$$\\Phi_B = \\int_S \\vec{B} \\cdot d\\vec{A} = B\\,A\\,\\cos\\theta \\qquad [1\\text{ Wb} = 1\\text{ T}\\cdot\\text{m}^2]$$' +
@@ -377,6 +400,9 @@
         updateScene(shouldRo);
         if (shouldRo && Sim.ui && Sim.ui.syncControls) {
           Sim.ui.syncControls();
+        }
+        if (shouldRo && Sim.plot && Sim.activeMod) {
+          Sim.plot.render(Sim.activeMod);
         }
         if (fr % 15 === 0 && Sim.explainer && Sim.activeMod) {
           Sim.explainer.scheduleUpdate(Sim.activeMod);

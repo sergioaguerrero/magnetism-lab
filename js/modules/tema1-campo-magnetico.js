@@ -113,9 +113,11 @@
   }
 
   let liveMagnet = { pp: V(S0.px, S0.py, 0), bLocal: V(0, 1, 0), bMag: 0, angDeg: 0 };
+  let compassHandle = null;
 
   function on0() {
     Sim.scene.clearGroup(mainGrp);
+    compassHandle = null;
     const pal = Sim.scene.getPalette();
 
     if (S0.modo === 'vectorial') {
@@ -291,6 +293,14 @@
       compassPivot.position.copy(pp);
       mainGrp.add(compassPivot);
 
+      /* Volumen invisible más amplio para agarrar la brújula cómodamente con el ratón */
+      compassHandle = new THREE.Mesh(
+        new THREE.SphereGeometry(1.15, 12, 10),
+        new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })
+      );
+      compassHandle.position.copy(pp);
+      mainGrp.add(compassHandle);
+
       mainGrp.add(Sim.viz.createVector(bDir, pp, 2.5, pal.F, { radius: 0.085 }));
       mainGrp.add(Sim.viz.createVector(bDir.clone().negate(), pp, 2.0, pal.south, { radius: 0.075 }));
       mainGrp.add(Sim.viz.createVector(bDir, pp, 3.6, pal.B, { radius: 0.048, label: 'B' }));
@@ -317,6 +327,58 @@
     state: S0,
     getLive() {
       return liveMagnet;
+    },
+    getDragTarget() {
+      if (S0.modo !== 'iman' || !compassHandle) return null;
+      return {
+        object: compassHandle,
+        hint: 'Arrastra la brújula en el plano XY',
+        getPos: () => V(S0.px, S0.py, 0),
+        setPos: (x, y) => {
+          S0.px = x;
+          S0.py = y;
+          on0();
+        },
+        bounds: { minX: -8, maxX: 8, minY: -8, maxY: 8, step: 0.5 }
+      };
+    },
+    getPlotData() {
+      const c = Sim.scene.getPalette().css;
+      if (S0.modo === 'vectorial') {
+        const qC = S0.q * 1e-6;
+        const B = S0.B * 1e-3;
+        const pts = [];
+        for (let deg = 0; deg <= 180; deg += 3) {
+          const fMicro = qC * S0.v * B * Math.sin((deg * Math.PI) / 180) * 1e6;
+          pts.push([deg, fMicro]);
+        }
+        const curF = qC * S0.v * B * Math.sin((S0.th * Math.PI) / 180) * 1e6;
+        return {
+          title: 'Fuerza magnética |F_B(θ)|',
+          xLabel: 'θ (°)',
+          yUnit: 'μN',
+          xMin: 0,
+          xMax: 180,
+          yMin: 0,
+          series: [{ label: '|F_B| = |q|vB·sin θ', color: c.F, pts }],
+          marker: { x: S0.th, y: curF, color: c.F }
+        };
+      }
+      const pts = [];
+      for (let x = -8; x <= 8; x += 0.4) {
+        const bMt = calcMagnetField(V(x, S0.py, 0)).length() * 1e3;
+        pts.push([+x.toFixed(2), bMt]);
+      }
+      return {
+        title: `Perfil |B(x)| en y = ${S0.py} cm`,
+        xLabel: 'x (cm)',
+        yUnit: 'mT',
+        xMin: -8,
+        xMax: 8,
+        yMin: 0,
+        series: [{ label: '|B(x)| dipolar', color: c.B, pts }],
+        marker: { x: S0.px, y: liveMagnet.bMag * 1e3, color: c.F }
+      };
     },
     theory:
       '<p>La fuerza magnética sobre una carga puntual $q$ que se desplaza con velocidad $\\vec{v}$ en un campo $\\vec{B}$ define operacionalmente el vector de inducción magnética:</p>' +
