@@ -20,11 +20,11 @@ const P = {
   a: [2 * E_, 6.6446573e-27]
 };
 
-const V = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
+const V = (x = 0, y = 0, z = 0) => (typeof THREE !== 'undefined' ? new THREE.Vector3(x, y, z) : { x, y, z });
 const $ = (id) => document.getElementById(id);
 
 const fm = (x) => {
-  if (x === 0) return '0';
+  if (!isFinite(x) || x === 0) return '0';
   const a = Math.abs(x);
   return a >= 0.01 && a < 1e5 ? String(+x.toPrecision(4)) : x.toExponential(3);
 };
