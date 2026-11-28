@@ -12,39 +12,29 @@
   let dirty = true;
   let lastCamHash = '';
 
-  /* Marcador 3D luminoso que señala el vector/elemento seleccionado en la escena */
+  /* Marcador geométrico discreto que señala el elemento inspeccionado */
   const markerGrp = new THREE.Group();
   markerGrp.visible = false;
   scene.add(markerGrp);
 
-  const ringGeo = new THREE.RingGeometry(0.42, 0.58, 32);
+  const ringGeo = new THREE.RingGeometry(0.38, 0.48, 32);
   const ringMat = new THREE.MeshBasicMaterial({
-    color: 0x38bdf8,
+    color: 0x1b4d63,
     side: THREE.DoubleSide,
     transparent: true,
-    opacity: 0.85,
+    opacity: 0.9,
     depthTest: false
   });
   const ringMesh = new THREE.Mesh(ringGeo, ringMat);
   ringMesh.renderOrder = 999;
-
-  const haloGeo = new THREE.SphereGeometry(0.38, 16, 12);
-  const haloMat = new THREE.MeshBasicMaterial({
-    color: 0x38bdf8,
-    transparent: true,
-    opacity: 0.28,
-    depthTest: false
-  });
-  const haloMesh = new THREE.Mesh(haloGeo, haloMat);
-  haloMesh.renderOrder = 998;
-  markerGrp.add(ringMesh, haloMesh);
+  markerGrp.add(ringMesh);
 
   let camAnim = null;
 
   function animateCameraTo(targetPos, offsetVec) {
     camAnim = {
       t0: performance.now(),
-      dur: 520,
+      dur: 420,
       startTarget: ctl.target.clone(),
       startCam: cam.position.clone(),
       endTarget: targetPos.clone(),
@@ -52,7 +42,6 @@
     };
   }
 
-  /* Leyenda contextual: solo muestra los elementos que existen realmente en el tema y modo activo */
   function getLegendItems(mod) {
     if (!mod) return [];
     const S = mod.state || {};
@@ -61,91 +50,89 @@
     if (mod.id === 'campo-magnetico') {
       if (S.modo === 'iman') {
         return [
-          { key: 'B', color: c.B, label: 'Campo $\\vec{B}$ local' },
+          { key: 'B', color: c.B, label: 'Campo $\\vec{B}$' },
           { key: 'I', color: c.I, label: 'Imán N–S' },
-          { key: 'F', color: c.F, label: 'Brújula 3D' }
+          { key: 'F', color: c.F, label: 'Brújula' }
         ];
       }
       return [
-        { key: 'B', color: c.B, label: 'Campo $\\vec{B}$' },
-        { key: 'v', color: c.v, label: 'Velocidad $\\vec{v}$' },
-        { key: 'vxb', color: c.vxb, label: 'Producto $\\vec{v}\\times\\vec{B}$' },
-        { key: 'F', color: c.F, label: 'Fuerza $\\vec{F}_B$' },
-        { key: 'I', color: c.I, label: 'Carga de prueba $q$' }
+        { key: 'B', color: c.B, label: '$\\vec{B}$' },
+        { key: 'v', color: c.v, label: '$\\vec{v}$' },
+        { key: 'vxb', color: c.vxb, label: '$\\vec{v}\\times\\vec{B}$' },
+        { key: 'F', color: c.F, label: '$\\vec{F}_B$' },
+        { key: 'I', color: c.I, label: 'Carga $q$' }
       ];
     }
 
     if (mod.id === 'fuentes-campo') {
       const items = [
-        { key: 'B', color: c.B, label: 'Líneas de $\\vec{B}$' },
-        { key: 'mu', color: c.mu, label: 'Sonda $\\vec{B}(x,y)$' },
-        { key: 'F', color: c.F, label: 'Intensidad $|\\vec{B}|$' },
-        { key: 'vxb', color: c.vxb, label: 'Regla mano der.' }
+        { key: 'B', color: c.B, label: 'Líneas $\\vec{B}$' },
+        { key: 'mu', color: c.mu, label: 'Sonda' },
+        { key: 'F', color: c.F, label: 'Escala $|\\vec{B}|$' }
       ];
       if (S.geo === 'carga_mov') {
-        items.splice(1, 0, { key: 'v', color: c.v, label: 'Velocidad $q\\vec{v}$' });
+        items.splice(1, 0, { key: 'v', color: c.v, label: '$q\\vec{v}$' });
       } else {
-        items.splice(1, 0, { key: 'I', color: c.I, label: 'Corriente $I\\,d\\vec{l}$' });
+        items.splice(1, 0, { key: 'I', color: c.I, label: '$I\\,d\\vec{l}$' });
       }
       return items;
     }
 
     if (mod.id === 'fuerza-corrientes') {
       return [
-        { key: 'I', color: c.I, label: 'Corriente $I_1$' },
-        { key: 'v', color: c.v, label: 'Corriente $I_2$' },
-        { key: 'B', color: c.B, label: 'Campo $\\vec{B}_{1\\to 2}$' },
-        { key: 'F', color: c.F, label: 'Fuerza $\\Delta\\vec{F}$' },
-        { key: 'mu', color: c.mu, label: 'Segmento $\\Delta l$' }
+        { key: 'I', color: c.I, label: '$I_1$' },
+        { key: 'v', color: c.v, label: '$I_2$' },
+        { key: 'B', color: c.B, label: '$\\vec{B}_{1\\to 2}$' },
+        { key: 'F', color: c.F, label: '$\\Delta\\vec{F}$' },
+        { key: 'mu', color: c.mu, label: 'Tramo $\\Delta l$' }
       ];
     }
 
     if (mod.id === 'torque-lazo') {
       return [
-        { key: 'B', color: c.B, label: 'Campo $\\vec{B}$' },
-        { key: 'I', color: c.I, label: 'Espira $N\\cdot I$' },
-        { key: 'mu', color: c.mu, label: 'Dipolo $\\vec{\\mu}$' },
-        { key: 'F', color: c.F, label: 'Par $\\vec{F}_1, \\vec{F}_2$' },
-        { key: 'v', color: c.v, label: 'Torque $\\vec{\\tau}$' }
+        { key: 'B', color: c.B, label: '$\\vec{B}$' },
+        { key: 'I', color: c.I, label: 'Espira $NI$' },
+        { key: 'mu', color: c.mu, label: '$\\vec{\\mu}$' },
+        { key: 'F', color: c.F, label: '$\\vec{F}_1, \\vec{F}_2$' },
+        { key: 'v', color: c.v, label: '$\\vec{\\tau}$' }
       ];
     }
 
     if (mod.id === 'movimiento-particula') {
       const items = [
-        { key: 'B', color: c.B, label: 'Campo $\\vec{B}$' },
-        { key: 'v', color: c.v, label: 'Velocidad $\\vec{v}$' },
-        { key: 'F', color: c.F, label: 'Fuerza $\\vec{F}$' },
-        { key: 'I', color: c.I, label: 'Trayectoria 3D' }
+        { key: 'B', color: c.B, label: '$\\vec{B}$' },
+        { key: 'v', color: c.v, label: '$\\vec{v}$' },
+        { key: 'F', color: c.F, label: '$\\vec{F}$' },
+        { key: 'I', color: c.I, label: 'Trayectoria' }
       ];
       if (S.rhr === 'si') {
-        items.push({ key: 'vxb', color: c.vxb, label: 'Pulgar $\\vec{v}\\times\\vec{B}$' });
+        items.push({ key: 'vxb', color: c.vxb, label: '$\\vec{v}\\times\\vec{B}$' });
       }
       if (S.E > 0) {
-        items.push({ key: 'mu', color: c.mu, label: 'Fuerza $\\vec{F}_E$' });
+        items.push({ key: 'mu', color: c.mu, label: '$\\vec{F}_E$' });
       }
       return items;
     }
 
     if (mod.id === 'flujo-magnetico') {
       return [
-        { key: 'B', color: c.B, label: 'Campo $\\vec{B}$' },
+        { key: 'B', color: c.B, label: '$\\vec{B}$' },
         { key: 'mu', color: c.mu, label: 'Normal $\\hat{n}$' },
         { key: 'I', color: c.I, label: 'Superficie $A$' },
-        { key: 'v', color: c.v, label: 'Área $A\\cos\\theta$' },
-        { key: 'vxb', color: c.vxb, label: 'Ángulo $\\theta$' },
-        { key: 'F', color: c.F, label: 'Signo de $\\Phi_B$' }
+        { key: 'v', color: c.v, label: '$A\\cos\\theta$' },
+        { key: 'vxb', color: c.vxb, label: 'Ángulo $\\theta$' }
       ];
     }
 
     if (mod.id === 'ley-gauss') {
       const items = [
-        { key: 'B', color: c.B, label: 'Flujo saliente' },
-        { key: 'F', color: c.F, label: 'Flujo entrante' },
+        { key: 'B', color: c.B, label: '$\\Phi_{\\text{sal}} > 0$' },
+        { key: 'F', color: c.F, label: '$\\Phi_{\\text{ent}} < 0$' },
         { key: 'v', color: c.v, label: 'Superficie $S$' },
         { key: 'I', color: c.I, label: S.source === 'dipolo' ? 'Imán N–S' : 'Espira $I$' }
       ];
       if (S.source === 'dipolo') {
-        items.push({ key: 'mu', color: c.mu, label: 'Dipolo $\\vec{\\mu}$' });
+        items.push({ key: 'mu', color: c.mu, label: '$\\vec{\\mu}$' });
       }
       return items;
     }
@@ -169,7 +156,7 @@
     container.innerHTML = items
       .map(
         (it) =>
-          `<button type="button" class="leg-item${activeKey === it.key ? ' on' : ''}" data-vec="${it.key}"><i class="dot" style="background:${it.color}"></i><span>${it.label}</span></button>`
+          `<button type="button" class="leg-item${activeKey === it.key ? ' on' : ''}" data-vec="${it.key}" title="Inspeccionar en escena"><i class="dot" style="background:${it.color}"></i><span>${it.label}</span></button>`
       )
       .join('');
 
@@ -187,7 +174,6 @@
     const S = mod.state || {};
     const c = Sim.scene.getPalette().css;
 
-    /* ===== Tema 1: Campo magnético ===== */
     if (mod.id === 'campo-magnetico') {
       if (S.modo === 'iman') {
         const live = mod.getLive ? mod.getLive() : { pp: V(S.px, S.py, 0), bLocal: V(0, 1, 0), bMag: 0, angDeg: 0 };
@@ -196,9 +182,9 @@
             pos: live.pp.clone().add(V(0, 0.8, 0)),
             offset: V(7, 5, 10),
             color: c.B,
-            title: 'Campo magnético local $\\vec{B}(x, y)$',
-            val: `|B| = ${fm(live.bMag * 1e3)} mT  ·  (${fm(live.bLocal.x * 1e3)}, ${fm(live.bLocal.y * 1e3)}) mT`,
-            desc: 'Vector tangente a las líneas de campo que salen del Polo Norte y entran al Polo Sur.'
+            title: 'Campo local $\\vec{B}(x, y)$',
+            val: `|B| = ${fm(live.bMag * 1e3)} mT · (${fm(live.bLocal.x * 1e3)}, ${fm(live.bLocal.y * 1e3)}) mT`,
+            desc: 'Tangente a las líneas del dipolo en la posición de la brújula.'
           };
         }
         if (key === 'I') {
@@ -206,9 +192,9 @@
             pos: V(0, 0, 0),
             offset: V(8, 5, 11),
             color: c.I,
-            title: 'Imán permanente de barra (Polos N–S)',
-            val: `Polo Norte en +Y (rojo) · Polo Sur en −Y (azul)`,
-            desc: 'Fuente dipolar magnética cuya intensidad se controla con el slider B.'
+            title: 'Imán permanente (N–S)',
+            val: 'Polo Norte +Y · Polo Sur −Y',
+            desc: 'Dipolo magnético alineado sobre el eje vertical.'
           };
         }
         if (key === 'F') {
@@ -216,9 +202,9 @@
             pos: live.pp.clone(),
             offset: V(7, 5, 10),
             color: c.F,
-            title: 'Brújula magnética 3D',
-            val: `Posición (${S.px} cm, ${S.py} cm)  ·  Ángulo ${live.angDeg}°`,
-            desc: 'La aguja Norte (roja) se alinea automáticamente en la dirección de B local.'
+            title: 'Brújula 3D',
+            val: `(${S.px}, ${S.py}) cm · α = ${live.angDeg}°`,
+            desc: 'La aguja Norte se orienta paralela al vector B local.'
           };
         }
         return null;
@@ -236,9 +222,9 @@
           pos: V(0, 3.2, 0),
           offset: V(7, 5, 10),
           color: c.B,
-          title: 'Vector Campo Magnético $\\vec{B}$ (Dedo medio)',
-          val: `|B| = ${S.B} mT (${fm(S.B * 1e-3)} T) en dirección +Y`,
-          desc: 'Define la dirección de las líneas de fuerza magnética en la región.'
+          title: 'Campo magnético $\\vec{B}$',
+          val: `|B| = ${S.B} mT (+Y)`,
+          desc: 'Campo uniforme vertical que define el plano de interacción junto a v.'
         };
       }
       if (key === 'I') {
@@ -246,9 +232,9 @@
           pos: V(0, 0, 0),
           offset: V(8, 5, 11),
           color: c.I,
-          title: 'Carga eléctrica de prueba $q$',
+          title: 'Carga de prueba $q$',
           val: `q = ${qSign > 0 ? '+' : '−'}${S.q} μC`,
-          desc: 'Partícula situada en el origen del sistema de coordenadas.'
+          desc: 'Carga puntual ubicada en el origen.'
         };
       }
       if (key === 'v') {
@@ -256,9 +242,9 @@
           pos: V(3.2 * sTh, 3.2 * cTh, 0),
           offset: V(7, 5, 10),
           color: c.v,
-          title: 'Vector velocidad $\\vec{v}$ (Dedo índice)',
-          val: `|v| = ${S.v} m/s  ·  Ángulo θ = ${S.th}° con B`,
-          desc: 'Vector velocidad de la carga de prueba contenido en el plano XY.'
+          title: 'Velocidad $\\vec{v}$',
+          val: `|v| = ${S.v} m/s · θ = ${S.th}°`,
+          desc: 'Vector contenido en el plano XY.'
         };
       }
       if (key === 'F') {
@@ -266,9 +252,9 @@
           pos: V(0, 0, 3.2 * qSign),
           offset: V(7, 5, 10),
           color: c.F,
-          title: 'Fuerza magnética $\\vec{F}_B = q(\\vec{v}\\times\\vec{B})$',
+          title: 'Fuerza $\\vec{F}_B = q(\\vec{v}\\times\\vec{B})$',
           val: `|F_B| = ${fm(FB * 1e6)} μN (${qSign > 0 ? '+Z' : '−Z'})`,
-          desc: 'Perpendicular tanto al campo B como a la velocidad v de la partícula.'
+          desc: 'Perpendicular al plano definido por v y B.'
         };
       }
       if (key === 'vxb') {
@@ -276,26 +262,25 @@
           pos: V(0, 0, 3.0),
           offset: V(7, 5, 10),
           color: c.vxb,
-          title: 'Producto cruz $\\vec{v}\\times\\vec{B}$ y paralelogramo',
-          val: `|v × B| = v·B·sin(${S.th}°) = ${fm(vxb)} V/m`,
-          desc: 'El área del paralelogramo sombreado representa la magnitud del producto vectorial v × B.'
+          title: 'Producto vectorial $\\vec{v}\\times\\vec{B}$',
+          val: `|v × B| = ${fm(vxb)} V/m`,
+          desc: 'Módulo igual al área del paralelogramo sombreado.'
         };
       }
     }
 
-    /* ===== Tema 2: Fuentes de campo (Biot-Savart) ===== */
     if (mod.id === 'fuentes-campo') {
       const pp = V(S.px, S.py, 0);
-      const live = mod.getLive ? mod.getLive() : { bMag: 0, bAna: null };
+      const live = mod.getLive ? mod.getLive() : { bMag: 0 };
 
       if (key === 'B') {
         return {
           pos: V(4, 2, 0),
           offset: V(8, 6, 14),
           color: c.B,
-          title: 'Campo magnético $\\vec{B}(\\vec{r})$ (Biot-Savart)',
-          val: `Fuente: ${S.geo.toUpperCase()}  ·  |B| en sonda = ${fm(live.bMag * 1e6)} μT`,
-          desc: 'Líneas de campo cerradas (verdes) y mapa vectorial en el plano z = 0.'
+          title: 'Líneas de campo $\\vec{B}$',
+          val: `|B| en sonda = ${fm(live.bMag * 1e6)} μT`,
+          desc: 'Curvas integradas numéricamente a partir de la ley de Biot-Savart.'
         };
       }
       if (key === 'I') {
@@ -304,9 +289,9 @@
           pos: iPos,
           offset: V(8, 6, 12),
           color: c.I,
-          title: 'Conductor y elemento de corriente $I\\,d\\vec{l}$',
-          val: `Corriente I = ${S.I} A  ·  Geometría: ${S.geo}`,
-          desc: 'Camino físico de la corriente eléctrica dividido en segmentos diferenciales dl.'
+          title: 'Corriente $I\\,d\\vec{l}$',
+          val: `I = ${S.I} A`,
+          desc: 'Trayectoria del conductor discretizada en elementos diferenciales.'
         };
       }
       if (key === 'v') {
@@ -314,9 +299,9 @@
           pos: V(0, 1.8, 0),
           offset: V(7, 5, 11),
           color: c.v,
-          title: 'Carga puntual y velocidad $q\\vec{v}$',
+          title: 'Carga móvil $q\\vec{v}$',
           val: `q·v = ${fm(S.I * 0.01)} C·m/s (+Y)`,
-          desc: 'Dirección de movimiento de la carga puntual que origina el campo magnético.'
+          desc: 'Fuente puntual en movimiento sobre el eje vertical.'
         };
       }
       if (key === 'F') {
@@ -324,9 +309,9 @@
           pos: V(2, 0, 0),
           offset: V(7, 5, 11),
           color: c.F,
-          title: 'Zona de máxima intensidad de $|\\vec{B}|$',
-          val: 'Escala térmica logarítmica (rojo = máximo |B|)',
-          desc: 'Las flechas cercanas a la fuente se tiñen de rojo donde la magnitud del campo es mayor.'
+          title: 'Mapa de intensidad $|\\vec{B}|$',
+          val: 'Escala logarítmica sobre z = 0',
+          desc: 'Indica dirección local y decaimiento espacial respecto a la fuente.'
         };
       }
       if (key === 'mu') {
@@ -334,24 +319,13 @@
           pos: pp,
           offset: V(7, 5, 12),
           color: c.mu,
-          title: 'Sonda de medida $\\vec{B}(x, y, 0)$',
-          val: `(${S.px} cm, ${S.py} cm, 0)  ·  |B| = ${fm(live.bMag * 1e6)} μT`,
-          desc: 'Punto donde se compara el cálculo numérico de Biot-Savart contra la fórmula analítica.'
-        };
-      }
-      if (key === 'vxb') {
-        return {
-          pos: pp.clone().multiplyScalar(0.5),
-          offset: V(8, 6, 13),
-          color: c.vxb,
-          title: 'Regla de la mano derecha ($d\\vec{l} \\times \\hat{r}$)',
-          val: S.geo === 'carga_mov' ? 'B ∝ (q·v × r̂) / r²' : 'dB ∝ (I·dl × r̂) / r²',
-          desc: 'El pulgar sigue la dirección de la fuente (+Y) y los dedos indican el sentido de las líneas de B.'
+          title: 'Sonda $\\vec{B}(x, y, 0)$',
+          val: `(${S.px}, ${S.py}, 0) cm · ${fm(live.bMag * 1e6)} μT`,
+          desc: 'Punto de comparación entre integración discreta y fórmula analítica.'
         };
       }
     }
 
-    /* ===== Tema 3: Fuerza entre corrientes ===== */
     if (mod.id === 'fuerza-corrientes') {
       const x1 = -S.d / 2;
       const x2 = S.d / 2;
@@ -366,9 +340,9 @@
           pos: V(x2, S.y0, -2.0),
           offset: V(8, 5, 11),
           color: c.B,
-          title: 'Campo magnético $\\vec{B}_{1\\to 2}$',
-          val: `|B₁| = ${fm(B1 * 1e6)} μT (dirección −Z en el hilo 2)`,
-          desc: 'Campo magnético circular creado por el hilo 1 que atraviesa perpendicularmente al hilo 2.'
+          title: 'Campo $\\vec{B}_{1\\to 2}$',
+          val: `|B₁| = ${fm(B1 * 1e6)} μT (−Z)`,
+          desc: 'Campo generado por el hilo 1 en la posición del hilo 2.'
         };
       }
       if (key === 'I') {
@@ -376,9 +350,9 @@
           pos: V(x1, S.y0 + 1.5, 0),
           offset: V(8, 5, 11),
           color: c.I,
-          title: 'Corriente del Conductor 1 ($I_1\\,d\\vec{l}_1$)',
-          val: `I₁ = ${S.I1} A (+Y)  ·  x₁ = ${x1} cm`,
-          desc: 'Primer conductor rectilíneo con corriente vertical hacia +Y.'
+          title: 'Conductor 1 ($I_1$)',
+          val: `I₁ = ${S.I1} A (+Y) · x₁ = ${x1} cm`,
+          desc: 'Corriente fija en sentido positivo del eje Y.'
         };
       }
       if (key === 'v') {
@@ -386,9 +360,9 @@
           pos: V(x2, S.y0 + 1.5 * s2, 0),
           offset: V(8, 5, 11),
           color: c.v,
-          title: 'Corriente del Conductor 2 ($I_2\\,d\\vec{l}_2$)',
-          val: `I₂ = ${S.I2} A (${s2 > 0 ? '+Y ⇈' : '−Y ⇅'})  ·  x₂ = +${x2} cm`,
-          desc: 'Segundo conductor paralelo cuyo sentido relativo define atracción o repulsión.'
+          title: 'Conductor 2 ($I_2$)',
+          val: `I₂ = ${S.I2} A (${s2 > 0 ? '+Y' : '−Y'}) · x₂ = +${x2} cm`,
+          desc: 'Su sentido relativo determina atracción o repulsión.'
         };
       }
       if (key === 'F') {
@@ -396,9 +370,9 @@
           pos: V(x2 - s2 * 1.8, S.y0, 0),
           offset: V(7, 5, 11),
           color: c.F,
-          title: 'Fuerza magnética $\\Delta\\vec{F} = I_2\\,\\Delta\\vec{l}_2 \\times \\vec{B}_1$',
-          val: `ΔF = ${fm(dF * 1e6)} μN  ·  F/L = ${fm(FperL * 1e6)} μN/m (${s2 > 0 ? 'Atracción' : 'Repulsión'})`,
-          desc: 'Par acción-reacción de fuerzas magnéticas entre ambos conductores.'
+          title: 'Fuerza $\\Delta\\vec{F}$',
+          val: `ΔF = ${fm(dF * 1e6)} μN · F/L = ${fm(FperL * 1e6)} μN/m`,
+          desc: s2 > 0 ? 'Fuerzas atractivas (acción y reacción).' : 'Fuerzas repulsivas (acción y reacción).'
         };
       }
       if (key === 'mu') {
@@ -406,19 +380,17 @@
           pos: V(x2, S.y0, 0),
           offset: V(7, 4, 10),
           color: c.mu,
-          title: 'Segmento diferencial resaltado ($\\Delta l$)',
-          val: `Longitud Δl = ${S.dl} cm  ·  Altura y₀ = ${S.y0} cm`,
-          desc: 'Tramo sobre el que se integra numéricamente la fuerza de Laplace.'
+          title: 'Segmento $\\Delta l$',
+          val: `Δl = ${S.dl} cm · y₀ = ${S.y0} cm`,
+          desc: 'Tramo sobre el que se integra la fuerza magnética.'
         };
       }
     }
 
-    /* ===== Tema 4: Torque sobre lazo ===== */
     if (mod.id === 'torque-lazo') {
       const live = mod.getLive ? mod.getLive() : { curTh: (S.th0 * Math.PI) / 180, deg: S.th0 };
       const thRad = live.curTh;
       const degTxt = live.deg.toFixed(1);
-
       const Lm = S.L * 1e-2;
       const A = S.shape === 'rect' ? Lm * Lm : Math.PI * (Lm / 2) * (Lm / 2);
       const B = S.B * 1e-3;
@@ -433,9 +405,9 @@
           pos: V(3.2, 0, 0),
           offset: V(7, 6, 10),
           color: c.B,
-          title: 'Campo magnético uniforme $\\vec{B}$',
-          val: `|B| = ${S.B} mT (dirección +X)`,
-          desc: 'Campo magnético externo uniforme que ejerce torque sobre el dipolo.'
+          title: 'Campo uniforme $\\vec{B}$',
+          val: `|B| = ${S.B} mT (+X)`,
+          desc: 'Campo externo horizontal uniforme.'
         };
       }
       if (key === 'I') {
@@ -443,9 +415,9 @@
           pos: uDir.clone().multiplyScalar(S.L / 2),
           offset: V(7, 6, 10),
           color: c.I,
-          title: 'Espira conductora ($N\\cdot I$)',
-          val: `I = ${S.I} A  ·  N = ${S.N} vueltas  ·  L = ${S.L} cm`,
-          desc: 'Lazo conductor por el que circula la corriente I.'
+          title: 'Espira conductora',
+          val: `I = ${S.I} A · N = ${S.N} · L = ${S.L} cm`,
+          desc: 'Circuito cerrado sometido al par magnético.'
         };
       }
       if (key === 'v') {
@@ -454,9 +426,9 @@
           pos: V(0, sTh >= 0 ? -2.4 : 2.4, 0),
           offset: V(7, 6, 10),
           color: c.v,
-          title: 'Vector Momento de Torsión $\\vec{\\tau} = \\vec{\\mu} \\times \\vec{B}$',
-          val: `|τ| = ${fm(tau)} N·m  ·  θ actual = ${degTxt}°`,
-          desc: 'Torque axial en el eje Y que alinea μ con B hacia θ = 0°.'
+          title: 'Torque $\\vec{\\tau} = \\vec{\\mu}\\times\\vec{B}$',
+          val: `|τ| = ${fm(tau)} N·m · θ = ${degTxt}°`,
+          desc: 'Dirigido sobre el eje de rotación Y.'
         };
       }
       if (key === 'F') {
@@ -464,9 +436,9 @@
           pos: uDir.clone().multiplyScalar(S.L / 2).add(V(0, 0, -2.0)),
           offset: V(7, 6, 10),
           color: c.F,
-          title: 'Par de fuerzas laterales ($\\vec{F}_1, \\vec{F}_2$)',
-          val: `F_brazo = ${fm(Farm)} N  ·  ∑F = 0 N`,
-          desc: 'Fuerzas iguales y opuestas sobre los brazos verticales que producen el giro.'
+          title: 'Par de fuerzas laterales',
+          val: `F = ${fm(Farm)} N · ∑F = 0 N`,
+          desc: 'Fuerzas opuestas en los brazos verticales que producen el giro.'
         };
       }
       if (key === 'mu') {
@@ -474,16 +446,15 @@
           pos: nDir.clone().multiplyScalar(3.2),
           offset: V(7, 6, 10),
           color: c.mu,
-          title: 'Momento dipolar magnético $\\vec{\\mu} = N I A\\,\\hat{n}$',
-          val: `|μ| = ${fm(mu)} A·m²  ·  θ actual = ${degTxt}°`,
-          desc: 'Vector perpendicular al plano de la espira que tiende a alinearse con B.'
+          title: 'Momento dipolar $\\vec{\\mu}$',
+          val: `|μ| = ${fm(mu)} A·m² · θ = ${degTxt}°`,
+          desc: 'Normal al plano de la espira; tiende a alinearse con B.'
         };
       }
     }
 
-    /* ===== Tema 5: Movimiento de partícula ===== */
     if (mod.id === 'movimiento-particula') {
-      const live = mod.getLive ? mod.getLive() : { p: V(), v: V(1, 0, 0), B: V(0, 1, 0), E: V(), F: V(), q: -E_, m: 9.1e-31, s: 1 };
+      const live = mod.getLive ? mod.getLive() : { p: V(), v: V(1, 0, 0), B: V(0, 1, 0), E: V(), F: V(), q: -E_, m: 9.1e-31 };
       const p = live.p.clone();
       const vDir = live.v.length() > 1e-9 ? live.v.clone().normalize() : V(1, 0, 0);
       const vxb = live.v.clone().cross(live.B);
@@ -495,9 +466,9 @@
           pos: p.clone().add(V(0, 1.8, 0)),
           offset: V(3.5, 2.2, 4.5),
           color: c.B,
-          title: 'Campo magnético $\\vec{B}$ (Dedo medio)',
-          val: `|B| = ${fm(S.B)} mT  ·  Dirección +Y`,
-          desc: 'Campo magnético vertical uniforme; curva la trayectoria sin variar la energía cinética.',
+          title: 'Campo magnético $\\vec{B}$',
+          val: `|B| = ${fm(S.B)} mT (+Y)`,
+          desc: 'Curva la trayectoria sin alterar la energía cinética.',
           follow: true
         };
       }
@@ -507,9 +478,9 @@
           pos: p.clone(),
           offset: V(4.2, 3.0, 5.2),
           color: c.I,
-          title: 'Partícula cargada y trayectoria 3D',
-          val: `q = ${fm(live.q)} C  ·  Radio r = ${fm(rGyro)} m`,
-          desc: 'Posición instantánea y estela calculada mediante el integrador simpléctico de Boris.',
+          title: 'Partícula y trayectoria',
+          val: `q = ${fm(live.q)} C · r = ${fm(rGyro)} m`,
+          desc: 'Integrada mediante el método simpléctico de Boris.',
           follow: true
         };
       }
@@ -519,9 +490,9 @@
           pos: p.clone().addScaledVector(vDir, 2.0),
           offset: V(3.4, 2.2, 4.4),
           color: c.v,
-          title: 'Vector velocidad $\\vec{v}$ (Dedo índice)',
-          val: `|v| = ${fm(live.v.length())} m/s  ·  Ek = ${fm(Ek)} eV`,
-          desc: `Tangente a la curva en todo punto; forma θ = ${S.th}° con B.`,
+          title: 'Velocidad instantánea $\\vec{v}$',
+          val: `|v| = ${fm(live.v.length())} m/s · Ek = ${fm(Ek)} eV`,
+          desc: 'Tangente a la trayectoria.',
           follow: true
         };
       }
@@ -530,9 +501,9 @@
           pos: p.clone().addScaledVector(fDir, 2.0),
           offset: V(3.4, 2.2, 4.4),
           color: c.F,
-          title: 'Fuerza de Lorentz $\\vec{F} = q(\\vec{E} + \\vec{v}\\times\\vec{B})$',
-          val: `|F| = ${fm(live.F.length())} N  ·  ${live.q > 0 ? 'Igual a v×B' : 'Opuesta a v×B'}`,
-          desc: 'Fuerza electromagnética neta sobre la partícula.',
+          title: 'Fuerza de Lorentz $\\vec{F}$',
+          val: `|F| = ${fm(live.F.length())} N`,
+          desc: live.q > 0 ? 'Paralela a v × B (q > 0).' : 'Opuesta a v × B (q < 0).',
           follow: true
         };
       }
@@ -542,9 +513,9 @@
           pos: p.clone().add(V(0, 0, live.q > 0 ? -1.8 : 1.8)),
           offset: V(3.6, 2.3, 4.6),
           color: c.mu,
-          title: 'Fuerza eléctrica $\\vec{F}_E = q\\vec{E}$',
-          val: `|F_E| = ${fm(feMag)} N  ·  E = ${fm(S.E)} kV/m (−Z)`,
-          desc: 'Fuerza eléctrica transversal que compite contra la fuerza magnética.',
+          title: 'Fuerza eléctrica $\\vec{F}_E$',
+          val: `|F_E| = ${fm(feMag)} N · E = ${fm(S.E)} kV/m`,
+          desc: 'Componente transversal sobre el eje Z.',
           follow: true
         };
       }
@@ -553,15 +524,14 @@
           pos: p.clone().addScaledVector(vxbDir, 1.8),
           offset: V(3.4, 2.2, 4.4),
           color: c.vxb,
-          title: 'Producto cruz $\\vec{v} \\times \\vec{B}$ (Pulgar)',
-          val: `|v × B| = ${fm(vxb.length())} V/m  ·  ⊥ a v y a B`,
-          desc: 'Dirección del pulgar según la regla de la mano derecha.',
+          title: 'Producto cruz $\\vec{v}\\times\\vec{B}$',
+          val: `|v × B| = ${fm(vxb.length())} V/m`,
+          desc: 'Referencia direccional de la regla de la mano derecha.',
           follow: true
         };
       }
     }
 
-    /* ===== Tema 6: Flujo magnético ===== */
     if (mod.id === 'flujo-magnetico') {
       const live = mod.getLive ? mod.getLive() : { curTh: (S.th * Math.PI) / 180, deg: S.th };
       const thRad = live.curTh;
@@ -578,9 +548,9 @@
           pos: V(3.5, 0, 0),
           offset: V(8, 6, 11),
           color: c.B,
-          title: 'Campo magnético $\\vec{B}$ y líneas de flujo',
-          val: `|B| = ${S.B} mT (+X)  ·  Φ_B = ${fm(phi * 1e6)} μWb`,
-          desc: 'Haz de líneas cuya densidad espacial es proporcional a la intensidad de B.'
+          title: 'Campo uniforme $\\vec{B}$',
+          val: `|B| = ${S.B} mT · Φ_B = ${fm(phi * 1e6)} μWb`,
+          desc: 'Densidad espacial de líneas proporcional a la magnitud de B.'
         };
       }
       if (key === 'I') {
@@ -588,9 +558,9 @@
           pos: V(0, S.L / 2, 0),
           offset: V(8, 6, 11),
           color: c.I,
-          title: 'Contorno de la superficie de área $A$',
-          val: `Área A = ${fm(A * 1e4)} cm² (${fm(A)} m²)`,
-          desc: 'Borde de la superficie plana orientable sobre la que se integra el flujo.'
+          title: 'Superficie de área $A$',
+          val: `A = ${fm(A * 1e4)} cm²`,
+          desc: 'Superficie plana orientable donde se evalúa el flujo.'
         };
       }
       if (key === 'v') {
@@ -598,19 +568,9 @@
           pos: V(-10, 0, 0),
           offset: V(9, 6, 12),
           color: c.v,
-          title: 'Área efectiva proyectada $A_\\perp = A\\cos\\theta$',
-          val: `A_⊥ = ${fm(A * cTh * 1e4)} cm²  ·  cos θ = ${cTh.toFixed(3)}`,
-          desc: 'Proyección sobre el plano x = −10 perpendicular a las líneas de campo.'
-        };
-      }
-      if (key === 'F') {
-        return {
-          pos: V(0, 0, 0),
-          offset: V(8, 6, 11),
-          color: c.F,
-          title: 'Intersección y signo del flujo $\\Phi_B$',
-          val: `Φ_B = ${fm(phi * 1e6)} μWb (${cTh > 0.01 ? 'Positivo' : cTh < -0.01 ? 'Negativo' : 'Nulo'})`,
-          desc: 'Puntos de corte de las líneas con la superficie (verde si Φ > 0, rojo si Φ < 0).'
+          title: 'Proyección $A_\\perp = A\\cos\\theta$',
+          val: `A_⊥ = ${fm(A * cTh * 1e4)} cm² · cos θ = ${cTh.toFixed(3)}`,
+          desc: 'Sección eficaz proyectada en el plano x = −10 cm.'
         };
       }
       if (key === 'mu') {
@@ -618,9 +578,9 @@
           pos: nDir.clone().multiplyScalar(3.5),
           offset: V(8, 6, 11),
           color: c.mu,
-          title: 'Vector normal unitario $\\hat{n}$',
-          val: `θ actual = ${degTxt}° respecto a B`,
-          desc: 'Vector perpendicular a la superficie que define la cara positiva del flujo.'
+          title: 'Vector normal $\\hat{n}$',
+          val: `θ = ${degTxt}° respecto a B`,
+          desc: 'Define la orientación positiva de la superficie.'
         };
       }
       if (key === 'vxb') {
@@ -628,14 +588,13 @@
           pos: V(2.2 * Math.cos(thRad / 2), 0, 2.2 * Math.sin(thRad / 2)),
           offset: V(7, 5, 10),
           color: c.vxb,
-          title: 'Arco del ángulo $\\theta$ entre $\\vec{B}$ y $\\hat{n}$',
-          val: `θ = ${degTxt}°  ·  cos θ = ${cTh.toFixed(3)}`,
-          desc: 'Determina la fracción del haz de campo magnético que atraviesa la superficie.'
+          title: 'Ángulo $\\theta$',
+          val: `θ = ${degTxt}° · cos θ = ${cTh.toFixed(3)}`,
+          desc: 'Inclinación entre el vector normal y el campo magnético.'
         };
       }
     }
 
-    /* ===== Tema 7: Ley de Gauss del magnetismo ===== */
     if (mod.id === 'ley-gauss') {
       const gCenter = V(S.gx, S.gy, 0);
       const live = mod.getLive ? mod.getLive() : { phiOut: 0, phiIn: 0, phiNet: 0 };
@@ -645,9 +604,9 @@
           pos: gCenter.clone().add(V(0, S.Rg * 0.85, 0)),
           offset: V(9, 6, 13),
           color: c.B,
-          title: 'Flujo magnético saliente ($\\Phi_{\\text{sal}} > 0$)',
-          val: `Φ_sal = +${fm(live.phiOut * 1e6)} μWb (B · n̂ > 0)`,
-          desc: 'Región donde las líneas de campo emergen hacia el exterior de S.'
+          title: 'Flujo saliente ($\\Phi_{\\text{sal}} > 0$)',
+          val: `+${fm(live.phiOut * 1e6)} μWb (B · n̂ > 0)`,
+          desc: 'Zonas donde el campo atraviesa S hacia el exterior.'
         };
       }
       if (key === 'I') {
@@ -655,9 +614,9 @@
           pos: V(0, 0, 0),
           offset: V(9, 6, 13),
           color: c.I,
-          title: 'Fuente magnética sin monopolos ($q_m = 0$)',
-          val: `${S.source === 'dipolo' ? 'Imán N–S' : 'Espira circular'} · I = ${S.I} A`,
-          desc: 'Genera líneas de campo magnético que forman siempre lazos cerrados continuos.'
+          title: 'Fuente magnética ($q_m = 0$)',
+          val: `${S.source === 'dipolo' ? 'Imán N–S' : 'Espira'} · I = ${S.I} A`,
+          desc: 'Produce exclusivamente líneas cerradas sin fuentes ni sumideros.'
         };
       }
       if (key === 'v') {
@@ -665,9 +624,9 @@
           pos: gCenter,
           offset: V(10, 7, 14),
           color: c.v,
-          title: 'Superficie gaussiana cerrada $S$',
+          title: 'Superficie gaussiana $S$',
           val: `${S.surf === 'esfera' ? 'Esfera' : 'Caja'} R_g = ${S.Rg} cm · Balance ${fm(live.phiNet * 1e6)} μWb`,
-          desc: 'Superficie cerrada donde el flujo saliente y el entrante se cancelan.'
+          desc: 'Frontera cerrada sobre la que se integra el flujo magnético.'
         };
       }
       if (key === 'F') {
@@ -675,9 +634,9 @@
           pos: gCenter.clone().add(V(0, -S.Rg * 0.85, 0)),
           offset: V(9, 6, 13),
           color: c.F,
-          title: 'Flujo magnético entrante ($\\Phi_{\\text{ent}} < 0$)',
-          val: `Φ_ent = −${fm(Math.abs(live.phiIn) * 1e6)} μWb (B · n̂ < 0)`,
-          desc: 'Toda línea que sale de la superficie cerrada vuelve a entrar por otra región.'
+          title: 'Flujo entrante ($\\Phi_{\\text{ent}} < 0$)',
+          val: `−${fm(Math.abs(live.phiIn) * 1e6)} μWb (B · n̂ < 0)`,
+          desc: 'Compensa el flujo saliente al cerrarse cada línea de campo.'
         };
       }
       if (key === 'mu') {
@@ -685,9 +644,9 @@
           pos: V(0, 1.5, 0),
           offset: V(8, 5, 12),
           color: c.mu,
-          title: 'Momento dipolar magnético $\\vec{\\mu}$ (Sur $\\to$ Norte)',
-          val: 'Eje dipolar +Y · ∇ · B = 0',
-          desc: 'Por el interior del imán las líneas regresan de Sur a Norte cerrando el lazo.'
+          title: 'Momento dipolar $\\vec{\\mu}$',
+          val: 'Sur → Norte (+Y)',
+          desc: 'En el interior del imán el campo retorna de Sur a Norte.'
         };
       }
     }
@@ -714,7 +673,6 @@
     }
 
     ringMat.color.set(info.color);
-    haloMat.color.set(info.color);
     markerGrp.visible = true;
     markerGrp.position.copy(info.pos);
 
@@ -742,7 +700,7 @@
     const hud = $('vec-hud');
     if (!hud || !info) return;
     hud.hidden = false;
-    hud.style.borderColor = info.color;
+    hud.style.borderTopColor = info.color;
 
     const dotEl = $('vec-hud-dot');
     const titleEl = $('vec-hud-title');
@@ -773,8 +731,8 @@
     const sx = (proj.x * 0.5 + 0.5) * w;
     const sy = (-proj.y * 0.5 + 0.5) * h;
 
-    const clampedX = Math.max(155, Math.min(w - 155, sx));
-    const clampedY = Math.max(105, Math.min(h - 24, sy - 22));
+    const clampedX = Math.max(150, Math.min(w - 150, sx));
+    const clampedY = Math.max(115, Math.min(h - 60, sy - 20));
     hud.style.left = clampedX + 'px';
     hud.style.top = clampedY + 'px';
   }
@@ -784,10 +742,7 @@
   function tick(now, isAnimating) {
     if (!activeKey || !Sim.activeMod) return;
 
-    /* Pulso ligero del anillo 3D (solo propiedades WebGL, sin tocar el DOM) */
     markerGrp.quaternion.copy(cam.quaternion);
-    const pulse = 1 + 0.14 * Math.sin(now * 0.006);
-    ringMesh.scale.set(pulse, pulse, 1);
 
     const camHash = `${cam.position.x.toFixed(3)},${cam.position.y.toFixed(3)},${cam.position.z.toFixed(3)}:${ctl.target.x.toFixed(3)},${ctl.target.y.toFixed(3)},${ctl.target.z.toFixed(3)}`;
     const camMoved = camHash !== lastCamHash;
@@ -806,7 +761,6 @@
     dirty = false;
 
     ringMat.color.set(info.color);
-    haloMat.color.set(info.color);
     markerGrp.position.copy(info.pos);
 
     if (camAnim) {

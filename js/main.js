@@ -1,30 +1,42 @@
-/* ===== Coordinador principal, navegación de temas, hash URL y bucle de animación ===== */
+/* ===== Coordinador principal, navegación superior, panel de pestañas y bucle 3D ===== */
 let activeMod = null;
 let paused = true;
 let fr = 0;
+let lastFrameTime = performance.now();
+
+const SHORT_TITLES = {
+  'campo-magnetico': 'Campo magnético',
+  'fuentes-campo': 'Fuentes de B',
+  'fuerza-corrientes': 'Corrientes',
+  'torque-lazo': 'Torsión',
+  'movimiento-particula': 'Partícula',
+  'flujo-magnetico': 'Flujo',
+  'ley-gauss': 'Ley de Gauss'
+};
 
 function setPaused(p) {
   paused = p;
   const pzBtn = $('pz');
   if (pzBtn) {
     pzBtn.textContent = paused ? 'Iniciar' : 'Pausar';
-    pzBtn.classList.toggle('on', paused);
+    pzBtn.classList.toggle('tr-primary', paused);
+    pzBtn.classList.toggle('on', !paused);
   }
 }
 
-/* Contador de FPS reales en vivo (sin límite artificial a 60 Hz) */
-let fpsFrames = 0;
-let fpsLastTime = performance.now();
-let lastFrameTime = performance.now();
-const fpsEl = $('fps');
-
-const tabButtons = Sim.modules.map((mod) => {
+/* Construcción de pestañas horizontales numeradas (01–07) en la barra superior */
+const tabButtons = Sim.modules.map((mod, idx) => {
+  const num = String(idx + 1).padStart(2, '0');
+  const shortLabel = SHORT_TITLES[mod.id] || mod.title.replace(/^\d+\s*·\s*/, '');
   const b = document.createElement('button');
   b.type = 'button';
-  b.textContent = mod.title;
+  b.className = 'topic-tab';
+  b.title = `${num} · ${mod.title.replace(/^\d+\s*·\s*/, '')}`;
+  b.innerHTML = `<span class="topic-tab-num">${num}</span><span class="topic-tab-label">${shortLabel}</span>`;
   b.onclick = () => setMode(mod.id);
-  $('tabs').append(b);
-  return { id: mod.id, btn: b };
+  const tabsEl = $('tabs');
+  if (tabsEl) tabsEl.append(b);
+  return { id: mod.id, num, btn: b };
 });
 
 function syncUrlHash(id) {
@@ -48,16 +60,32 @@ function setMode(id, presetName, skipHash) {
     if (m.group) m.group.visible = m.id === id;
   });
 
+  let activeNum = '01';
   tabButtons.forEach((t) => {
-    t.btn.classList.toggle('on', t.id === id);
+    const isMatch = t.id === id;
+    t.btn.classList.toggle('on', isMatch);
+    t.btn.setAttribute('aria-current', isMatch ? 'page' : 'false');
+    if (isMatch) activeNum = t.num;
   });
 
-  $('th').innerHTML = mod.theory;
-  Sim.ui.renderMath($('th'));
-  $('pz').hidden = !mod.canPause;
+  const vpIndex = $('vp-index');
+  const vpTitle = $('vp-title');
+  if (vpIndex) vpIndex.textContent = activeNum;
+  if (vpTitle) vpTitle.textContent = mod.title.replace(/^\d+\s*·\s*/, '');
+
+  const thEl = $('th');
+  if (thEl) {
+    thEl.innerHTML = mod.theory;
+    Sim.ui.renderMath(thEl);
+  }
+
+  const pzBtn = $('pz');
+  if (pzBtn) pzBtn.hidden = !mod.canPause;
   setPaused(true);
-  if ($('btn-free')) {
-    $('btn-free').hidden = !mod.canFollow;
+
+  const freeBtn = $('btn-free');
+  if (freeBtn) {
+    freeBtn.hidden = !mod.canFollow;
   }
 
   if (presetName && mod.applyPreset) {
@@ -90,14 +118,57 @@ function centerCamera() {
   ctl.update();
 }
 
-$('rs').onclick = () => {
-  setPaused(true);
-  if (activeMod && activeMod.reset) {
-    activeMod.reset();
-    if (Sim.explainer) Sim.explainer.update(activeMod, false);
-    if (Sim.inspector) Sim.inspector.markDirty();
+/* Gestión de pestañas del panel derecho: Instrumentación | Análisis y teoría */
+let activeRailTab = 'controls';
+function setRailTab(tabName) {
+  activeRailTab = tabName;
+  const isAnalysis = tabName === 'analysis';
+  const btnCtrl = $('tab-controls');
+  const btnAna = $('tab-analysis');
+  const panelCtrl = $('panel-controls');
+  const panelAna = $('panel-analysis');
+
+  if (btnCtrl) {
+    btnCtrl.classList.toggle('is-active', !isAnalysis);
+    btnCtrl.setAttribute('aria-selected', String(!isAnalysis));
   }
-};
+  if (btnAna) {
+    btnAna.classList.toggle('is-active', isAnalysis);
+    btnAna.setAttribute('aria-selected', String(isAnalysis));
+  }
+  if (panelCtrl) panelCtrl.hidden = isAnalysis;
+  if (panelAna) panelAna.hidden = !isAnalysis;
+
+  document.body.classList.toggle('analysis-open', isAnalysis);
+
+  if (isAnalysis && Sim.explainer && activeMod) {
+    Sim.explainer.update(activeMod, true);
+  }
+}
+
+if ($('tab-controls')) $('tab-controls').onclick = () => setRailTab('controls');
+if ($('tab-analysis')) $('tab-analysis').onclick = () => setRailTab('analysis');
+
+/* Mostrar u ocultar panel lateral derecho */
+if ($('btn-toggle-rail')) {
+  $('btn-toggle-rail').onclick = () => {
+    const collapsed = document.body.classList.toggle('rail-collapsed');
+    $('btn-toggle-rail').setAttribute('aria-expanded', String(!collapsed));
+    if (Sim.scene && Sim.scene.syncSize) Sim.scene.syncSize();
+  };
+}
+
+/* Controles de transporte y parámetros */
+if ($('rs')) {
+  $('rs').onclick = () => {
+    setPaused(true);
+    if (activeMod && activeMod.reset) {
+      activeMod.reset();
+      if (Sim.explainer) Sim.explainer.update(activeMod, false);
+      if (Sim.inspector) Sim.inspector.markDirty();
+    }
+  };
+}
 
 if ($('btn-defaults')) {
   $('btn-defaults').onclick = () => {
@@ -109,19 +180,21 @@ if ($('btn-defaults')) {
   };
 }
 
-$('pz').onclick = () => {
-  setPaused(!paused);
-  if (paused && activeMod && Sim.explainer) {
-    Sim.explainer.update(activeMod, false);
-  }
-};
+if ($('pz')) {
+  $('pz').onclick = () => {
+    setPaused(!paused);
+    if (paused && activeMod && Sim.explainer) {
+      Sim.explainer.update(activeMod, false);
+    }
+  };
+}
 
 Sim.freeCam = false;
 if ($('btn-free')) {
   $('btn-free').onclick = () => {
     Sim.freeCam = !Sim.freeCam;
     $('btn-free').classList.toggle('on', Sim.freeCam);
-    $('btn-free').textContent = Sim.freeCam ? 'Libre: ON' : 'Modo libre';
+    $('btn-free').textContent = Sim.freeCam ? 'Cámara libre: activa' : 'Cámara libre';
   };
 }
 
@@ -154,31 +227,28 @@ if (Sim.scene && Sim.scene.onThemeChange) {
   });
 }
 
-/* Alternar entre barra lateral izquierda (Temas) y barra lateral derecha (Explicación) */
-let explainOpen = false;
-function toggleExplain(forceState) {
-  explainOpen = typeof forceState === 'boolean' ? forceState : !explainOpen;
-  const btnExp = $('btn-explain');
-
-  document.body.classList.toggle('explain-open', explainOpen);
-  if (btnExp) btnExp.classList.toggle('on', explainOpen);
-
-  if (explainOpen && Sim.explainer && activeMod) {
-    Sim.explainer.update(activeMod, true);
-  }
+/* Popover de ayuda de navegación 3D */
+const helpPopover = $('help-popover');
+const btnHelp = $('btn-help');
+function setHelpOpen(open) {
+  if (!helpPopover || !btnHelp) return;
+  helpPopover.hidden = !open;
+  btnHelp.classList.toggle('is-active', open);
+  btnHelp.setAttribute('aria-expanded', String(open));
 }
 
-if ($('btn-explain')) {
-  $('btn-explain').onclick = () => toggleExplain();
+if (btnHelp) {
+  btnHelp.onclick = () => setHelpOpen(helpPopover.hidden);
 }
-if ($('btn-close-explain')) {
-  $('btn-close-explain').onclick = () => toggleExplain(false);
+if ($('btn-close-help')) {
+  $('btn-close-help').onclick = () => setHelpOpen(false);
 }
 
-/* Modal de inicio con acceso directo a los 7 temas del laboratorio */
+/* Modal de índice de los 7 temas */
 const modalEl = $('welcome-modal');
 if ($('btn-home') && modalEl) {
   $('btn-home').onclick = () => {
+    setHelpOpen(false);
     modalEl.hidden = false;
     const closeBtn = $('btn-close-modal');
     if (closeBtn) closeBtn.focus();
@@ -193,19 +263,6 @@ if ($('btn-close-modal') && modalEl) {
   };
 }
 
-/* Accesibilidad: cerrar modal o inspector con tecla Escape */
-window.addEventListener('keydown', (e) => {
-  if (e.key !== 'Escape') return;
-  if (modalEl && !modalEl.hidden) {
-    modalEl.hidden = true;
-    return;
-  }
-  const hud = $('vec-hud');
-  if (hud && !hud.hidden && Sim.inspector) {
-    Sim.inspector.clear();
-  }
-});
-
 document.querySelectorAll('[data-goto]').forEach((card) => {
   card.onclick = () => {
     const targetMod = card.getAttribute('data-goto');
@@ -213,6 +270,42 @@ document.querySelectorAll('[data-goto]').forEach((card) => {
     setMode(targetMod, preset);
     if (modalEl) modalEl.hidden = true;
   };
+});
+
+/* Atajos de teclado discretos y accesibles */
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    if (modalEl && !modalEl.hidden) {
+      modalEl.hidden = true;
+      return;
+    }
+    if (helpPopover && !helpPopover.hidden) {
+      setHelpOpen(false);
+      return;
+    }
+    const hud = $('vec-hud');
+    if (hud && !hud.hidden && Sim.inspector) {
+      Sim.inspector.clear();
+    }
+    return;
+  }
+
+  const tag = e.target && e.target.tagName ? e.target.tagName.toUpperCase() : '';
+  if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+  if (e.key >= '1' && e.key <= '7') {
+    const mod = Sim.modules[Number(e.key) - 1];
+    if (mod) setMode(mod.id);
+  } else if (e.key === ' ' && activeMod && activeMod.canPause && tag !== 'BUTTON') {
+    e.preventDefault();
+    setPaused(!paused);
+  } else if ((e.key === 'r' || e.key === 'R') && activeMod && activeMod.reset) {
+    setPaused(true);
+    activeMod.reset();
+    if (Sim.explainer) Sim.explainer.update(activeMod, false);
+    if (Sim.inspector) Sim.inspector.markDirty();
+  }
 });
 
 window.addEventListener('hashchange', () => {
@@ -227,14 +320,6 @@ function loop(now) {
 
   const dt = Math.min(0.05, Math.max(0.001, (now - lastFrameTime) / 1000));
   lastFrameTime = now;
-
-  fpsFrames++;
-  if (now - fpsLastTime >= 600) {
-    const fps = Math.round((fpsFrames * 1000) / (now - fpsLastTime));
-    if (fpsEl) fpsEl.textContent = fps + ' FPS';
-    fpsFrames = 0;
-    fpsLastTime = now;
-  }
 
   const isAnimating = Boolean(activeMod && activeMod.canPause && !paused);
   if (activeMod && activeMod.update) {
