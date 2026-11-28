@@ -1,14 +1,22 @@
-/* ===== Módulo 6 (B-05): Ley de Gauss del magnetismo (∮ B · dA = 0, ∇·B = 0) ===== */
+/* ===== Tema 7: Ley de Gauss del magnetismo (∮ B · dA = 0, ∇·B = 0) ===== */
 (function () {
+  if (!Sim.scene || !Sim.scene.webglReady) return;
+
   const gF = new THREE.Group();
   scene.add(gF);
 
-  gF.add(new THREE.AxesHelper(10));
-
+  const refGrp = new THREE.Group();
   const srcGrp = new THREE.Group();
   const linesGrp = new THREE.Group();
   const gaussGrp = new THREE.Group();
-  gF.add(srcGrp, linesGrp, gaussGrp);
+  gF.add(refGrp, srcGrp, linesGrp, gaussGrp);
+
+  function rebuildRef() {
+    Sim.scene.clearGroup(refGrp);
+    refGrp.add(Sim.viz.createGrid({ size: 22, majorStep: 4, minorStep: 2, plane: 'xz' }));
+    refGrp.add(Sim.viz.createAxes(10, { tickStep: 2, unitLabel: '1 div = 2 cm' }));
+  }
+  rebuildRef();
 
   const SF = {
     source: 'dipolo',
@@ -22,36 +30,36 @@
   const cfgF = [
     {
       k: 'source',
-      t: 'Fuente de campo magnético',
+      t: 'Fuente magnética',
       opts: {
-        'Imán de barra / Dipolo (N–S)': 'dipolo',
+        'Imán de barra (dipolo N–S)': 'dipolo',
         'Espira circular de corriente': 'espira'
       }
     },
     {
       k: 'surf',
-      t: 'Superficie gaussiana cerrada S',
+      t: 'Superficie gaussiana $S$',
       opts: {
         'Esfera cerrada (radio R_g)': 'esfera',
-        'Caja / Cubo cerrado (lado 2·R_g)': 'caja'
+        'Caja cerrada (lado 2·R_g)': 'caja'
       }
     },
-    { k: 'I', t: 'Intensidad de fuente ($I$ / $\\mu$)', u: 'A', min: 1, max: 20, step: 0.5 },
-    { k: 'Rg', t: 'Tamaño superficie cerrada $R_g$', u: 'cm', min: 3, max: 9, step: 0.5 },
-    { k: 'gx', t: 'Posición $X$ superficie ($x_g$)', u: 'cm', min: -7, max: 7, step: 0.5 },
-    { k: 'gy', t: 'Posición $Y$ superficie ($y_g$)', u: 'cm', min: -7, max: 7, step: 0.5 }
+    { k: 'I', t: 'Intensidad $I$', u: 'A', min: 1, max: 20, step: 0.5 },
+    { k: 'Rg', t: 'Radio / semilado $R_g$', u: 'cm', min: 3, max: 9, step: 0.5 },
+    { k: 'gx', t: 'Centro $x_g$', u: 'cm', min: -7, max: 7, step: 0.5 },
+    { k: 'gy', t: 'Centro $y_g$', u: 'cm', min: -7, max: 7, step: 0.5 }
   ];
 
   let SG = { m: [], d: [] };
+  let liveGauss = { phiOut: 0, phiIn: 0, phiNet: 0 };
+  let gaussHandle = null;
 
-  /* Construye los segmentos de corriente equivalentes (cuyo campo cumple ∇·B ≡ 0 en todo el espacio) */
   function buildSourceSegments() {
     SG = { m: [], d: [] };
     const addRing = (radius, yCenter, nSeg) => {
       for (let i = 0; i < nSeg; i++) {
         const a0 = (2 * Math.PI * i) / nSeg;
         const a1 = (2 * Math.PI * (i + 1)) / nSeg;
-        /* Sentido antihorario visto desde +Y => B apunta hacia +Y en el eje (Polo Norte en +Y) */
         const p0 = V(radius * Math.cos(a0), yCenter, -radius * Math.sin(a0));
         const p1 = V(radius * Math.cos(a1), yCenter, -radius * Math.sin(a1));
         SG.m.push(p0.clone().add(p1).multiplyScalar(0.5));
@@ -62,7 +70,6 @@
     if (SF.source === 'espira') {
       addRing(4.0, 0, 72);
     } else {
-      /* Imán cilíndrico modelado por corrientes superficiales de magnetización K_b = M × n̂ */
       const nRings = 9;
       const Lmag = 6.0;
       for (let k = 0; k < nRings; k++) {
@@ -72,11 +79,10 @@
     }
   }
 
-  /* Campo magnético B(p) derivado de potencial vectorial suave A (garantiza ∇·B = ∇·(∇×A) ≡ 0) */
   function Bf(p) {
-    let x = 0,
-      y = 0,
-      z = 0;
+    let x = 0;
+    let y = 0;
+    let z = 0;
     const soft = 0.45;
     for (let i = 0; i < SG.m.length; i++) {
       const m = SG.m[i];
@@ -91,44 +97,54 @@
       z += (d.x * ry - d.y * rx) * k;
     }
     const scaleFactor = SF.source === 'dipolo' ? 0.55 : 1.0;
-    const c = ((MU0 * SF.I * scaleFactor) / (4 * Math.PI)) * 1e4; // en Tesla
+    const c = ((MU0 * SF.I * scaleFactor) / (4 * Math.PI)) * 1e4;
     return V(x * c, y * c, z * c);
   }
 
   function renderSourceAndFieldLines() {
-    srcGrp.clear();
-    linesGrp.clear();
+    Sim.scene.clearGroup(srcGrp);
+    Sim.scene.clearGroup(linesGrp);
+    const pal = Sim.scene.getPalette();
 
     if (SF.source === 'espira') {
       const torus = new THREE.Mesh(
-        new THREE.TorusGeometry(4.0, 0.22, 16, 72),
-        new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.35, metalness: 0.25 })
+        new THREE.TorusGeometry(4.0, 0.2, 16, 72),
+        new THREE.MeshStandardMaterial({ color: pal.I, roughness: 0.4, metalness: 0.24 })
       );
       torus.rotation.x = Math.PI / 2;
       srcGrp.add(torus);
-      srcGrp.add(new THREE.ArrowHelper(V(0, 0, -1), V(4.0, 0, 0), 2.2, 0xfef08a, 0.7, 0.45));
-      srcGrp.add(new THREE.ArrowHelper(V(0, 0, 1), V(-4.0, 0, 0), 2.2, 0xfef08a, 0.7, 0.45));
+      srcGrp.add(Sim.viz.createVector(V(0, 0, -1), V(4.0, 0, 0), 2.1, pal.vxb, { radius: 0.055 }));
+      srcGrp.add(Sim.viz.createVector(V(0, 0, 1), V(-4.0, 0, 0), 2.1, pal.vxb, { radius: 0.055 }));
     } else {
-      /* Imán de barra: Polo Norte (+Y, rojo) y Polo Sur (-Y, azul) */
-      const geoHalf = new THREE.CylinderGeometry(1.55, 1.55, 3.0, 28);
+      const geoHalf = new THREE.CylinderGeometry(1.5, 1.5, 3.0, 28);
       const north = new THREE.Mesh(
         geoHalf,
-        new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.4, metalness: 0.15 })
+        new THREE.MeshStandardMaterial({ color: pal.F, roughness: 0.48, metalness: 0.12 })
       );
       north.position.set(0, 1.5, 0);
 
       const south = new THREE.Mesh(
         geoHalf,
-        new THREE.MeshStandardMaterial({ color: 0x3b82f6, roughness: 0.4, metalness: 0.15 })
+        new THREE.MeshStandardMaterial({ color: pal.south, roughness: 0.48, metalness: 0.12 })
       );
       south.position.set(0, -1.5, 0);
       srcGrp.add(north, south);
 
-      /* Flecha del momento dipolar magnético μ (de S a N, eje +Y) */
-      srcGrp.add(new THREE.ArrowHelper(V(0, 1, 0), V(0, -2.5, 0), 5.4, 0xe879f9, 0.9, 0.55));
+      const nLbl = Sim.viz.createLabel('N', { color: '#faf9f5', worldHeight: 0.78, depthTest: false });
+      const sLbl = Sim.viz.createLabel('S', { color: '#faf9f5', worldHeight: 0.78, depthTest: false });
+      if (nLbl) {
+        nLbl.position.set(0, 1.6, 1.6);
+        srcGrp.add(nLbl);
+      }
+      if (sLbl) {
+        sLbl.position.set(0, -1.6, 1.6);
+        srcGrp.add(sLbl);
+      }
+
+      srcGrp.add(Sim.viz.createVector(V(0, 1, 0), V(0, -2.5, 0), 5.2, pal.mu, { radius: 0.072, label: 'μ' }));
     }
 
-    /* Trazado de líneas de campo magnético cerradas en planos meridianos */
+    const lineMat = new THREE.LineBasicMaterial({ color: pal.B, transparent: true, opacity: 0.56 });
     const seeds = SF.source === 'espira' ? [-2.4, -1.2, 0, 1.2, 2.4] : [-1.0, -0.45, 0.45, 1.0];
     seeds.forEach((r0) => {
       [0, Math.PI / 2].forEach((phiPlane) => {
@@ -150,19 +166,13 @@
             if (k > 15 && p.distanceTo(s0) < 0.4) break;
           }
           if (pts.length > 1) {
-            linesGrp.add(
-              new THREE.Line(
-                new THREE.BufferGeometry().setFromPoints(pts),
-                new THREE.LineBasicMaterial({ color: 0x22c55e, transparent: true, opacity: 0.55 })
-              )
-            );
+            linesGrp.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), lineMat));
           }
         });
       });
     });
   }
 
-  /* Integración numérica de flujo saliente (B·n̂ > 0) y entrante (B·n̂ < 0) en la superficie cerrada S */
   function integrateClosedSurface() {
     const cx = SF.gx;
     const cy = SF.gy;
@@ -202,10 +212,9 @@
         }
       }
     } else {
-      /* Caja cerrada de semilado R (lado 2R), 6 caras */
       const M = 16;
       const step = (2 * R) / M;
-      const dA = (step * 1e-2) * (step * 1e-2);
+      const dA = step * 1e-2 * (step * 1e-2);
       const faces = [
         { n: V(1, 0, 0), u: V(0, 1, 0), v: V(0, 0, 1) },
         { n: V(-1, 0, 0), u: V(0, 1, 0), v: V(0, 0, -1) },
@@ -244,24 +253,25 @@
   function onF() {
     buildSourceSegments();
     renderSourceAndFieldLines();
-    gaussGrp.clear();
+    Sim.scene.clearGroup(gaussGrp);
+    const pal = Sim.scene.getPalette();
 
     const cx = SF.gx;
     const cy = SF.gy;
     const R = SF.Rg;
 
     const surfMat = new THREE.MeshStandardMaterial({
-      color: 0x38bdf8,
+      color: pal.gaussSurf,
       transparent: true,
-      opacity: 0.16,
+      opacity: 0.12,
       side: THREE.DoubleSide,
       depthWrite: false
     });
     const wireMat = new THREE.MeshBasicMaterial({
-      color: 0x38bdf8,
+      color: pal.gaussSurf,
       wireframe: true,
       transparent: true,
-      opacity: 0.32
+      opacity: 0.24
     });
 
     if (SF.surf === 'esfera') {
@@ -270,72 +280,107 @@
       const wire = new THREE.Mesh(sphGeo, wireMat);
       mesh.position.set(cx, cy, 0);
       wire.position.set(cx, cy, 0);
+      gaussHandle = mesh;
       gaussGrp.add(mesh, wire);
     } else {
       const boxGeo = new THREE.BoxGeometry(2 * R, 2 * R, 2 * R);
       const mesh = new THREE.Mesh(boxGeo, surfMat);
       const edges = new THREE.LineSegments(
         new THREE.EdgesGeometry(boxGeo),
-        new THREE.LineBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.75 })
+        new THREE.LineBasicMaterial({ color: pal.gaussSurf, transparent: true, opacity: 0.65 })
       );
       mesh.position.set(cx, cy, 0);
       edges.position.set(cx, cy, 0);
+      gaussHandle = mesh;
       gaussGrp.add(mesh, edges);
     }
 
     const { phiOut, phiIn, sampleArrows } = integrateClosedSurface();
 
-    /* Flechas sobre la superficie cerrada:
-       - Verde esmeralda: flujo saliente (B · n̂ > 0)
-       - Rojo coral: flujo entrante (B · n̂ < 0) */
     sampleArrows.forEach(({ pos, B, Bn }) => {
       const m = B.length();
       if (m < 1e-12) return;
-      const isOut = Bn >= 0;
-      const color = isOut ? 0x10b981 : 0xf43f5e;
-      gaussGrp.add(new THREE.ArrowHelper(B.clone().divideScalar(m), pos, 1.5, color, 0.5, 0.32));
+      const color = Bn >= 0 ? pal.fluxPos : pal.fluxNeg;
+      gaussGrp.add(
+        Sim.viz.createVector(B.clone().divideScalar(m), pos, 1.4, color, {
+          radius: 0.04,
+          headLength: 0.42,
+          headRadius: 0.13
+        })
+      );
     });
 
-    /* Promedio de magnitud de flujo entrante/saliente (toda línea que entra sale por otro punto de S) */
-    const phiMag = 0.5 * (phiOut + Math.abs(phiIn));
     const phiNetNum = phiOut + phiIn;
+    const denom = Math.max(phiOut, Math.abs(phiIn), 1e-15);
+    const relRes = (Math.abs(phiNetNum) / denom) * 100;
+    liveGauss = { phiOut, phiIn, phiNet: phiNetNum };
 
     ro([
-      [
-        'Superficie cerrada $S$',
-        (SF.surf === 'esfera' ? 'Esfera' : 'Caja') +
-          ' · ' +
-          (SF.source === 'dipolo' ? 'Imán N–S' : 'Espira')
-      ],
-      ['Flujo saliente $\\Phi_{\\text{sal}}$', '+' + fm(phiMag * 1e6) + ' μWb'],
-      ['Flujo entrante $\\Phi_{\\text{ent}}$', '−' + fm(phiMag * 1e6) + ' μWb'],
-      ['Flujo neto $\\oint_S \\vec{B}\\cdot d\\vec{A}$', '0 Wb (∇·B = 0)'],
-      ['Residuo $|\\Phi_{\\text{sal}} + \\Phi_{\\text{ent}}|$', fm(Math.abs(phiNetNum) * 1e6) + ' μWb (~0)'],
-      ['Carga magnética $q_m$', '0 (sin monopolos)']
+      ['Flujo saliente $\\Phi_{\\text{sal}}$', '+' + fm(phiOut * 1e6), 'μWb', { primary: true }],
+      ['Flujo entrante $\\Phi_{\\text{ent}}$', '−' + fm(Math.abs(phiIn) * 1e6), 'μWb', { primary: true }],
+      ['Balance numérico', `${fm(phiNetNum * 1e6)} μWb (${fm(relRes)} %)`],
+      ['Valor teórico $\\oint_S \\vec{B}\\cdot d\\vec{A}$', '0', 'Wb'],
+      ['Superficie $S$', `${SF.surf === 'esfera' ? 'Esfera' : 'Caja'} · ${SF.source === 'dipolo' ? 'Imán N–S' : 'Espira'}`],
+      ['Carga magnética $q_m$', '0 (∇·B = 0)']
     ]);
   }
 
   Sim.registerModule({
-    id: 'F',
+    id: 'ley-gauss',
     title: '7 · Ley de Gauss del magnetismo',
     group: gF,
     canPause: false,
-    cameraPos: [15, 11, 22],
+    cameraPos: [14.5, 10.5, 21.5],
     state: SF,
+    getLive() {
+      return liveGauss;
+    },
+    getDragTarget() {
+      if (!gaussHandle) return null;
+      return {
+        object: gaussHandle,
+        hint: 'Arrastra la superficie S en el plano XY',
+        getPos: () => V(SF.gx, SF.gy, 0),
+        setPos: (x, y) => {
+          SF.gx = x;
+          SF.gy = y;
+          onF();
+        },
+        bounds: { minX: -7, maxX: 7, minY: -7, maxY: 7, step: 0.5 }
+      };
+    },
+    getPlotData() {
+      const c = Sim.scene.getPalette().css;
+      const outU = liveGauss.phiOut * 1e6;
+      const inU = liveGauss.phiIn * 1e6;
+      const netU = liveGauss.phiNet * 1e6;
+      return {
+        kind: 'balance',
+        title: 'Balance de flujo en superficie S',
+        unit: 'μWb',
+        bars: [
+          { label: 'Φ saliente', val: outU, color: c.B, text: '+' + fm(outU) },
+          { label: 'Φ entrante', val: inU, color: c.F, text: '−' + fm(Math.abs(inU)) },
+          { label: 'Φ neto', val: netU, color: c.v, text: fm(netU) }
+        ]
+      };
+    },
     theory:
-      '<b>Ley de Gauss del magnetismo (ausencia de monopolos magnéticos):</b>' +
-      '$$\\oint_S \\vec{B} \\cdot d\\vec{A} = \\Phi_{\\text{saliente}} + \\Phi_{\\text{entrante}} = 0 \\iff \\nabla \\cdot \\vec{B} = 0$$' +
-      '$$\\Phi_{\\text{saliente}} = -\\Phi_{\\text{entrante}}$$' +
-      '<ul class="th-list">' +
-      '<li><b>Flujo saliente ($\\Phi_{\\text{sal}} > 0$, flechas verdes):</b> Regiones donde el campo sale de $S$ ($\\vec{B}\\cdot\\hat{n} > 0$).</li>' +
-      '<li><b>Flujo entrante ($\\Phi_{\\text{ent}} < 0$, flechas rojas):</b> Regiones donde el campo entra a $S$ ($\\vec{B}\\cdot\\hat{n} < 0$).</li>' +
-      '</ul>' +
-      '<p>Como todas las líneas de campo magnético son curvas cerradas, todo el flujo que sale de cualquier superficie cerrada iguala exactamente al flujo que entra en ella.</p>',
+      '<p>Las líneas de campo magnético son curvas cerradas sin principio ni fin. Por ello, el flujo magnético neto a través de cualquier superficie cerrada $S$ es idénticamente nulo:</p>' +
+      Sim.refs.eq('\\oint_S \\vec{B} \\cdot d\\vec{A} = 0 \\iff \\nabla \\cdot \\vec{B} = 0', [
+        ['YF', '§27.3'],
+        ['GR', '§5.3.2']
+      ]) +
+      '<p>Esta ley expresa la ausencia de monopolos magnéticos aislados.</p>',
     activate() {
       build(cfgF, SF, onF);
       onF();
     },
     reset() {
+      onF();
+    },
+    onThemeChange() {
+      rebuildRef();
       onF();
     }
   });

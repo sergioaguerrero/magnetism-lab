@@ -1,6 +1,7 @@
-/* ===== Gestor de interfaz: renderizado matemático KaTeX, variantes, sliders y lecturas ===== */
+/* ===== Gestor de interfaz: controles numéricos editables, variantes, instrumentos SI y KaTeX ===== */
 let lastRoKey = '';
-let roValSpans = [];
+let roNodes = [];
+let lastParsedReadouts = [];
 let sliderDefaults = {};
 let activeVis = null;
 let activeOnChange = null;
@@ -17,21 +18,97 @@ function renderMath(el) {
   });
 }
 
+/* Separa magnitud numérica y unidad SI cuando se recibe una cadena simple */
+function parseReading(item) {
+  if (item.length >= 3 && typeof item[2] === 'string') {
+    return { num: String(item[1]), unit: item[2], primary: Boolean(item[3] && item[3].primary) };
+  }
+  const raw = String(item[1]).trim();
+  const match = raw.match(/^([+\-−]?\d+(?:\.\d+)?(?:e[+\-]?\d+)?)\s*(μN\/m|N·m|A·m²|C·m\/s|A·m|kg\/C|V\/m|cm²|m²|m\/s|μWb|mWb|Wb|μT|mT|μN|mN|μC|eV|Hz|cm|°|%|T|N|J|m|s|A)$/i);
+  if (match) {
+    return { num: match[1], unit: match[2], primary: Boolean(item[2] && item[2].primary) };
+  }
+  return { num: raw, unit: '', primary: Boolean(item[2] && item[2].primary) };
+}
+
 function ro(list) {
   const roEl = $('ro');
-  const key = list.map((item) => item[0]).join('||');
+  if (!roEl) return;
 
-  if (key !== lastRoKey || roValSpans.length !== list.length) {
+  const parsed = list.map((item) => ({
+    label: item[0],
+    ...parseReading(item)
+  }));
+  lastParsedReadouts = parsed;
+
+  /* Si ningún elemento se marcó como primario explícitamente, destacamos el primero o los dos primeros numéricos */
+  const hasExplicitPrimary = parsed.some((p) => p.primary);
+  if (!hasExplicitPrimary && parsed.length > 0) {
+    parsed[0].primary = true;
+    if (parsed.length > 3) parsed[1].primary = true;
+  }
+
+  const key = parsed.map((p) => `${p.primary ? 'P' : 'S'}:${p.label}`).join('||');
+
+  if (key !== lastRoKey || roNodes.length !== parsed.length) {
     lastRoKey = key;
-    roEl.innerHTML = list
-      .map(([label]) => `<div class="kv"><span class="kv-lbl">${label}</span><span class="kv-val"></span></div>`)
-      .join('');
-    roValSpans = Array.from(roEl.querySelectorAll('.kv-val'));
+
+    const primaryItems = [];
+    const tableItems = [];
+    parsed.forEach((p, idx) => {
+      if (p.primary) primaryItems.push({ ...p, idx });
+      else tableItems.push({ ...p, idx });
+    });
+
+    const primaryHtml =
+      primaryItems.length > 0
+        ? `<div class="telemetry-primary">${primaryItems
+            .map(
+              (p) =>
+                `<div class="metric-featured" data-idx="${p.idx}">` +
+                `<span class="metric-lbl">${p.label}</span>` +
+                `<span class="metric-reading"><span class="metric-num"></span><span class="metric-unit"></span></span>` +
+                `</div>`
+            )
+            .join('')}</div>`
+        : '';
+
+    const tableHtml =
+      tableItems.length > 0
+        ? `<div class="telemetry-table">${tableItems
+            .map(
+              (p) =>
+                `<div class="metric-row" data-idx="${p.idx}">` +
+                `<span class="metric-lbl">${p.label}</span>` +
+                `<span class="metric-reading"><span class="metric-num"></span><span class="metric-unit"></span></span>` +
+                `</div>`
+            )
+            .join('')}</div>`
+        : '';
+
+    roEl.innerHTML = primaryHtml + tableHtml;
+
+    roNodes = new Array(parsed.length);
+    roEl.querySelectorAll('[data-idx]').forEach((node) => {
+      const idx = Number(node.getAttribute('data-idx'));
+      roNodes[idx] = {
+        num: node.querySelector('.metric-num'),
+        unit: node.querySelector('.metric-unit')
+      };
+    });
     renderMath(roEl);
   }
 
-  for (let i = 0; i < list.length; i++) {
-    roValSpans[i].textContent = list[i][1];
+  for (let i = 0; i < parsed.length; i++) {
+    const slot = roNodes[i];
+    if (!slot) continue;
+    if (slot.num && slot.num.textContent !== parsed[i].num) {
+      slot.num.textContent = parsed[i].num;
+    }
+    if (slot.unit) {
+      slot.unit.textContent = parsed[i].unit;
+      slot.unit.hidden = !parsed[i].unit;
+    }
   }
 }
 
@@ -44,9 +121,26 @@ function captureSliderDefaults(cfg, state, baseDefaults) {
   });
 }
 
+function notifyDependents() {
+  if (Sim.plot && Sim.activeMod) {
+    Sim.plot.render(Sim.activeMod);
+  }
+  if (Sim.drag && Sim.activeMod) {
+    Sim.drag.syncHint(Sim.activeMod);
+  }
+  if (Sim.explainer && Sim.activeMod) {
+    Sim.explainer.scheduleUpdate(Sim.activeMod);
+  }
+  if (Sim.inspector && Sim.activeMod) {
+    Sim.inspector.syncLegend(Sim.activeMod);
+    Sim.inspector.markDirty();
+  }
+}
+
 function build(cfg, state, onChange) {
   const vContainer = $('variants');
   const cContainer = $('ctrls');
+  const secVariants = $('sec-variants');
   if (vContainer) vContainer.innerHTML = '';
   if (cContainer) cContainer.innerHTML = '';
 
@@ -55,8 +149,6 @@ function build(cfg, state, onChange) {
 
   const baseDefaults = Sim.activeMod && Sim.activeMod.defaultState ? Sim.activeMod.defaultState : null;
   captureSliderDefaults(cfg, state, baseDefaults);
-  /* Si el módulo actual tiene un preset activo (ej. Selector de velocidades o Espira),
-     conserva los valores predeterminados de los sliders propios de esa variante */
   cfg.forEach((o) => {
     if (!o.opts) {
       sliderDefaults[o.k] = state[o.k];
@@ -66,35 +158,40 @@ function build(cfg, state, onChange) {
   const rows = [];
 
   const vis = () => {
+    let visibleVariants = 0;
     rows.forEach(([o, r, syncVal]) => {
-      r.hidden = !!o.show && !o.show();
+      const isHidden = !!o.show && !o.show();
+      r.hidden = isHidden;
+      if (o.opts && !isHidden) visibleVariants++;
       if (syncVal) syncVal();
     });
+    if (secVariants) {
+      secVariants.hidden = visibleVariants === 0;
+    }
   };
   activeVis = vis;
 
   cfg.forEach((o) => {
-    const r = document.createElement('label');
-    r.className = 'row';
+    let r;
     let syncVal = null;
 
     if (o.opts) {
-      /* Las variantes / selectores de cada tema van en la barra lateral izquierda (#variants) */
-      r.classList.add('variant-row');
-      r.innerHTML = `<div><span>${o.t}</span></div>`;
+      r = document.createElement('label');
+      r.className = 'variant-row';
+      r.innerHTML = `<span class="ctrl-label">${o.t}</span>`;
       const s = document.createElement('select');
-      s.style.width = '100%';
       for (const k in o.opts) {
         s.add(new Option(k, o.opts[k]));
       }
       s.value = state[o.k];
       syncVal = () => {
-        s.value = state[o.k];
+        if (s.value !== String(state[o.k])) {
+          s.value = state[o.k];
+        }
       };
       s.oninput = () => {
         const prev = state[o.k];
         state[o.k] = s.value;
-        /* Si la variante cambia, primero restaura la base de los sliders y aplica los defaults de la nueva variante */
         if (o.onSelect) {
           if (baseDefaults) {
             cfg.forEach((item) => {
@@ -111,33 +208,64 @@ function build(cfg, state, onChange) {
           });
         }
         vis();
-        onChange();
-        if (Sim.explainer && Sim.activeMod) Sim.explainer.update(Sim.activeMod);
+        onChange(o.k);
+        notifyDependents();
       };
       r.append(s);
       if (vContainer) vContainer.append(r);
       else if (cContainer) cContainer.append(r);
     } else {
-      /* Los parámetros numéricos modificables (sliders) van en la sección inferior (#ctrls) */
-      r.classList.add('slider-row');
-      r.innerHTML = `<div><span>${o.t}</span><b></b></div><input type="range" min="${o.min}" max="${o.max}" step="${o.step}">`;
-      const i = r.querySelector('input');
-      const b = r.querySelector('b');
-      i.value = state[o.k];
-      const sh = () => {
-        b.textContent = fm(+i.value) + (o.u ? ' ' + o.u : '');
+      r = document.createElement('div');
+      r.className = 'slider-row';
+      const unitHtml = o.u ? `<span class="slider-unit">${o.u}</span>` : '';
+      r.innerHTML =
+        `<div class="slider-head">` +
+        `<span class="slider-label">${o.t}</span>` +
+        `<span class="slider-readout">` +
+        `<input type="number" class="num-input" min="${o.min}" max="${o.max}" step="${o.step}" aria-label="${o.t.replace(/\$[^$]*\$/g, '')}">` +
+        `${unitHtml}` +
+        `</span>` +
+        `</div>` +
+        `<input type="range" min="${o.min}" max="${o.max}" step="${o.step}">`;
+
+      const rangeInput = r.querySelector('input[type="range"]');
+      const numInput = r.querySelector('input[type="number"]');
+      rangeInput.value = state[o.k];
+      numInput.value = state[o.k];
+
+      const applyNumericValue = (rawVal, fromNumberBox) => {
+        let val = Number(rawVal);
+        if (!isFinite(val)) return;
+        val = Math.max(o.min, Math.min(o.max, val));
+        state[o.k] = val;
+        rangeInput.value = val;
+        if (!fromNumberBox || document.activeElement !== numInput) {
+          numInput.value = val;
+        }
+        onChange(o.k);
+        notifyDependents();
       };
-      sh();
+
       syncVal = () => {
-        i.value = state[o.k];
-        sh();
+        if (+rangeInput.value !== +state[o.k]) {
+          rangeInput.value = state[o.k];
+        }
+        if (document.activeElement !== numInput && +numInput.value !== +state[o.k]) {
+          numInput.value = state[o.k];
+        }
       };
-      i.oninput = () => {
-        state[o.k] = +i.value;
-        sh();
-        onChange();
-        if (Sim.explainer && Sim.activeMod) Sim.explainer.update(Sim.activeMod);
+
+      rangeInput.oninput = () => applyNumericValue(rangeInput.value, false);
+      numInput.oninput = () => {
+        if (numInput.value === '' || numInput.value === '-') return;
+        applyNumericValue(numInput.value, true);
       };
+      numInput.onchange = () => {
+        const clamped = Math.max(o.min, Math.min(o.max, Number(numInput.value) || o.min));
+        numInput.value = clamped;
+        applyNumericValue(clamped, false);
+      };
+
       if (cContainer) cContainer.append(r);
     }
 
@@ -149,15 +277,22 @@ function build(cfg, state, onChange) {
   vis();
 }
 
-/* Restaura únicamente los sliders numéricos (Parámetros modificables) sin alterar las Variantes del tema */
+function syncControls() {
+  if (activeVis) activeVis();
+}
+
 function resetSlidersOnly() {
   if (!activeState) return;
   for (const k in sliderDefaults) {
     activeState[k] = sliderDefaults[k];
   }
   if (activeVis) activeVis();
-  if (activeOnChange) activeOnChange();
-  if (Sim.explainer && Sim.activeMod) Sim.explainer.update(Sim.activeMod);
+  if (activeOnChange) activeOnChange('__reset__');
+  notifyDependents();
 }
 
-Sim.ui = { ro, build, renderMath, resetSlidersOnly };
+function getLastReadouts() {
+  return lastParsedReadouts;
+}
+
+Sim.ui = { ro, build, renderMath, resetSlidersOnly, syncControls, getLastReadouts };
