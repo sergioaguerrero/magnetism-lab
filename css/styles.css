@@ -227,7 +227,8 @@ input:focus-visible {
   display: none;
 }
 
-.topic-tab {
+.topic-tab,
+#tabs > button {
   flex: none;
   display: inline-flex;
   align-items: center;
@@ -250,12 +251,14 @@ input:focus-visible {
   color: var(--ink-muted);
 }
 
-.topic-tab:hover {
+.topic-tab:hover,
+#tabs > button:hover {
   color: var(--ink-primary);
   background: var(--surface-subtle);
 }
 
-.topic-tab.on {
+.topic-tab.on,
+#tabs > button.on {
   color: var(--ink-primary);
   border-bottom-color: var(--accent-primary);
   font-weight: 600;
