@@ -5,43 +5,50 @@
   const gD = new THREE.Group();
   scene.add(gD);
 
-  gD.add(new THREE.AxesHelper(10));
-
+  const refGrp = new THREE.Group();
   const bFieldGrp = new THREE.Group();
   const loopGrp = new THREE.Group();
   const vecGrp = new THREE.Group();
-  gD.add(bFieldGrp, loopGrp, vecGrp);
+  gD.add(refGrp, bFieldGrp, loopGrp, vecGrp);
 
-  function rebuildBackgroundField() {
+  function rebuildRefAndField() {
+    Sim.scene.clearGroup(refGrp);
     Sim.scene.clearGroup(bFieldGrp);
     const pal = Sim.scene.getPalette();
 
-    const lineMat = new THREE.LineBasicMaterial({ color: pal.B, transparent: true, opacity: 0.28 });
+    refGrp.add(Sim.viz.createGrid({ size: 20, majorStep: 4, minorStep: 2, plane: 'xz' }));
+    refGrp.add(Sim.viz.createAxes(9.5, { tickStep: 2, unitLabel: '1 div = 2 cm' }));
+
+    const lineMat = new THREE.LineBasicMaterial({ color: pal.B, transparent: true, opacity: 0.22 });
     [-6, 0, 6].forEach((y) => {
       [-6, 0, 6].forEach((z) => {
-        const pts = [V(-10, y, z), V(10, y, z)];
-        bFieldGrp.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), lineMat));
-        bFieldGrp.add(new THREE.ArrowHelper(V(1, 0, 0), V(6.5, y, z), 2.2, pal.B, 0.65, 0.4));
+        bFieldGrp.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([V(-10, y, z), V(10, y, z)]), lineMat));
+        bFieldGrp.add(
+          Sim.viz.createVector(V(1, 0, 0), V(6.6, y, z), 1.9, pal.B, {
+            radius: 0.028,
+            headLength: 0.42,
+            headRadius: 0.11
+          })
+        );
       });
     });
 
-    const axisPts = [V(0, -9, 0), V(0, 9, 0)];
     bFieldGrp.add(
       new THREE.Line(
-        new THREE.BufferGeometry().setFromPoints(axisPts),
+        new THREE.BufferGeometry().setFromPoints([V(0, -8.5, 0), V(0, 8.5, 0)]),
         new THREE.LineBasicMaterial({ color: pal.axisLine, transparent: true, opacity: 0.55 })
       )
     );
   }
-  rebuildBackgroundField();
+  rebuildRefAndField();
 
-  /* Flechas persistentes reutilizadas en cada frame (cero asignaciones WebGL durante la rotación) */
+  /* Vectores sólidos persistentes reutilizados en cada frame (cero asignaciones durante la oscilación) */
   const initPal = Sim.scene.getPalette();
-  const muArrow = new THREE.ArrowHelper(V(1, 0, 0), V(0, 0, 0), 5.2, initPal.mu, 0.9, 0.55);
-  const bArrow = new THREE.ArrowHelper(V(1, 0, 0), V(0, 0, 0), 5.2, initPal.B, 0.9, 0.55);
-  const f1Arrow = new THREE.ArrowHelper(V(0, 0, -1), V(0, 0, 0), 3.6, initPal.F, 0.75, 0.45);
-  const f2Arrow = new THREE.ArrowHelper(V(0, 0, 1), V(0, 0, 0), 3.6, initPal.F, 0.75, 0.45);
-  const tauArrow = new THREE.ArrowHelper(V(0, -1, 0), V(0, 0, 0), 3.0, initPal.v, 0.85, 0.5);
+  const muArrow = Sim.viz.createVector(V(1, 0, 0), V(0, 0, 0), 5.0, initPal.mu, { radius: 0.082, label: 'μ' });
+  const bArrow = Sim.viz.createVector(V(1, 0, 0), V(0, 0, 0), 5.0, initPal.B, { radius: 0.075, label: 'B' });
+  const f1Arrow = Sim.viz.createVector(V(0, 0, -1), V(0, 0, 0), 3.4, initPal.F, { radius: 0.072, label: 'F₁' });
+  const f2Arrow = Sim.viz.createVector(V(0, 0, 1), V(0, 0, 0), 3.4, initPal.F, { radius: 0.072, label: 'F₂' });
+  const tauArrow = Sim.viz.createVector(V(0, -1, 0), V(0, 0, 0), 3.0, initPal.v, { radius: 0.08, label: 'τ' });
   vecGrp.add(muArrow, bArrow, f1Arrow, f2Arrow, tauArrow);
 
   const SD = {
@@ -63,26 +70,26 @@
       k: 'shape',
       t: 'Geometría de la espira',
       opts: {
-        'Espira rectangular (L × L)': 'rect',
-        'Espira circular (diámetro L)': 'circ'
+        'Rectangular (L × L)': 'rect',
+        'Circular (diámetro L)': 'circ'
       }
     },
     {
       k: 'mode',
-      t: 'Modo de simulación',
+      t: 'Régimen',
       opts: {
-        'Dinámico (gira al equilibrio)': 'dinamico',
-        'Estático (ángulo fijo θ)': 'estatico'
+        'Dinámico (hacia equilibrio)': 'dinamico',
+        'Estático (ángulo fijo)': 'estatico'
       },
       onSelect() {
         omega = 0;
       }
     },
-    { k: 'th0', t: 'Ángulo inicial $\\theta$ (entre $\\vec{\\mu}$ y $\\vec{B}$)', u: '°', min: -175, max: 175, step: 1 },
+    { k: 'th0', t: 'Ángulo inicial $\\theta$', u: '°', min: -175, max: 175, step: 1 },
     { k: 'I', t: 'Corriente $I$', u: 'A', min: 0.5, max: 20, step: 0.5 },
-    { k: 'B', t: 'Campo magnético $B$ ($+X$)', u: 'mT', min: 5, max: 200, step: 5 },
-    { k: 'L', t: 'Dimensión de espira $L$', u: 'cm', min: 4, max: 14, step: 0.5 },
-    { k: 'N', t: 'Número de vueltas $N$', u: '', min: 1, max: 50, step: 1 },
+    { k: 'B', t: 'Campo $B$ ($+X$)', u: 'mT', min: 5, max: 200, step: 5 },
+    { k: 'L', t: 'Dimensión $L$', u: 'cm', min: 4, max: 14, step: 0.5 },
+    { k: 'N', t: 'Vueltas $N$', u: '', min: 1, max: 50, step: 1 },
     {
       k: 'dmp',
       t: 'Amortiguamiento',
@@ -145,25 +152,18 @@
     Sim.scene.clearGroup(loopGrp);
     const pal = Sim.scene.getPalette();
     const h = SD.L / 2;
-    const pts = localLoopPoints();
 
-    loopGrp.add(
-      new THREE.Line(
-        new THREE.BufferGeometry().setFromPoints(pts),
-        new THREE.LineBasicMaterial({ color: pal.I })
-      )
-    );
-
-    const tubeMat = new THREE.MeshStandardMaterial({ color: pal.I, roughness: 0.35, metalness: 0.25 });
+    const tubeMat = new THREE.MeshStandardMaterial({ color: pal.I, roughness: 0.4, metalness: 0.25 });
     const surfMat = new THREE.MeshStandardMaterial({
       color: pal.mu,
       transparent: true,
-      opacity: 0.2,
-      side: THREE.DoubleSide
+      opacity: 0.16,
+      side: THREE.DoubleSide,
+      depthWrite: false
     });
 
     if (SD.shape === 'rect') {
-      const cylV = new THREE.CylinderGeometry(0.18, 0.18, SD.L, 16);
+      const cylV = new THREE.CylinderGeometry(0.16, 0.16, SD.L, 16);
       const arm1 = new THREE.Mesh(cylV, tubeMat);
       arm1.position.set(0, 0, h);
       const arm2 = new THREE.Mesh(cylV, tubeMat);
@@ -181,7 +181,7 @@
       plane.rotation.y = Math.PI / 2;
       loopGrp.add(plane);
     } else {
-      const torus = new THREE.Mesh(new THREE.TorusGeometry(h, 0.18, 16, 64), tubeMat);
+      const torus = new THREE.Mesh(new THREE.TorusGeometry(h, 0.16, 16, 64), tubeMat);
       torus.rotation.y = Math.PI / 2;
       loopGrp.add(torus);
 
@@ -190,8 +190,8 @@
       loopGrp.add(disc);
     }
 
-    loopGrp.add(new THREE.ArrowHelper(V(0, 1, 0), V(0, -1, h), 2.4, pal.arc, 0.7, 0.45));
-    loopGrp.add(new THREE.ArrowHelper(V(0, -1, 0), V(0, 1, -h), 2.4, pal.arc, 0.7, 0.45));
+    loopGrp.add(Sim.viz.createVector(V(0, 1, 0), V(0, -1, h), 2.1, pal.vxb, { radius: 0.055 }));
+    loopGrp.add(Sim.viz.createVector(V(0, -1, 0), V(0, 1, -h), 2.1, pal.vxb, { radius: 0.055 }));
   }
 
   function updateVisualsAndReadouts(updateRo) {
@@ -213,7 +213,7 @@
     if (Math.abs(sTh) > 1e-3) {
       tauArrow.visible = true;
       tauArrow.setDirection(V(0, sTh > 0 ? -1 : 1, 0));
-      tauArrow.setLength(Math.max(1.2, Math.min(5.5, 4.8 * Math.abs(sTh))), 0.85, 0.5);
+      tauArrow.setLength(Math.max(1.2, Math.min(5.2, 4.6 * Math.abs(sTh))), 0.72, 0.2);
     } else {
       tauArrow.visible = false;
     }
@@ -232,14 +232,14 @@
     const deg = ((curTh * 180) / Math.PI).toFixed(1);
 
     ro([
-      ['Área del lazo $A$', fm(A * 1e4) + ' cm² (' + fm(A) + ' m²)'],
-      ['Momento $|\\vec{\\mu}| = N I A$', fm(mu) + ' A·m²'],
-      ['Ángulo $\\theta$ ($\\vec{\\mu}, \\vec{B}$)', deg + ' °'],
-      ['Torque $|\\vec{\\tau}| = \\mu B |\\sin\\theta|$', fm(tauAna) + ' N·m'],
-      ['Torque numérico $|\\sum \\vec{r}\\times d\\vec{F}|$', fm(tauNum) + ' N·m'],
-      ['Error relativo', tauAna > 1e-12 ? fm(errRel) + ' %' : '0 %'],
-      ['Par lateral $F_1 = F_2$', fm(Farm) + ' N (∑F = 0)'],
-      ['Energía $U = -\\vec{\\mu}\\cdot\\vec{B}$', fm(U) + ' J']
+      ['Torque $|\\vec{\\tau}|$', fm(tauAna), 'N·m', { primary: true }],
+      ['Ángulo actual $\\theta$', deg, '°', { primary: true }],
+      ['Momento dipolar $|\\vec{\\mu}|$', fm(mu), 'A·m²'],
+      ['Energía potencial $U$', fm(U), 'J'],
+      ['Fuerza lateral $F_1 = F_2$', fm(Farm), 'N'],
+      ['Área de espira $A$', fm(A * 1e4), 'cm²'],
+      ['Torque numérico', fm(tauNum), 'N·m'],
+      ['Error relativo', tauAna > 1e-12 ? fm(errRel) : '0', '%']
     ]);
   }
 
@@ -256,7 +256,7 @@
     title: '4 · Momento de torsión sobre un lazo',
     group: gD,
     canPause: true,
-    cameraPos: [11, 12, 16],
+    cameraPos: [11, 11, 15.5],
     state: SD,
     getLive() {
       return {
@@ -266,14 +266,9 @@
       };
     },
     theory:
-      '<b>Momento de torsión sobre un lazo de corriente en $\\vec{B}$ uniforme:</b>' +
-      '$$\\vec{\\mu} = N\\,I\\,A\\,\\hat{n}, \\qquad \\vec{\\tau} = \\vec{\\mu} \\times \\vec{B}, \\qquad |\\vec{\\tau}| = N\\,I\\,A\\,B\\,|\\sin\\theta|$$' +
-      '$$\\sum \\vec{F} = \\vec{F}_1 + \\vec{F}_2 = \\vec{0}, \\qquad U = -\\vec{\\mu}\\cdot\\vec{B} = -\\mu\\,B\\,\\cos\\theta$$' +
-      '<ul class="th-list">' +
-      '<li><b>Momento dipolar $\\vec{\\mu}$ (magenta):</b> Normal al plano de la espira por la regla de la mano derecha.</li>' +
-      '<li><b>Par de fuerzas $\\vec{F}_1, \\vec{F}_2$ (rojas):</b> Fuerzas laterales opuestas con resultante neta nula.</li>' +
-      '<li><b>Torque $\\vec{\\tau}$ (azul, eje $Y$):</b> Gira la espira hacia el equilibrio estable en $\\theta = 0^\\circ$.</li>' +
-      '</ul>',
+      '<p>Una espira plana de $N$ vueltas, área $A$ y corriente $I$ posee un momento dipolar $\\vec{\\mu} = N I A\\,\\hat{n}$. Dentro de un campo uniforme $\\vec{B}$ la fuerza neta es nula, pero aparece un par restaurador:</p>' +
+      '$$\\vec{\\tau} = \\vec{\\mu} \\times \\vec{B}, \\qquad U = -\\vec{\\mu}\\cdot\\vec{B} = -\\mu\\,B\\,\\cos\\theta$$' +
+      '<p>La posición $\\theta = 0^\\circ$ corresponde al mínimo de energía potencial (equilibrio estable).</p>',
     activate() {
       build(cfgD, SD, initD);
       initD();
@@ -282,7 +277,7 @@
       initD();
     },
     onThemeChange() {
-      rebuildBackgroundField();
+      rebuildRefAndField();
       syncVectorColors();
       rebuildLoopGeometry();
       updateVisualsAndReadouts(false);

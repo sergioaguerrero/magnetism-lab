@@ -5,12 +5,20 @@
   const gA = new THREE.Group();
   scene.add(gA);
 
-  gA.add(new THREE.AxesHelper(3.5));
+  const refGrp = new THREE.Group();
+  gA.add(refGrp);
+
+  function rebuildRef() {
+    Sim.scene.clearGroup(refGrp);
+    refGrp.add(Sim.viz.createGrid({ size: 16, majorStep: 4, minorStep: 2, plane: 'xz' }));
+    refGrp.add(Sim.viz.createAxes(4.2, { tickStep: 1 }));
+  }
+  rebuildRef();
 
   const initPal = Sim.scene.getPalette();
   const ball = new THREE.Mesh(
     new THREE.SphereGeometry(0.18, 24, 16),
-    new THREE.MeshStandardMaterial({ color: 0x3b82f6 })
+    new THREE.MeshStandardMaterial({ color: initPal.south, roughness: 0.35, metalness: 0.12 })
   );
   gA.add(ball);
 
@@ -26,11 +34,12 @@
   tl.frustumCulled = false;
   gA.add(tl);
 
-  const vA = new THREE.ArrowHelper(V(1, 0, 0), V(), 2.1, initPal.v, 0.5, 0.3);
-  const bPartA = new THREE.ArrowHelper(V(0, 1, 0), V(), 1.9, initPal.B, 0.45, 0.28);
-  const vxbA = new THREE.ArrowHelper(V(0, 0, 1), V(), 1.9, initPal.vxb, 0.45, 0.28);
-  const fA = new THREE.ArrowHelper(V(1, 0, 0), V(), 2.1, initPal.F, 0.5, 0.3);
-  const feA = new THREE.ArrowHelper(V(0, 0, -1), V(), 2.0, initPal.mu, 0.48, 0.28);
+  /* Vectores sólidos persistentes sobre la partícula (cero asignaciones por frame) */
+  const vA = Sim.viz.createVector(V(1, 0, 0), V(), 1.9, initPal.v, { radius: 0.052, label: 'v', labelHeight: 0.45 });
+  const bPartA = Sim.viz.createVector(V(0, 1, 0), V(), 1.75, initPal.B, { radius: 0.048, label: 'B', labelHeight: 0.45 });
+  const vxbA = Sim.viz.createVector(V(0, 0, 1), V(), 1.75, initPal.vxb, { radius: 0.046, label: 'v×B', labelHeight: 0.42 });
+  const fA = Sim.viz.createVector(V(1, 0, 0), V(), 1.95, initPal.F, { radius: 0.056, label: 'F', labelHeight: 0.45 });
+  const feA = Sim.viz.createVector(V(0, 0, -1), V(), 1.8, initPal.mu, { radius: 0.048, label: 'F_E', labelHeight: 0.42 });
   gA.add(vA, bPartA, vxbA, fA, feA);
 
   const specGrp = new THREE.Group();
@@ -39,12 +48,16 @@
   const Bg = new THREE.Group();
   const bgArrows = [];
   [
-    [-3, -3],
-    [3, -3],
-    [-3, 3],
-    [3, 3]
+    [-3.5, -3.5],
+    [3.5, -3.5],
+    [-3.5, 3.5],
+    [3.5, 3.5]
   ].forEach(([x, z]) => {
-    const arr = new THREE.ArrowHelper(V(0, 1, 0), V(x, -1.5, z), 3, initPal.B, 0.5, 0.3);
+    const arr = Sim.viz.createVector(V(0, 1, 0), V(x, -1.5, z), 3, initPal.B, {
+      radius: 0.024,
+      headLength: 0.35,
+      headRadius: 0.09
+    });
     bgArrows.push(arr);
     Bg.add(arr);
   });
@@ -98,14 +111,14 @@
   const cfgA = [
     {
       k: 'preset',
-      t: 'Caso de movimiento',
+      t: 'Régimen de movimiento',
       opts: {
-        '1. Ciclotrón (órbita circular)': 'ciclotron',
-        '2. Hélice magnética (θ = 55°)': 'helice',
-        '3. Selector de velocidades (v = E/B)': 'selector',
-        '4. Espectrómetro de masas (α vs. p)': 'espectrometro',
-        '5. Deriva E×B (cicloide)': 'deriva',
-        'Personalizado (ajuste libre)': 'libre'
+        'Ciclotrón (órbita circular)': 'ciclotron',
+        'Hélice magnética (θ = 55°)': 'helice',
+        'Selector de velocidades (v = E/B)': 'selector',
+        'Espectrómetro de masas (α vs. p)': 'espectrometro',
+        'Deriva E×B (cicloide)': 'deriva',
+        'Configuración libre': 'libre'
       },
       onSelect(val) {
         applyPreset(val);
@@ -113,18 +126,18 @@
     },
     {
       k: 'rhr',
-      t: 'Regla de la mano derecha 3D',
+      t: 'Vectores sobre la partícula',
       opts: {
-        'Mostrar triedro (v, B, v×B y F)': 'si',
-        'Solo vectores v y F': 'no'
+        'Triedro completo (v, B, v×B, F)': 'si',
+        'Solo v y F': 'no'
       }
     },
-    { k: 'part', t: 'Partícula ($q, m$)', opts: { 'Electrón (q = −e)': 'e', 'Protón (q = +e)': 'p', 'Partícula α (q = +2e)': 'a' } },
+    { k: 'part', t: 'Partícula', opts: { 'Electrón (q = −e)': 'e', 'Protón (q = +e)': 'p', 'Partícula α (q = +2e)': 'a' } },
     { k: 'v', t: 'Rapidez inicial $v_0$', u: '×10⁶ m/s', min: 0.1, max: 30, step: 0.1 },
-    { k: 'th', t: 'Ángulo $\\theta$ entre $\\vec{v}$ y $\\vec{B}$', u: '°', min: 0, max: 180, step: 1 },
-    { k: 'B', t: 'Campo magnético $B$ ($+Y$)', u: 'mT', min: 0.1, max: 20, step: 0.1 },
-    { k: 'E', t: 'Campo eléctrico $E$ ($-Z, \\perp \\vec{B}$)', u: 'kV/m', min: 0, max: 200, step: 1 },
-    { k: 'sp', t: 'Velocidad de simulación', u: '×', min: 0.1, max: 4, step: 0.1 }
+    { k: 'th', t: 'Ángulo $\\theta(\\vec{v}, \\vec{B})$', u: '°', min: 0, max: 180, step: 1 },
+    { k: 'B', t: 'Campo $B$ ($+Y$)', u: 'mT', min: 0.1, max: 20, step: 0.1 },
+    { k: 'E', t: 'Campo $E$ ($-Z$)', u: 'kV/m', min: 0, max: 200, step: 1 },
+    { k: 'sp', t: 'Escala temporal', u: '×', min: 0.1, max: 4, step: 0.1 }
   ];
 
   let sim;
@@ -172,8 +185,6 @@
   const MANUAL_KEYS = new Set(['part', 'v', 'th', 'B', 'E']);
 
   function initA(changedKey) {
-    /* Si el usuario modifica manualmente parámetros físicos mientras un preset está activo,
-       pasa a 'libre' para no mostrar un nombre de preset ni órbitas de referencia incoherentes */
     if (changedKey && MANUAL_KEYS.has(changedKey) && SA.preset !== 'libre') {
       SA.preset = 'libre';
       if (Sim.ui && Sim.ui.syncControls) Sim.ui.syncControls();
@@ -208,7 +219,8 @@
     };
 
     trail.n = 0;
-    ball.material.color.set(q > 0 ? Sim.scene.getPalette().F : 0x3b82f6);
+    const pal = Sim.scene.getPalette();
+    ball.material.color.setHex(q > 0 ? pal.F : pal.south);
     if (!Sim.freeCam) {
       const off = cam.position.clone().sub(ctl.target);
       if (off.lengthSq() > 0.01) {
@@ -306,19 +318,17 @@
     const Ek = 0.5 * s.m * s.v.lengthSq();
     const rGyro = (s.m * vp) / (Math.abs(s.q) * B);
     const mqRatio = s.m / Math.abs(s.q);
-    const rhrNote = s.q > 0 ? 'Igual a v × B (q > 0)' : 'Opuesto a v × B (q < 0)';
 
     ro([
-      ['Sentido de $\\vec{F}_B$', rhrNote],
-      ['Radio $r = \\dfrac{m v_\\perp}{|q|B}$', fm(rGyro) + ' m'],
-      ['Relación $\\dfrac{m}{|q|}$', fm(mqRatio) + ' kg/C'],
-      ['Periodo $T = \\dfrac{2\\pi m}{|q|B}$', fm(T) + ' s'],
-      ['Frecuencia $f = \\dfrac{1}{T}$', fm(1 / T) + ' Hz'],
-      ['Paso hélice $p = v_\\parallel T$', fm(vl * T) + ' m'],
-      ['Velocidad $v_d = \\dfrac{E}{B}$', fm(E / B) + ' m/s'],
-      ['Energía $E_k = \\dfrac{1}{2}mv^2$', fm(Ek / E_) + ' eV'],
-      ['Conservación de $E_k$', E ? 'E realiza trabajo' : fm((Ek / s.Ek0 - 1) * 100) + ' %'],
-      ['Tiempo simulado $t$', fm(s.t) + ' s']
+      ['Radio de Larmor $r$', fm(rGyro), 'm', { primary: true }],
+      ['Energía cinética $E_k$', fm(Ek / E_), 'eV', { primary: true }],
+      ['Periodo $T$', fm(T), 's'],
+      ['Frecuencia $f$', fm(1 / T), 'Hz'],
+      ['Paso de hélice $p$', fm(vl * T), 'm'],
+      ['Deriva $v_d = E/B$', fm(E / B), 'm/s'],
+      ['Relación $m/|q|$', fm(mqRatio), 'kg/C'],
+      ['Deriva de $E_k$', E ? 'E realiza trabajo' : fm((Ek / s.Ek0 - 1) * 100) + ' %'],
+      ['Tiempo simulado $t$', fm(s.t), 's']
     ]);
   }
 
@@ -328,7 +338,7 @@
     group: gA,
     canPause: true,
     canFollow: true,
-    cameraPos: [7, 5, 8],
+    cameraPos: [7.5, 5.2, 8.5],
     state: SA,
     getLive() {
       const F = sim.E.clone().add(sim.v.clone().cross(sim.B)).multiplyScalar(sim.q);
@@ -341,17 +351,9 @@
       initA();
     },
     theory:
-      '<b>Fuerza de Lorentz y movimiento en campos $\\vec{E}$ y $\\vec{B}$:</b>' +
-      '$$\\vec{F} = q\\,(\\vec{E} + \\vec{v} \\times \\vec{B}), \\qquad \\vec{v}_d = \\frac{\\vec{E}\\times\\vec{B}}{B^2}$$' +
-      '$$r = \\frac{m\\,v_\\perp}{|q|\\,B}, \\qquad T = \\frac{2\\pi\\,m}{|q|\\,B}, \\qquad p = v_\\parallel\\,T$$' +
-      '<b>Regla de la mano derecha (triedro 3D):</b>' +
-      '<ul class="th-list">' +
-      '<li><b>Dedo índice:</b> Velocidad $\\vec{v}$ (flecha azul)</li>' +
-      '<li><b>Dedo medio:</b> Campo magnético $\\vec{B}$ (flecha verde)</li>' +
-      '<li><b>Dedo pulgar:</b> Producto cruz $\\vec{v} \\times \\vec{B}$ (flecha amarilla)</li>' +
-      '<li><b>Fuerza $\\vec{F}_B$ (roja):</b> Apunta como el pulgar si $q > 0$, y se invierte si $q < 0$.</li>' +
-      '</ul>' +
-      '<p>En el <b>Selector de velocidades</b> ($v = \\tfrac{E}{B}$), las fuerzas eléctrica y magnética se anulan ($\\vec{F}_E = -\\vec{F}_B$) y la partícula describe una trayectoria rectilínea.</p>',
+      '<p>La trayectoria de una carga $q$ de masa $m$ en campos electromagnéticos uniformes obedece la fuerza de Lorentz:</p>' +
+      '$$\\vec{F} = q\\,(\\vec{E} + \\vec{v} \\times \\vec{B}), \\qquad r = \\frac{m\\,v_\\perp}{|q|\\,B}, \\qquad T = \\frac{2\\pi\\,m}{|q|\\,B}$$' +
+      '<p>Cuando $E = 0$, la energía cinética permanece constante; en campos cruzados con $v_0 = E/B$, las fuerzas eléctrica y magnética se cancelan.</p>',
     activate() {
       build(cfgA, SA, initA);
       initA();
@@ -360,9 +362,11 @@
       initA();
     },
     onThemeChange() {
+      rebuildRef();
       syncThemeColors();
       if (sim) {
-        ball.material.color.set(sim.q > 0 ? Sim.scene.getPalette().F : 0x3b82f6);
+        const pal = Sim.scene.getPalette();
+        ball.material.color.setHex(sim.q > 0 ? pal.F : pal.south);
         buildSpectrometerReference(sim);
       }
     },

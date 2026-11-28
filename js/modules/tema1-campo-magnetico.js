@@ -5,10 +5,16 @@
   const g0 = new THREE.Group();
   scene.add(g0);
 
-  g0.add(new THREE.AxesHelper(8));
-
+  const refGrp = new THREE.Group();
   const mainGrp = new THREE.Group();
-  g0.add(mainGrp);
+  g0.add(refGrp, mainGrp);
+
+  function rebuildRef() {
+    Sim.scene.clearGroup(refGrp);
+    refGrp.add(Sim.viz.createGrid({ size: 16, majorStep: 4, minorStep: 2, plane: 'xz' }));
+    refGrp.add(Sim.viz.createAxes(7.5, { tickStep: 2, unitLabel: '1 div = 2 cm' }));
+  }
+  rebuildRef();
 
   const S0 = {
     modo: 'vectorial',
@@ -24,24 +30,24 @@
   const cfg0 = [
     {
       k: 'modo',
-      t: 'Subtema de campo magnético',
+      t: 'Subtema',
       opts: {
-        'Fuerza F = q(v × B) y Mano Derecha': 'vectorial',
-        'Imán de barra (N–S) y Brújula 3D': 'iman'
+        'Fuerza F = q(v × B)': 'vectorial',
+        'Imán de barra y brújula 3D': 'iman'
       }
     },
     {
       k: 'signo',
-      t: 'Signo de la carga de prueba q',
+      t: 'Signo de la carga $q$',
       opts: {
-        'Positiva (q > 0, F ∥ v × B)': 'pos',
-        'Negativa (q < 0, F opuesta a v × B)': 'neg'
+        'Positiva (q > 0)': 'pos',
+        'Negativa (q < 0)': 'neg'
       },
       show: () => S0.modo === 'vectorial'
     },
     {
       k: 'q',
-      t: 'Magnitud de carga $|q|$',
+      t: 'Carga $|q|$',
       u: 'μC',
       min: 1,
       max: 25,
@@ -50,7 +56,7 @@
     },
     {
       k: 'v',
-      t: 'Rapidez de la partícula $v$',
+      t: 'Rapidez $v$',
       u: 'm/s',
       min: 1,
       max: 40,
@@ -59,7 +65,7 @@
     },
     {
       k: 'B',
-      t: 'Intensidad de campo magnético $B$',
+      t: 'Campo magnético $B$',
       u: 'mT',
       min: 10,
       max: 500,
@@ -67,7 +73,7 @@
     },
     {
       k: 'th',
-      t: 'Ángulo $\\theta$ entre $\\vec{v}$ y $\\vec{B}$',
+      t: 'Ángulo $\\theta(\\vec{v}, \\vec{B})$',
       u: '°',
       min: 0,
       max: 180,
@@ -76,7 +82,7 @@
     },
     {
       k: 'px',
-      t: 'Posición brújula $x$',
+      t: 'Brújula $x$',
       u: 'cm',
       min: -8,
       max: 8,
@@ -85,7 +91,7 @@
     },
     {
       k: 'py',
-      t: 'Posición brújula $y$',
+      t: 'Brújula $y$',
       u: 'cm',
       min: -8,
       max: 8,
@@ -94,7 +100,6 @@
     }
   ];
 
-  /* Campo dipolar de un imán de barra vertical (-3 cm a +3 cm en Y) */
   function calcMagnetField(p) {
     const rPlus = V(p.x, p.y - 3.0, p.z);
     const rMinus = V(p.x, p.y + 3.0, p.z);
@@ -122,20 +127,26 @@
       const sTh = Math.abs(Math.sin(thRad)) < 1e-12 ? 0 : Math.sin(thRad);
       const cTh = Math.abs(Math.cos(thRad)) < 1e-12 ? 0 : Math.cos(thRad);
 
-      /* Fondo de líneas de campo magnético B uniforme (+Y) */
+      /* Líneas de referencia del campo uniforme B (+Y) */
       [-5, 0, 5].forEach((x) => {
         [-5, 5].forEach((z) => {
-          mainGrp.add(new THREE.ArrowHelper(V(0, 1, 0), V(x, -4, z), 8, pal.B, 0.55, 0.32));
+          mainGrp.add(
+            Sim.viz.createVector(V(0, 1, 0), V(x, -3.5, z), 7, pal.B, {
+              radius: 0.028,
+              headLength: 0.42,
+              headRadius: 0.11
+            })
+          );
         });
       });
 
-      /* Esfera de la carga puntual en el origen */
+      /* Carga puntual en el origen */
       const chargeMesh = new THREE.Mesh(
-        new THREE.SphereGeometry(0.45, 24, 16),
+        new THREE.SphereGeometry(0.4, 24, 16),
         new THREE.MeshStandardMaterial({
-          color: qSign > 0 ? pal.F : pal.v,
-          roughness: 0.3,
-          metalness: 0.15
+          color: qSign > 0 ? pal.F : pal.south,
+          roughness: 0.42,
+          metalness: 0.1
         })
       );
       mainGrp.add(chargeMesh);
@@ -145,13 +156,12 @@
       const bDir = V(0, 1, 0);
       const vDir = V(sTh, cTh, 0);
 
-      mainGrp.add(new THREE.ArrowHelper(bDir, V(0, 0, 0), bLen, pal.B, 0.85, 0.5));
-      mainGrp.add(new THREE.ArrowHelper(vDir, V(0, 0, 0), vLen, pal.v, 0.85, 0.5));
+      mainGrp.add(Sim.viz.createVector(bDir, V(0, 0, 0), bLen, pal.B, { radius: 0.08, label: 'B' }));
+      mainGrp.add(Sim.viz.createVector(vDir, V(0, 0, 0), vLen, pal.v, { radius: 0.08, label: 'v' }));
 
-      /* Paralelogramo sombreado que representa geométricamente |v × B| = v·B·sin θ */
       if (sTh > 0.02) {
-        const pB = bDir.clone().multiplyScalar(bLen * 0.75);
-        const pV = vDir.clone().multiplyScalar(vLen * 0.75);
+        const pB = bDir.clone().multiplyScalar(bLen * 0.72);
+        const pV = vDir.clone().multiplyScalar(vLen * 0.72);
         const pSum = pB.clone().add(pV);
         const paraGeo = new THREE.BufferGeometry().setFromPoints([
           V(0, 0, 0),
@@ -162,39 +172,48 @@
           pB
         ]);
         paraGeo.computeVertexNormals();
-        const paraMesh = new THREE.Mesh(
-          paraGeo,
-          new THREE.MeshBasicMaterial({
-            color: pal.vxb,
-            transparent: true,
-            opacity: 0.2,
-            side: THREE.DoubleSide
+        mainGrp.add(
+          new THREE.Mesh(
+            paraGeo,
+            new THREE.MeshBasicMaterial({
+              color: pal.vxb,
+              transparent: true,
+              opacity: 0.16,
+              side: THREE.DoubleSide,
+              depthWrite: false
+            })
+          )
+        );
+        mainGrp.add(
+          new THREE.Line(
+            new THREE.BufferGeometry().setFromPoints([V(0, 0, 0), pV, pSum, pB, V(0, 0, 0)]),
+            new THREE.LineBasicMaterial({ color: pal.vxb, transparent: true, opacity: 0.65 })
+          )
+        );
+
+        const vxbLen = Math.max(1.2, 4.6 * sTh);
+        mainGrp.add(
+          Sim.viz.createVector(V(0, 0, 1), V(0, 0, 0), vxbLen, pal.vxb, {
+            radius: 0.072,
+            label: 'v×B'
           })
         );
-        mainGrp.add(paraMesh);
 
-        const paraBorder = new THREE.Line(
-          new THREE.BufferGeometry().setFromPoints([V(0, 0, 0), pV, pSum, pB, V(0, 0, 0)]),
-          new THREE.LineBasicMaterial({ color: pal.vxb, transparent: true, opacity: 0.7 })
-        );
-        mainGrp.add(paraBorder);
-
-        /* Vector pulgar v × B (+Z) */
-        const vxbLen = Math.max(1.2, 4.8 * sTh);
-        mainGrp.add(new THREE.ArrowHelper(V(0, 0, 1), V(0, 0, 0), vxbLen, pal.vxb, 0.85, 0.5));
-
-        /* Vector Fuerza Magnética F_B = q(v × B) */
         const fDir = V(0, 0, qSign);
-        const fOrigin = qSign > 0 ? V(0, 0.25, 0) : V(0, 0, 0);
-        mainGrp.add(new THREE.ArrowHelper(fDir, fOrigin, vxbLen * 1.08, pal.F, 0.9, 0.55));
+        const fOrigin = qSign > 0 ? V(0, 0.24, 0) : V(0, 0, 0);
+        mainGrp.add(
+          Sim.viz.createVector(fDir, fOrigin, vxbLen * 1.1, pal.F, {
+            radius: 0.088,
+            label: 'F_B'
+          })
+        );
       }
 
-      /* Arco del ángulo θ entre B (+Y) y v */
       if (S0.th > 2) {
         const arcPts = [];
-        for (let i = 0; i <= 24; i++) {
-          const a = (thRad * i) / 24;
-          arcPts.push(V(2.0 * Math.sin(a), 2.0 * Math.cos(a), 0));
+        for (let i = 0; i <= 28; i++) {
+          const a = (thRad * i) / 28;
+          arcPts.push(V(1.9 * Math.sin(a), 1.9 * Math.cos(a), 0));
         }
         mainGrp.add(
           new THREE.Line(
@@ -208,31 +227,40 @@
       const Fmag = Math.abs(qC) * vxbMag;
 
       ro([
-        ['Carga de prueba $q$', (qSign > 0 ? '+' : '−') + fm(S0.q) + ' μC'],
-        ['Campo magnético $|\\vec{B}|$', fm(S0.B) + ' mT (' + fm(B) + ' T)'],
-        ['Ángulo $\\theta$ y factor $\\sin\\theta$', S0.th + '° (sin θ = ' + sTh.toFixed(3) + ')'],
-        ['Producto cruz $|\\vec{v}\\times\\vec{B}| = v B \\sin\\theta$', fm(vxbMag) + ' V/m'],
-        ['Fuerza magnética $|\\vec{F}_B| = |q| v B \\sin\\theta$', fm(Fmag * 1e6) + ' μN (' + fm(Fmag) + ' N)'],
-        ['Dirección de $\\vec{F}_B$', sTh < 1e-3 ? 'Nula (v ∥ B)' : qSign > 0 ? '+Z (igual a v × B)' : '−Z (opuesta a v × B)']
+        ['Fuerza $|\\vec{F}_B|$', fm(Fmag * 1e6), 'μN', { primary: true }],
+        ['Producto $|\\vec{v}\\times\\vec{B}|$', fm(vxbMag), 'V/m', { primary: true }],
+        ['Carga $q$', (qSign > 0 ? '+' : '−') + fm(S0.q), 'μC'],
+        ['Campo $|\\vec{B}|$', fm(S0.B), 'mT'],
+        ['Ángulo $\\theta$ ($\\sin\\theta$)', `${S0.th}° (${sTh.toFixed(3)})`],
+        ['Dirección de $\\vec{F}_B$', sTh < 1e-3 ? 'Nula (v ∥ B)' : qSign > 0 ? '+Z (paralela a v×B)' : '−Z (opuesta a v×B)']
       ]);
     } else {
-      /* Subtema 2: Imán de barra (Polos Norte y Sur) y brújula 3D */
-      const geoHalf = new THREE.BoxGeometry(2.2, 3.0, 1.4);
+      /* Subtema 2: Imán de barra y brújula 3D */
+      const geoHalf = new THREE.BoxGeometry(2.1, 3.0, 1.3);
       const north = new THREE.Mesh(
         geoHalf,
-        new THREE.MeshStandardMaterial({ color: pal.F, roughness: 0.35 })
+        new THREE.MeshStandardMaterial({ color: pal.F, roughness: 0.48, metalness: 0.12 })
       );
       north.position.set(0, 1.5, 0);
       const south = new THREE.Mesh(
         geoHalf,
-        new THREE.MeshStandardMaterial({ color: 0x3b82f6, roughness: 0.35 })
+        new THREE.MeshStandardMaterial({ color: pal.south, roughness: 0.48, metalness: 0.12 })
       );
       south.position.set(0, -1.5, 0);
       mainGrp.add(north, south);
 
-      /* Líneas de campo saliendo del Polo Norte (+Y) y entrando al Polo Sur (-Y) */
-      const lineMat = new THREE.LineBasicMaterial({ color: pal.B, transparent: true, opacity: 0.7 });
-      lineMat._shared = true;
+      const nLbl = Sim.viz.createLabel('N', { color: '#faf9f5', worldHeight: 0.85, depthTest: false });
+      const sLbl = Sim.viz.createLabel('S', { color: '#faf9f5', worldHeight: 0.85, depthTest: false });
+      if (nLbl) {
+        nLbl.position.set(0, 1.8, 0.72);
+        mainGrp.add(nLbl);
+      }
+      if (sLbl) {
+        sLbl.position.set(0, -1.8, 0.72);
+        mainGrp.add(sLbl);
+      }
+
+      const lineMat = new THREE.LineBasicMaterial({ color: pal.B, transparent: true, opacity: 0.62 });
       [-2.8, -1.6, -0.7, 0.7, 1.6, 2.8].forEach((x0) => {
         const s0 = V(x0, 0, 0);
         [1, -1].forEach((dir) => {
@@ -250,34 +278,32 @@
           }
         });
       });
-      lineMat._shared = false;
 
-      /* Brújula 3D en la posición (px, py, 0) alineada con el vector B local */
       const pp = V(S0.px, S0.py, 0);
       const bLocal = calcMagnetField(pp);
       const bMag = bLocal.length();
       const bDir = bMag > 1e-12 ? bLocal.clone().divideScalar(bMag) : V(0, 1, 0);
 
       const compassPivot = new THREE.Mesh(
-        new THREE.SphereGeometry(0.32, 16, 12),
-        new THREE.MeshStandardMaterial({ color: pal.vxb })
+        new THREE.SphereGeometry(0.28, 16, 12),
+        new THREE.MeshStandardMaterial({ color: pal.vxb, roughness: 0.4, metalness: 0.2 })
       );
       compassPivot.position.copy(pp);
       mainGrp.add(compassPivot);
 
-      mainGrp.add(new THREE.ArrowHelper(bDir, pp, 2.6, pal.F, 0.75, 0.48));
-      mainGrp.add(new THREE.ArrowHelper(bDir.clone().negate(), pp, 2.2, 0x3b82f6, 0.6, 0.35));
-      mainGrp.add(new THREE.ArrowHelper(bDir, pp, 3.8, pal.B, 0.8, 0.5));
+      mainGrp.add(Sim.viz.createVector(bDir, pp, 2.5, pal.F, { radius: 0.085 }));
+      mainGrp.add(Sim.viz.createVector(bDir.clone().negate(), pp, 2.0, pal.south, { radius: 0.075 }));
+      mainGrp.add(Sim.viz.createVector(bDir, pp, 3.6, pal.B, { radius: 0.048, label: 'B' }));
 
       const angDeg = Number(((Math.atan2(bDir.y, bDir.x) * 180) / Math.PI).toFixed(1));
       liveMagnet = { pp, bLocal, bMag, angDeg };
 
       ro([
-        ['Posición de la brújula $(x, y)$', `(${S0.px} cm, ${S0.py} cm)`],
-        ['Magnitud local $|\\vec{B}|$', fm(bMag * 1e3) + ' mT'],
-        ['Componentes $(B_x, B_y)$', `${fm(bLocal.x * 1e3)} · ${fm(bLocal.y * 1e3)} mT`],
-        ['Orientación de la aguja Norte', angDeg + '° (tangente a las líneas de B)'],
-        ['Polos del imán', 'Salen de Norte (+Y, rojo) → Entran a Sur (−Y, azul)']
+        ['Campo local $|\\vec{B}|$', fm(bMag * 1e3), 'mT', { primary: true }],
+        ['Orientación aguja $\\alpha$', String(angDeg), '°', { primary: true }],
+        ['Posición $(x, y)$', `(${S0.px}, ${S0.py})`, 'cm'],
+        ['Componente $B_x$', fm(bLocal.x * 1e3), 'mT'],
+        ['Componente $B_y$', fm(bLocal.y * 1e3), 'mT']
       ]);
     }
   }
@@ -287,20 +313,15 @@
     title: '1 · Campo magnético',
     group: g0,
     canPause: false,
-    cameraPos: [10, 8, 16],
+    cameraPos: [10.5, 7.5, 14.5],
     state: S0,
     getLive() {
       return liveMagnet;
     },
     theory:
-      '<b>Definición del campo magnético $\\vec{B}$ y fuerza sobre una carga:</b>' +
-      '$$\\vec{F}_B = q\\,(\\vec{v} \\times \\vec{B}), \\qquad |\\vec{F}_B| = |q|\\,v\\,B\\,\\sin\\theta \\quad [1\\text{ T} = 1\\text{ N}/(\\text{A}\\cdot\\text{m})]$$' +
-      '<ul class="th-list">' +
-      '<li><b>Dedo índice ($\\vec{v}$, azul):</b> Dirección de la velocidad de la carga.</li>' +
-      '<li><b>Dedo medio ($\\vec{B}$, verde):</b> Dirección de las líneas de campo magnético.</li>' +
-      '<li><b>Pulgar ($\\vec{v}\\times\\vec{B}$, amarillo):</b> Perpendicular al paralelogramo formado por $\\vec{v}$ y $\\vec{B}$.</li>' +
-      '<li><b>Fuerza $\\vec{F}_B$ (roja):</b> Es máxima cuando $\\theta = 90^\\circ$ y nula cuando $\\vec{v} \\parallel \\vec{B}$ ($\\theta = 0^\\circ$ o $180^\\circ$).</li>' +
-      '</ul>',
+      '<p>La fuerza magnética sobre una carga puntual $q$ que se desplaza con velocidad $\\vec{v}$ en un campo $\\vec{B}$ define operacionalmente el vector de inducción magnética:</p>' +
+      '$$\\vec{F}_B = q\\,(\\vec{v} \\times \\vec{B}), \\qquad |\\vec{F}_B| = |q|\\,v\\,B\\,\\sin\\theta$$' +
+      '<p>En el Sistema Internacional, $1\\text{ T} = 1\\text{ N}/(\\text{A}\\cdot\\text{m})$. La fuerza es máxima cuando $\\vec{v}\\perp\\vec{B}$ y se anula cuando $\\vec{v}\\parallel\\vec{B}$.</p>',
     activate() {
       build(cfg0, S0, on0);
       on0();
@@ -309,6 +330,7 @@
       on0();
     },
     onThemeChange() {
+      rebuildRef();
       on0();
     }
   });

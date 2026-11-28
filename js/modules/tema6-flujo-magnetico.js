@@ -5,13 +5,19 @@
   const gE = new THREE.Group();
   scene.add(gE);
 
-  gE.add(new THREE.AxesHelper(10));
-
+  const refGrp = new THREE.Group();
   const surfGrp = new THREE.Group();
   const linesGrp = new THREE.Group();
   const vecGrp = new THREE.Group();
   const projGrp = new THREE.Group();
-  gE.add(surfGrp, linesGrp, vecGrp, projGrp);
+  gE.add(refGrp, surfGrp, linesGrp, vecGrp, projGrp);
+
+  function rebuildRef() {
+    Sim.scene.clearGroup(refGrp);
+    refGrp.add(Sim.viz.createGrid({ size: 22, majorStep: 4, minorStep: 2, plane: 'xz' }));
+    refGrp.add(Sim.viz.createAxes(9.5, { tickStep: 2, unitLabel: '1 div = 2 cm' }));
+  }
+  rebuildRef();
 
   const SE = {
     shape: 'disco',
@@ -27,23 +33,23 @@
   const cfgE = [
     {
       k: 'shape',
-      t: 'Geometría de la superficie',
+      t: 'Superficie',
       opts: {
         'Disco circular (diámetro L)': 'disco',
-        'Superficie cuadrada (L × L)': 'rect'
+        'Cuadrado (L × L)': 'rect'
       }
     },
     {
       k: 'mode',
-      t: 'Modo de orientación',
+      t: 'Orientación',
       opts: {
-        'Manual (ajustar ángulo θ)': 'manual',
-        'Rotación continua (Φ = B·A·cos ωt)': 'rotacion'
+        'Manual (ángulo θ)': 'manual',
+        'Rotación continua (ωt)': 'rotacion'
       }
     },
-    { k: 'th', t: 'Ángulo $\\theta$ (entre $\\hat{n}$ y $\\vec{B}$)', u: '°', min: -180, max: 180, step: 1 },
-    { k: 'B', t: 'Campo magnético $B$ ($+X$)', u: 'mT', min: 10, max: 200, step: 5 },
-    { k: 'L', t: 'Dimensión superficie $L$', u: 'cm', min: 4, max: 14, step: 0.5 },
+    { k: 'th', t: 'Ángulo $\\theta(\\hat{n}, \\vec{B})$', u: '°', min: -180, max: 180, step: 1 },
+    { k: 'B', t: 'Campo $B$ ($+X$)', u: 'mT', min: 10, max: 200, step: 5 },
+    { k: 'L', t: 'Dimensión $L$', u: 'cm', min: 4, max: 14, step: 0.5 },
     {
       k: 'w',
       t: 'Velocidad angular $\\omega$',
@@ -55,15 +61,14 @@
     }
   ];
 
-  /* Objetos persistentes reutilizados durante la rotación continua (cero fugas de memoria WebGL) */
   const initPal = Sim.scene.getPalette();
-  const hitSphereGeo = new THREE.SphereGeometry(0.22, 12, 10);
+  const hitSphereGeo = new THREE.SphereGeometry(0.18, 12, 10);
   hitSphereGeo._shared = true;
-  const hitMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: initPal.fluxPos, emissiveIntensity: 0.6 });
+  const hitMat = new THREE.MeshStandardMaterial({ color: initPal.fluxPos, roughness: 0.35, metalness: 0.1 });
   hitMat._shared = true;
 
-  const nArrow = new THREE.ArrowHelper(V(1, 0, 0), V(0, 0, 0), 5.8, initPal.mu, 0.95, 0.55);
-  const bArrow = new THREE.ArrowHelper(V(1, 0, 0), V(0, 0, 0), 5.8, initPal.B, 0.95, 0.55);
+  const nArrow = Sim.viz.createVector(V(1, 0, 0), V(0, 0, 0), 5.4, initPal.mu, { radius: 0.082, label: 'n̂' });
+  const bArrow = Sim.viz.createVector(V(1, 0, 0), V(0, 0, 0), 5.4, initPal.B, { radius: 0.075, label: 'B' });
 
   const ARC_STEPS = 28;
   const arcPositions = new Float32Array((ARC_STEPS + 1) * 3);
@@ -77,11 +82,10 @@
   const projPositions = new Float32Array(PROJ_MAX * 3);
   const projGeo = new THREE.BufferGeometry();
   projGeo.setAttribute('position', new THREE.BufferAttribute(projPositions, 3));
-  const projMat = new THREE.LineBasicMaterial({ color: initPal.fluxPos, transparent: true, opacity: 0.75 });
+  const projMat = new THREE.LineBasicMaterial({ color: initPal.fluxPos, transparent: true, opacity: 0.78 });
   const projLine = new THREE.Line(projGeo, projMat);
   projGrp.add(projLine);
 
-  /* Estado cacheado de la superficie y la rejilla de líneas */
   let surfFrame = null;
   let surfMat = null;
   let wireMat = null;
@@ -103,10 +107,11 @@
     surfMat = new THREE.MeshStandardMaterial({
       color: pal.fluxPos,
       transparent: true,
-      opacity: 0.4,
-      side: THREE.DoubleSide
+      opacity: 0.32,
+      side: THREE.DoubleSide,
+      depthWrite: false
     });
-    const rimMat = new THREE.MeshStandardMaterial({ color: pal.I, roughness: 0.35, metalness: 0.2 });
+    const rimMat = new THREE.MeshStandardMaterial({ color: pal.I, roughness: 0.42, metalness: 0.22 });
     wireMat = null;
 
     if (SE.shape === 'disco') {
@@ -114,7 +119,7 @@
       disc.rotation.y = Math.PI / 2;
       surfFrame.add(disc);
 
-      const ring = new THREE.Mesh(new THREE.TorusGeometry(h, 0.14, 14, 64), rimMat);
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(h, 0.13, 14, 64), rimMat);
       ring.rotation.y = Math.PI / 2;
       surfFrame.add(ring);
     } else {
@@ -122,7 +127,7 @@
       plane.rotation.y = Math.PI / 2;
       surfFrame.add(plane);
 
-      wireMat = new THREE.MeshBasicMaterial({ color: pal.fluxPos, wireframe: true, transparent: true, opacity: 0.45 });
+      wireMat = new THREE.MeshBasicMaterial({ color: pal.fluxPos, wireframe: true, transparent: true, opacity: 0.35 });
       const wireGrid = new THREE.Mesh(new THREE.PlaneGeometry(SE.L, SE.L, 4, 4), wireMat);
       wireGrid.rotation.y = Math.PI / 2;
       surfFrame.add(wireGrid);
@@ -142,7 +147,7 @@
       [-h * 0.45, h * 0.45],
       [h * 0.45, h * 0.45]
     ].forEach(([u, v]) => {
-      surfFrame.add(new THREE.ArrowHelper(V(1, 0, 0), V(0, v, u), 1.6, pal.mu, 0.45, 0.3));
+      surfFrame.add(Sim.viz.createVector(V(1, 0, 0), V(0, v, u), 1.45, pal.mu, { radius: 0.034, headLength: 0.36, headRadius: 0.1 }));
     });
 
     surfGrp.add(surfFrame);
@@ -162,9 +167,13 @@
         const y = (iy / nGrid) * span;
         const z = (iz / nGrid) * span;
 
-        const lineMat = new THREE.LineBasicMaterial({ color: pal.B, transparent: true, opacity: 0.2 });
+        const lineMat = new THREE.LineBasicMaterial({ color: pal.B, transparent: true, opacity: 0.18 });
         const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([V(-10, y, z), V(10, y, z)]), lineMat);
-        const arrow = new THREE.ArrowHelper(V(1, 0, 0), V(8.2, y, z), 1.6, pal.B, 0.35, 0.22);
+        const arrow = Sim.viz.createVector(V(1, 0, 0), V(8.4, y, z), 1.4, pal.B, {
+          radius: 0.025,
+          headLength: 0.34,
+          headRadius: 0.095
+        });
         const dot = new THREE.Mesh(hitSphereGeo, hitMat);
         dot.visible = false;
 
@@ -174,7 +183,6 @@
     }
   }
 
-  /* Integración numérica real (suma de Riemann 2D 64×64) para ambas geometrías (disco y cuadrado) */
   function calcNumericalFlux(th) {
     const M = 64;
     const h = (SE.L * 1e-2) / 2;
@@ -211,13 +219,11 @@
     if (cTh > 0.02) fluxColor = pal.fluxPos;
     else if (cTh < -0.02) fluxColor = pal.fluxNeg;
 
-    /* 1. Superficie orientable */
     surfFrame.rotation.y = -curTh;
     surfMat.color.setHex(fluxColor);
-    surfMat.opacity = 0.28 + 0.22 * Math.abs(cTh);
+    surfMat.opacity = 0.22 + 0.2 * Math.abs(cTh);
     if (wireMat) wireMat.color.setHex(fluxColor);
 
-    /* 2. Vectores centrales y arco θ */
     nArrow.setDirection(V(cTh, 0, sTh));
     nArrow.setColor(pal.mu);
     bArrow.setColor(pal.B);
@@ -227,16 +233,15 @@
       arcLine.visible = true;
       for (let i = 0; i <= ARC_STEPS; i++) {
         const a = (curTh * i) / ARC_STEPS;
-        arcPositions[i * 3] = 2.8 * Math.cos(a);
+        arcPositions[i * 3] = 2.6 * Math.cos(a);
         arcPositions[i * 3 + 1] = 0;
-        arcPositions[i * 3 + 2] = 2.8 * Math.sin(a);
+        arcPositions[i * 3 + 2] = 2.6 * Math.sin(a);
       }
       arcGeo.attributes.position.needsUpdate = true;
     } else {
       arcLine.visible = false;
     }
 
-    /* 3. Proyección del área efectiva A_⊥ en x = -10 */
     const projX = -10;
     projMat.color.setHex(fluxColor);
     if (SE.shape === 'disco') {
@@ -266,8 +271,7 @@
     }
     projGeo.attributes.position.needsUpdate = true;
 
-    /* 4. Actualización in-place del haz de líneas e impactos */
-    hitMat.emissive.setHex(fluxColor);
+    hitMat.color.setHex(fluxColor);
     const totalLines = pool.length;
     let piercingLines = 0;
 
@@ -291,9 +295,9 @@
 
       const lineColor = pierces ? fluxColor : pal.B;
       item.lineMat.color.setHex(lineColor);
-      item.lineMat.opacity = pierces ? 0.85 : 0.18;
+      item.lineMat.opacity = pierces ? 0.78 : 0.16;
       item.arrow.setColor(lineColor);
-      item.arrow.setLength(1.6, pierces ? 0.55 : 0.35, pierces ? 0.35 : 0.22);
+      item.arrow.setLength(1.4, pierces ? 0.44 : 0.3, pierces ? 0.12 : 0.08);
 
       if (pierces && Math.abs(xInt) <= 10) {
         item.dot.visible = true;
@@ -314,18 +318,18 @@
     const errRel = Math.abs(phiAna) > 1e-12 ? (Math.abs(phiNum - phiAna) / Math.abs(phiAna)) * 100 : 0;
     const deg = ((curTh * 180) / Math.PI).toFixed(1);
 
-    let signLabel = 'Nulo (0 Wb, B ⊥ n̂)';
-    if (cTh > 0.01) signLabel = 'Positivo (+Φ_B, θ < 90°)';
-    else if (cTh < -0.01) signLabel = 'Negativo (−Φ_B, θ > 90°)';
+    let signLabel = 'Nulo (B ⊥ n̂)';
+    if (cTh > 0.01) signLabel = 'Positivo (+Φ_B)';
+    else if (cTh < -0.01) signLabel = 'Negativo (−Φ_B)';
 
     ro([
-      ['Signo del flujo $\\Phi_B$', signLabel],
-      ['Área total $A$', fm(A * 1e4) + ' cm² (' + fm(A) + ' m²)'],
-      ['Ángulo $\\theta$ ($\\cos\\theta$)', deg + '° (' + cTh.toFixed(3) + ')'],
-      ['Área proyectada $A\\cos\\theta$', fm(Aeff * 1e4) + ' cm²'],
-      ['Flujo analítico $\\Phi_B = B A \\cos\\theta$', fm(phiAna * 1e6) + ' μWb'],
-      ['Flujo numérico $\\sum \\vec{B}\\cdot\\Delta\\vec{A}$', fm(phiNum * 1e6) + ' μWb (' + fm(errRel) + ' % err)'],
-      ['Líneas que atraviesan', piercingLines + ' de ' + totalLines]
+      ['Flujo analítico $\\Phi_B$', fm(phiAna * 1e6), 'μWb', { primary: true }],
+      ['Área proyectada $A\\cos\\theta$', fm(Aeff * 1e4), 'cm²', { primary: true }],
+      ['Signo del flujo', signLabel],
+      ['Ángulo $\\theta$ ($\\cos\\theta$)', `${deg}° (${cTh.toFixed(3)})`],
+      ['Área geométrica $A$', fm(A * 1e4), 'cm²'],
+      ['Flujo numérico ($64\\times 64$)', `${fm(phiNum * 1e6)} μWb (${fm(errRel)} %)`],
+      ['Líneas interceptadas', `${piercingLines} / ${totalLines}`]
     ]);
   }
 
@@ -339,7 +343,7 @@
     title: '6 · Flujo magnético',
     group: gE,
     canPause: true,
-    cameraPos: [12, 11, 18],
+    cameraPos: [12, 10.5, 17.5],
     state: SE,
     getLive() {
       return {
@@ -348,15 +352,9 @@
       };
     },
     theory:
-      '<b>Flujo magnético a través de una superficie orientable:</b>' +
-      '$$\\Phi_B = \\int_S \\vec{B} \\cdot d\\vec{A} = \\vec{B} \\cdot \\vec{A} = B\\,A\\,\\cos\\theta \\quad [\\text{Wb} = \\text{T}\\cdot\\text{m}^2]$$' +
-      '$$A_\\perp = A\\,\\cos\\theta, \\qquad \\Phi_B(t) = B\\,A\\,\\cos(\\omega t)$$' +
-      '<ul class="th-list">' +
-      '<li><b>Flujo positivo ($\\Phi_B > 0$, verde):</b> Cuando $|\\theta| < 90^\\circ$ (las líneas salen por $+\\hat{n}$).</li>' +
-      '<li><b>Flujo nulo ($\\Phi_B = 0$, gris):</b> Cuando $\\theta = \\pm 90^\\circ$ (superficie paralela al campo $\\vec{B}$).</li>' +
-      '<li><b>Flujo negativo ($\\Phi_B < 0$, rojo):</b> Cuando $|\\theta| > 90^\\circ$ (las líneas entran contra $+\\hat{n}$).</li>' +
-      '</ul>' +
-      '<p>El flujo total es proporcional al área proyectada $A\\cos\\theta$ y al número de líneas que atraviesan la superficie.</p>',
+      '<p>El flujo magnético a través de una superficie abierta $S$ mide el paso neto de líneas de campo respecto a la orientación definida por $\\hat{n}$:</p>' +
+      '$$\\Phi_B = \\int_S \\vec{B} \\cdot d\\vec{A} = B\\,A\\,\\cos\\theta \\qquad [1\\text{ Wb} = 1\\text{ T}\\cdot\\text{m}^2]$$' +
+      '<p>En rotación uniforme a frecuencia angular $\\omega$, el flujo oscila armónicamente como $\\Phi_B(t) = B A \\cos(\\omega t)$.</p>',
     activate() {
       build(cfgE, SE, initE);
       initE();
@@ -365,6 +363,7 @@
       initE();
     },
     onThemeChange() {
+      rebuildRef();
       cachedSurfKey = '';
       updateScene(false);
     },

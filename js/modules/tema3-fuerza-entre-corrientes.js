@@ -5,19 +5,17 @@
   const gC = new THREE.Group();
   scene.add(gC);
 
-  gC.add(new THREE.AxesHelper(10));
-
-  const gridGrp = new THREE.Group();
+  const refGrp = new THREE.Group();
   const staticGrp = new THREE.Group();
   const carrierGrp = new THREE.Group();
-  gC.add(gridGrp, staticGrp, carrierGrp);
+  gC.add(refGrp, staticGrp, carrierGrp);
 
-  function rebuildGrid() {
-    Sim.scene.clearGroup(gridGrp);
-    const pal = Sim.scene.getPalette();
-    gridGrp.add(new THREE.GridHelper(24, 12, pal.gridMain, pal.gridSub));
+  function rebuildRef() {
+    Sim.scene.clearGroup(refGrp);
+    refGrp.add(Sim.viz.createGrid({ size: 22, majorStep: 4, minorStep: 2, plane: 'xz' }));
+    refGrp.add(Sim.viz.createAxes(10, { tickStep: 2, unitLabel: '1 div = 2 cm' }));
   }
-  rebuildGrid();
+  rebuildRef();
 
   const SC = {
     dir: 'mismo',
@@ -31,17 +29,17 @@
   const cfgC = [
     {
       k: 'dir',
-      t: 'Sentido de las corrientes',
+      t: 'Sentido relativo',
       opts: {
-        'Mismo sentido (atracción)': 'mismo',
-        'Sentidos opuestos (repulsión)': 'opuesto'
+        'Paralelas (atracción)': 'mismo',
+        'Antiparalelas (repulsión)': 'opuesto'
       }
     },
-    { k: 'I1', t: 'Corriente conductor 1 ($I_1$)', u: 'A', min: 0.5, max: 20, step: 0.5 },
-    { k: 'I2', t: 'Corriente conductor 2 ($I_2$)', u: 'A', min: 0.5, max: 20, step: 0.5 },
-    { k: 'd', t: 'Separación entre hilos ($d$)', u: 'cm', min: 2, max: 14, step: 0.5 },
-    { k: 'dl', t: 'Longitud del segmento ($\\Delta l$)', u: 'cm', min: 1, max: 8, step: 0.5 },
-    { k: 'y0', t: 'Posición vertical segmento ($y_0$)', u: 'cm', min: -6, max: 6, step: 0.5 }
+    { k: 'I1', t: 'Corriente $I_1$', u: 'A', min: 0.5, max: 20, step: 0.5 },
+    { k: 'I2', t: 'Corriente $I_2$', u: 'A', min: 0.5, max: 20, step: 0.5 },
+    { k: 'd', t: 'Separación $d$', u: 'cm', min: 2, max: 14, step: 0.5 },
+    { k: 'dl', t: 'Segmento $\\Delta l$', u: 'cm', min: 1, max: 8, step: 0.5 },
+    { k: 'y0', t: 'Altura $y_0$', u: 'cm', min: -6, max: 6, step: 0.5 }
   ];
 
   const WIRE_LEN = 20;
@@ -49,9 +47,9 @@
   const carriers2 = [];
   const N_CARRIERS = 9;
 
-  const matC1 = new THREE.MeshStandardMaterial({ color: 0xfef08a, emissive: 0xd97706, emissiveIntensity: 0.45 });
-  const matC2 = new THREE.MeshStandardMaterial({ color: 0xe0f2fe, emissive: 0x0284c7, emissiveIntensity: 0.45 });
-  const sphGeo = new THREE.SphereGeometry(0.24, 12, 10);
+  const matC1 = new THREE.MeshStandardMaterial({ color: 0xe6c792, roughness: 0.35, metalness: 0.15 });
+  const matC2 = new THREE.MeshStandardMaterial({ color: 0xb7d5e8, roughness: 0.35, metalness: 0.15 });
+  const sphGeo = new THREE.SphereGeometry(0.22, 12, 10);
 
   for (let i = 0; i < N_CARRIERS; i++) {
     const m1 = new THREE.Mesh(sphGeo, matC1);
@@ -64,7 +62,6 @@
   let phase1 = 0;
   let phase2 = 0;
 
-  /* Cálculo numérico de B1(p) por Biot-Savart sobre hilo 1 largo (-200 cm a +200 cm) */
   function calcB1Numerical(p, x1, I1) {
     const N = 400;
     const YMAX = 200;
@@ -85,7 +82,6 @@
     return V(bx * c, 0, bz * c);
   }
 
-  /* Fuerza numérica integrando dF2 = I2 * dl2 × B1(p) sobre el segmento Δl */
   function calcSegmentForceNumerical(x1, x2, I1, I2, s2, y0, dl) {
     const M = 10;
     const step = dl / M;
@@ -94,8 +90,7 @@
       const y = y0 - dl / 2 + (j + 0.5) * step;
       const B1 = calcB1Numerical(V(x2, y, 0), x1, I1);
       const dlVec = V(0, s2 * step * 1e-2, 0);
-      const dF = dlVec.cross(B1).multiplyScalar(I2);
-      F.add(dF);
+      F.add(dlVec.cross(B1).multiplyScalar(I2));
     }
     return F;
   }
@@ -111,7 +106,7 @@
     grp.add(
       new THREE.Line(
         new THREE.BufferGeometry().setFromPoints(pts),
-        new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.55 })
+        new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.48 })
       )
     );
     [0, Math.PI / 2, Math.PI, (3 * Math.PI) / 2].forEach((a) => {
@@ -119,7 +114,7 @@
       const dir = V(-Math.sin(a), 0, -Math.cos(a))
         .multiplyScalar(ccwFromTop ? 1 : -1)
         .normalize();
-      grp.add(new THREE.ArrowHelper(dir, pos, 1.1, color, 0.45, 0.3));
+      grp.add(Sim.viz.createVector(dir, pos, 0.95, color, { radius: 0.032, headLength: 0.35, headRadius: 0.11 }));
     });
     return grp;
   }
@@ -148,27 +143,25 @@
     const y0 = SC.y0;
     const dl = SC.dl;
 
-    /* Conductores 1 y 2 */
-    const wireGeo = new THREE.CylinderGeometry(0.16, 0.16, WIRE_LEN, 20);
+    const wireGeo = new THREE.CylinderGeometry(0.15, 0.15, WIRE_LEN, 20);
     const w1 = new THREE.Mesh(
       wireGeo,
-      new THREE.MeshStandardMaterial({ color: pal.I, roughness: 0.35, metalness: 0.2 })
+      new THREE.MeshStandardMaterial({ color: pal.I, roughness: 0.42, metalness: 0.22 })
     );
     w1.position.set(x1, 0, 0);
 
     const w2 = new THREE.Mesh(
       wireGeo,
-      new THREE.MeshStandardMaterial({ color: pal.v, roughness: 0.35, metalness: 0.2 })
+      new THREE.MeshStandardMaterial({ color: pal.v, roughness: 0.42, metalness: 0.22 })
     );
     w2.position.set(x2, 0, 0);
     staticGrp.add(w1, w2);
 
-    /* Segmentos diferenciales Δl resaltados en ambos hilos */
-    const segGeo = new THREE.CylinderGeometry(0.28, 0.28, dl, 24);
+    const segGeo = new THREE.CylinderGeometry(0.25, 0.25, dl, 24);
     const segMat = new THREE.MeshStandardMaterial({
       color: pal.mu,
-      emissive: 0xa21caf,
-      emissiveIntensity: 0.4
+      roughness: 0.42,
+      metalness: 0.16
     });
     const seg1 = new THREE.Mesh(segGeo, segMat);
     seg1.position.set(x1, y0, 0);
@@ -176,7 +169,6 @@
     seg2.position.set(x2, y0, 0);
     staticGrp.add(seg1, seg2);
 
-    /* Anillos de campo magnético B1 y B2 */
     [-5, y0, 5].forEach((yy) => {
       staticGrp.add(buildCircleRing(x1, yy, d, pal.B, true));
     });
@@ -189,31 +181,33 @@
     const B2_ana = (MU0 * SC.I2) / (2 * Math.PI * (d * 1e-2));
     const F_per_L_ana = (MU0 * SC.I1 * SC.I2) / (2 * Math.PI * (d * 1e-2));
 
-    const bLen1 = Math.min(4.5, Math.max(1.6, 1.4 + Math.log10(B1_ana * 1e6 + 1) * 0.9));
-    const bLen2 = Math.min(4.5, Math.max(1.6, 1.4 + Math.log10(B2_ana * 1e6 + 1) * 0.9));
+    const bLen1 = Math.min(4.2, Math.max(1.6, 1.3 + Math.log10(B1_ana * 1e6 + 1) * 0.85));
+    const bLen2 = Math.min(4.2, Math.max(1.6, 1.3 + Math.log10(B2_ana * 1e6 + 1) * 0.85));
     const fLen = Math.min(
       Math.max(1.5, d * 0.42),
-      Math.max(1.6, 1.1 + Math.log10(F_per_L_ana * 1e6 + 1) * 0.95)
+      Math.max(1.6, 1.1 + Math.log10(F_per_L_ana * 1e6 + 1) * 0.9)
     );
 
-    staticGrp.add(new THREE.ArrowHelper(V(0, 1, 0), p1, Math.max(2.2, dl * 0.65), pal.I, 0.7, 0.45));
-    staticGrp.add(new THREE.ArrowHelper(V(0, s2, 0), p2, Math.max(2.2, dl * 0.65), pal.v, 0.7, 0.45));
+    staticGrp.add(Sim.viz.createVector(V(0, 1, 0), p1, Math.max(2.2, dl * 0.65), pal.I, { radius: 0.072, label: 'I₁' }));
+    staticGrp.add(Sim.viz.createVector(V(0, s2, 0), p2, Math.max(2.2, dl * 0.65), pal.v, { radius: 0.072, label: 'I₂' }));
 
-    staticGrp.add(new THREE.ArrowHelper(V(0, 0, -1), p2, bLen1, pal.B, 0.65, 0.4));
-    staticGrp.add(new THREE.ArrowHelper(V(0, 0, s2), p1, bLen2, pal.B, 0.65, 0.4));
+    staticGrp.add(Sim.viz.createVector(V(0, 0, -1), p2, bLen1, pal.B, { radius: 0.068, label: 'B₁' }));
+    staticGrp.add(Sim.viz.createVector(V(0, 0, s2), p1, bLen2, pal.B, { radius: 0.068, label: 'B₂' }));
 
-    const dirF2 = V(-s2, 0, 0);
-    const dirF1 = V(s2, 0, 0);
-    staticGrp.add(new THREE.ArrowHelper(dirF2, p2, fLen, pal.F, 0.75, 0.48));
-    staticGrp.add(new THREE.ArrowHelper(dirF1, p1, fLen, pal.F, 0.75, 0.48));
+    staticGrp.add(Sim.viz.createVector(V(-s2, 0, 0), p2, fLen, pal.F, { radius: 0.084, label: 'F₁→₂' }));
+    staticGrp.add(Sim.viz.createVector(V(s2, 0, 0), p1, fLen, pal.F, { radius: 0.084, label: 'F₂→₁' }));
 
-    const cotaPts = [V(x1, -9, 0), V(x2, -9, 0)];
     staticGrp.add(
       new THREE.Line(
-        new THREE.BufferGeometry().setFromPoints(cotaPts),
+        new THREE.BufferGeometry().setFromPoints([V(x1, -9, 0), V(x2, -9, 0)]),
         new THREE.LineBasicMaterial({ color: pal.axisLine })
       )
     );
+    const dLbl = Sim.viz.createLabel(`d = ${d} cm`, { color: pal.labelInk, worldHeight: 0.55 });
+    if (dLbl) {
+      dLbl.position.set(0, -9.65, 0);
+      staticGrp.add(dLbl);
+    }
 
     updateCarriers();
 
@@ -223,13 +217,13 @@
     const errRel = dF_ana > 0 ? (Math.abs(dF_num - dF_ana) / dF_ana) * 100 : 0;
 
     ro([
-      ['Interacción magnética', s2 > 0 ? 'Atracción (⇈)' : 'Repulsión (⇅)'],
-      ['Campo $|\\vec{B}_1| = \\dfrac{\\mu_0 I_1}{2\\pi d}$', fm(B1_ana * 1e6) + ' μT'],
-      ['Campo $|\\vec{B}_2| = \\dfrac{\\mu_0 I_2}{2\\pi d}$', fm(B2_ana * 1e6) + ' μT'],
-      ['Fuerza $\\dfrac{F}{L} = \\dfrac{\\mu_0 I_1 I_2}{2\\pi d}$', fm(F_per_L_ana * 1e6) + ' μN/m'],
-      ['Fuerza analítica $\\Delta F$', fm(dF_ana * 1e6) + ' μN'],
-      ['Fuerza numérica $\\sum d\\vec{F}$', fm(dF_num * 1e6) + ' μN'],
-      ['Error relativo', fm(errRel) + ' %']
+      ['Fuerza por longitud $F/L$', fm(F_per_L_ana * 1e6), 'μN/m', { primary: true }],
+      ['Fuerza en segmento $\\Delta F$', fm(dF_ana * 1e6), 'μN', { primary: true }],
+      ['Interacción', s2 > 0 ? 'Atracción (paralelas)' : 'Repulsión (antiparalelas)'],
+      ['Campo $|\\vec{B}_1|$ en hilo 2', fm(B1_ana * 1e6), 'μT'],
+      ['Campo $|\\vec{B}_2|$ en hilo 1', fm(B2_ana * 1e6), 'μT'],
+      ['Integración numérica $\\Delta F$', fm(dF_num * 1e6), 'μN'],
+      ['Error relativo', fm(errRel), '%']
     ]);
   }
 
@@ -238,17 +232,12 @@
     title: '3 · Fuerza entre elementos de corriente',
     group: gC,
     canPause: true,
-    cameraPos: [14, 11, 22],
+    cameraPos: [13, 10, 21],
     state: SC,
     theory:
-      '<b>Fuerza magnética entre elementos de corriente:</b>' +
-      '$$d\\vec{F}_{1\\to 2} = I_2\\,d\\vec{l}_2 \\times \\vec{B}_1, \\qquad B_1 = \\frac{\\mu_0 I_1}{2\\pi d}$$' +
-      '$$\\frac{F}{L} = \\frac{\\mu_0\\,I_1\\,I_2}{2\\pi\\,d}, \\qquad \\Delta F = \\frac{\\mu_0\\,I_1\\,I_2}{2\\pi\\,d}\\,\\Delta l$$' +
-      '<ul class="th-list">' +
-      '<li><b>Mismo sentido ($\\uparrow\\uparrow$):</b> Los conductores se <b>atraen</b> mutuamente.</li>' +
-      '<li><b>Sentidos opuestos ($\\uparrow\\downarrow$):</b> Los conductores se <b>repelen</b> mutuamente.</li>' +
-      '</ul>' +
-      '<p>En ambos casos las fuerzas cumplen la tercera ley de Newton ($\\vec{F}_{1\\to 2} = -\\vec{F}_{2\\to 1}$).</p>',
+      '<p>Cada conductor se halla inmerso en el campo magnético producido por el otro, experimentando la fuerza de Laplace:</p>' +
+      '$$d\\vec{F}_{1\\to 2} = I_2\\,d\\vec{l}_2 \\times \\vec{B}_1, \\qquad \\frac{F}{L} = \\frac{\\mu_0\\,I_1\\,I_2}{2\\pi\\,d}$$' +
+      '<p>Las corrientes paralelas se atraen y las antiparalelas se repelen, cumpliendo en todo momento la tercera ley de Newton ($\\vec{F}_{1\\to 2} = -\\vec{F}_{2\\to 1}$).</p>',
     activate() {
       build(cfgC, SC, onC);
       onC();
@@ -259,7 +248,7 @@
       onC();
     },
     onThemeChange() {
-      rebuildGrid();
+      rebuildRef();
       onC();
     },
     update(paused, _fr, dt) {
