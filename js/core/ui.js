@@ -1,6 +1,7 @@
 /* ===== Gestor de interfaz: controles numéricos editables, variantes, instrumentos SI y KaTeX ===== */
 let lastRoKey = '';
 let roNodes = [];
+let lastParsedReadouts = [];
 let sliderDefaults = {};
 let activeVis = null;
 let activeOnChange = null;
@@ -38,6 +39,7 @@ function ro(list) {
     label: item[0],
     ...parseReading(item)
   }));
+  lastParsedReadouts = parsed;
 
   /* Si ningún elemento se marcó como primario explícitamente, destacamos el primero o los dos primeros numéricos */
   const hasExplicitPrimary = parsed.some((p) => p.primary);
@@ -120,6 +122,12 @@ function captureSliderDefaults(cfg, state, baseDefaults) {
 }
 
 function notifyDependents() {
+  if (Sim.plot && Sim.activeMod) {
+    Sim.plot.render(Sim.activeMod);
+  }
+  if (Sim.drag && Sim.activeMod) {
+    Sim.drag.syncHint(Sim.activeMod);
+  }
   if (Sim.explainer && Sim.activeMod) {
     Sim.explainer.scheduleUpdate(Sim.activeMod);
   }
@@ -283,4 +291,8 @@ function resetSlidersOnly() {
   notifyDependents();
 }
 
-Sim.ui = { ro, build, renderMath, resetSlidersOnly, syncControls };
+function getLastReadouts() {
+  return lastParsedReadouts;
+}
+
+Sim.ui = { ro, build, renderMath, resetSlidersOnly, syncControls, getLastReadouts };

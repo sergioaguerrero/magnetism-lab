@@ -101,6 +101,12 @@ function setMode(id, presetName, skipHash) {
     Sim.inspector.clear();
     Sim.inspector.syncLegend(mod);
   }
+  if (Sim.plot) {
+    Sim.plot.render(mod);
+  }
+  if (Sim.drag) {
+    Sim.drag.syncHint(mod);
+  }
 
   if (!skipHash) {
     syncUrlHash(id);
@@ -143,6 +149,8 @@ function setRailTab(tabName) {
 
   if (isAnalysis && Sim.explainer && activeMod) {
     Sim.explainer.update(activeMod, true);
+  } else if (!isAnalysis && Sim.plot && activeMod) {
+    Sim.plot.render(activeMod);
   }
 }
 
@@ -164,6 +172,7 @@ if ($('rs')) {
     setPaused(true);
     if (activeMod && activeMod.reset) {
       activeMod.reset();
+      if (Sim.plot) Sim.plot.render(activeMod);
       if (Sim.explainer) Sim.explainer.update(activeMod, false);
       if (Sim.inspector) Sim.inspector.markDirty();
     }
@@ -211,6 +220,18 @@ if ($('vec-hud-close')) {
   };
 }
 
+if ($('btn-export-png')) {
+  $('btn-export-png').onclick = () => {
+    if (Sim.exporter) Sim.exporter.exportPng();
+  };
+}
+
+if ($('btn-export-csv')) {
+  $('btn-export-csv').onclick = () => {
+    if (Sim.exporter) Sim.exporter.exportCsv();
+  };
+}
+
 if ($('btn-theme')) {
   $('btn-theme').onclick = () => Sim.scene.toggleTheme();
 }
@@ -219,6 +240,9 @@ if (Sim.scene && Sim.scene.onThemeChange) {
   Sim.scene.onThemeChange(() => {
     if (activeMod && activeMod.onThemeChange) {
       activeMod.onThemeChange();
+    }
+    if (Sim.plot && activeMod) {
+      Sim.plot.render(activeMod);
     }
     if (Sim.inspector && activeMod) {
       Sim.inspector.syncLegend(activeMod);
@@ -303,6 +327,7 @@ window.addEventListener('keydown', (e) => {
   } else if ((e.key === 'r' || e.key === 'R') && activeMod && activeMod.reset) {
     setPaused(true);
     activeMod.reset();
+    if (Sim.plot) Sim.plot.render(activeMod);
     if (Sim.explainer) Sim.explainer.update(activeMod, false);
     if (Sim.inspector) Sim.inspector.markDirty();
   }

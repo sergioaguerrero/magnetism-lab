@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
-  <link rel="stylesheet" href="css/styles.css?v=5">
+  <link rel="stylesheet" href="css/styles.css?v=6">
 </head>
 <body>
   <!-- Barra superior integrada: marca, navegación de los 7 temas y herramientas globales -->
@@ -30,6 +30,9 @@
     <nav id="tabs" class="topic-nav" aria-label="Temas de simulación"></nav>
 
     <div class="topbar-tools">
+      <button type="button" id="btn-export-png" class="tool-btn tool-mono" title="Descargar captura PNG del visor 3D">PNG</button>
+      <button type="button" id="btn-export-csv" class="tool-btn tool-mono" title="Exportar parámetros, mediciones SI y curva en CSV">CSV</button>
+      <span class="tool-sep" aria-hidden="true"></span>
       <button type="button" id="btn-home" class="tool-btn" title="Ver índice de temas">Índice</button>
       <button type="button" id="btn-help" class="tool-btn tool-icon" title="Controles de cámara y atajos" aria-label="Controles de cámara y atajos" aria-expanded="false" aria-controls="help-popover">?</button>
       <button type="button" id="btn-theme" class="tool-btn tool-icon" title="Cambiar esquema de color" aria-label="Cambiar esquema de color">
@@ -53,9 +56,12 @@
       <div id="cvw" class="viewport-canvas">
         <!-- Encabezado discreto del módulo activo y leyenda contextual de vectores -->
         <div class="vp-header">
-          <div class="vp-title-block">
-            <span id="vp-index" class="vp-index">01</span>
-            <h1 id="vp-title" class="vp-title">Campo magnético</h1>
+          <div class="vp-title-stack">
+            <div class="vp-title-block">
+              <span id="vp-index" class="vp-index">01</span>
+              <h1 id="vp-title" class="vp-title">Campo magnético</h1>
+            </div>
+            <span id="vp-drag-hint" class="vp-drag-hint" hidden></span>
           </div>
           <div class="legend" aria-label="Elementos físicos en escena" aria-live="polite"></div>
         </div>
@@ -135,6 +141,14 @@
             <span class="sec-meta">Unidades SI</span>
           </div>
           <div id="ro" class="telemetry-panel"></div>
+        </section>
+
+        <section class="rail-section" id="sec-plot" hidden>
+          <div class="sec-hdr">
+            <h2 id="plot-title">Perfil 2D</h2>
+            <span id="plot-meta" class="sec-meta"></span>
+          </div>
+          <canvas id="plot-canvas" class="plot-canvas"></canvas>
         </section>
       </div>
 
@@ -245,6 +259,9 @@
   <script src="js/core/constants.js"></script>
   <script src="js/core/scene.js"></script>
   <script src="js/core/viz3d.js"></script>
+  <script src="js/core/plot2d.js"></script>
+  <script src="js/core/drag3d.js"></script>
+  <script src="js/core/export.js"></script>
   <script src="js/core/ui.js"></script>
   <script src="js/core/explainer.js"></script>
   <script src="js/core/inspector.js"></script>
