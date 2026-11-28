@@ -399,9 +399,15 @@
     },
     theory:
       '<p>Cada elemento diferencial de corriente $I\\,d\\vec{l}$ (o una carga en movimiento $q\\vec{v}$) contribuye al campo magnético según la ley de Biot-Savart:</p>' +
-      '$$d\\vec{B} = \\frac{\\mu_0}{4\\pi}\\,\\frac{I\\,d\\vec{l} \\times \\hat{r}}{r^2}, \\qquad \\vec{B}_q = \\frac{\\mu_0}{4\\pi}\\,\\frac{q\\,\\vec{v} \\times \\hat{r}}{r^2}$$' +
+      Sim.refs.eq('d\\vec{B} = \\frac{\\mu_0}{4\\pi}\\,\\frac{I\\,d\\vec{l} \\times \\hat{r}}{r^2}, \\qquad \\vec{B}_q = \\frac{\\mu_0}{4\\pi}\\,\\frac{q\\,\\vec{v} \\times \\hat{r}}{r^2}', [
+        ['YF', '§28.1–28.2'],
+        ['GR', '§5.2.1']
+      ]) +
       '<p>Para geometrías con simetría conocida se obtienen soluciones analíticas cerradas:</p>' +
-      '$$B_{\\text{hilo}} = \\frac{\\mu_0 I}{2\\pi d}, \\quad B_{\\text{espira}} = \\frac{\\mu_0 I R^2}{2(R^2+y^2)^{3/2}}, \\quad B_{\\text{sol}} = \\frac{\\mu_0 N I}{L}$$',
+      Sim.refs.eq('B_{\\text{hilo}} = \\frac{\\mu_0 I}{2\\pi d}, \\quad B_{\\text{espira}} = \\frac{\\mu_0 I R^2}{2(R^2+y^2)^{3/2}}, \\quad B_{\\text{sol}} = \\frac{\\mu_0 N I}{L}', [
+        ['YF', '§28.3, §28.5, §28.7'],
+        ['SJ', '§30.1, §30.4']
+      ]),
     activate() {
       build(cfgB, SB, onB);
       onB();

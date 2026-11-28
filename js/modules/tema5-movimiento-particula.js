@@ -372,7 +372,10 @@
     },
     theory:
       '<p>La trayectoria de una carga $q$ de masa $m$ en campos electromagnéticos uniformes obedece la fuerza de Lorentz:</p>' +
-      '$$\\vec{F} = q\\,(\\vec{E} + \\vec{v} \\times \\vec{B}), \\qquad r = \\frac{m\\,v_\\perp}{|q|\\,B}, \\qquad T = \\frac{2\\pi\\,m}{|q|\\,B}$$' +
+      Sim.refs.eq('\\vec{F} = q\\,(\\vec{E} + \\vec{v} \\times \\vec{B}), \\qquad r = \\frac{m\\,v_\\perp}{|q|\\,B}, \\qquad T = \\frac{2\\pi\\,m}{|q|\\,B}', [
+        ['YF', '§27.4–27.5'],
+        ['GR', '§5.1.2']
+      ]) +
       '<p>Cuando $E = 0$, la energía cinética permanece constante; en campos cruzados con $v_0 = E/B$, las fuerzas eléctrica y magnética se cancelan.</p>',
     activate() {
       build(cfgA, SA, initA);

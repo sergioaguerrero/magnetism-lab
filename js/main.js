@@ -77,6 +77,10 @@ function setMode(id, presetName, skipHash) {
   if (thEl) {
     thEl.innerHTML = mod.theory;
     Sim.ui.renderMath(thEl);
+    if (Sim.refs) {
+      Sim.refs.bindCitationClicks(thEl);
+      Sim.refs.renderBibliography();
+    }
   }
 
   const pzBtn = $('pz');

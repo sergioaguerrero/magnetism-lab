@@ -376,7 +376,10 @@
     },
     theory:
       '<p>El flujo magnético a través de una superficie abierta $S$ mide el paso neto de líneas de campo respecto a la orientación definida por $\\hat{n}$:</p>' +
-      '$$\\Phi_B = \\int_S \\vec{B} \\cdot d\\vec{A} = B\\,A\\,\\cos\\theta \\qquad [1\\text{ Wb} = 1\\text{ T}\\cdot\\text{m}^2]$$' +
+      Sim.refs.eq('\\Phi_B = \\int_S \\vec{B} \\cdot d\\vec{A} = B\\,A\\,\\cos\\theta \\qquad [1\\text{ Wb} = 1\\text{ T}\\cdot\\text{m}^2]', [
+        ['YF', '§27.3'],
+        ['SJ', '§30.5']
+      ]) +
       '<p>En rotación uniforme a frecuencia angular $\\omega$, el flujo oscila armónicamente como $\\Phi_B(t) = B A \\cos(\\omega t)$.</p>',
     activate() {
       build(cfgE, SE, initE);

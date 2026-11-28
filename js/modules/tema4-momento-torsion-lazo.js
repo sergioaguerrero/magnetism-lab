@@ -296,7 +296,10 @@
     },
     theory:
       '<p>Una espira plana de $N$ vueltas, área $A$ y corriente $I$ posee un momento dipolar $\\vec{\\mu} = N I A\\,\\hat{n}$. Dentro de un campo uniforme $\\vec{B}$ la fuerza neta es nula, pero aparece un par restaurador:</p>' +
-      '$$\\vec{\\tau} = \\vec{\\mu} \\times \\vec{B}, \\qquad U = -\\vec{\\mu}\\cdot\\vec{B} = -\\mu\\,B\\,\\cos\\theta$$' +
+      Sim.refs.eq('\\vec{\\tau} = \\vec{\\mu} \\times \\vec{B}, \\qquad U = -\\vec{\\mu}\\cdot\\vec{B} = -\\mu\\,B\\,\\cos\\theta', [
+        ['YF', '§27.7'],
+        ['GR', '§6.1.1']
+      ]) +
       '<p>La posición $\\theta = 0^\\circ$ corresponde al mínimo de energía potencial (equilibrio estable).</p>',
     activate() {
       build(cfgD, SD, initD);

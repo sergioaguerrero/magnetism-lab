@@ -367,7 +367,10 @@
     },
     theory:
       '<p>Las líneas de campo magnético son curvas cerradas sin principio ni fin. Por ello, el flujo magnético neto a través de cualquier superficie cerrada $S$ es idénticamente nulo:</p>' +
-      '$$\\oint_S \\vec{B} \\cdot d\\vec{A} = 0 \\iff \\nabla \\cdot \\vec{B} = 0$$' +
+      Sim.refs.eq('\\oint_S \\vec{B} \\cdot d\\vec{A} = 0 \\iff \\nabla \\cdot \\vec{B} = 0', [
+        ['YF', '§27.3'],
+        ['GR', '§5.3.2']
+      ]) +
       '<p>Esta ley expresa la ausencia de monopolos magnéticos aislados.</p>',
     activate() {
       build(cfgF, SF, onF);

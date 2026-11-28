@@ -1,5 +1,8 @@
-/* ===== Desarrollo analítico contextual por tema (redacción académica individualizada) ===== */
+/* ===== Desarrollo analítico contextual por tema con citas bibliográficas por ecuación ===== */
 (function () {
+  const eq = (tex, cites) => (Sim.refs ? Sim.refs.eq(tex, cites) : `$$${tex}$$`);
+  const cite = (id, loc) => (Sim.refs ? Sim.refs.inline(id, loc) : '');
+
   function fmTex(x) {
     if (x === 0 || !isFinite(x)) return '0';
     const a = Math.abs(x);
@@ -11,7 +14,7 @@
     return `${mant}\\times 10^{${exp}}`;
   }
 
-  /* Tema 1: estructura centrada en producto vectorial (modo vectorial) o campo dipolar (modo imán) */
+  /* Tema 1: producto vectorial o campo dipolar */
   function buildTema1(S, mod) {
     if (S.modo === 'iman') {
       const live = mod.getLive ? mod.getLive() : null;
@@ -24,10 +27,13 @@
       return `
         <p>La brújula se encuentra en $(x, y) = (${S.px}\\text{ cm},\\, ${S.py}\\text{ cm})$, a una distancia $r = ${fmTex(rCm)}\\text{ cm}$ del centro del imán de barra orientado sobre el eje $Y$.</p>
         <p>En ese punto, el campo dipolar aproximado tiene componentes cartesianas y magnitud:</p>
-        $$\\vec{B}(x,y) = (${fmTex(bxMt)}\\,\\hat{i} + ${fmTex(byMt)}\\,\\hat{j})\\text{ mT}, \\qquad |\\vec{B}| = ${fmTex(bMagMt)}\\text{ mT}$$
+        ${eq(`\\vec{B}(x,y) = (${fmTex(bxMt)}\\,\\hat{i} + ${fmTex(byMt)}\\,\\hat{j})\\text{ mT}, \\qquad |\\vec{B}| = ${fmTex(bMagMt)}\\text{ mT}`, [
+          ['YF', '§27.1–27.3'],
+          ['SJ', '§29.1']
+        ])}
         <p>El par magnético sobre la aguja la orienta en la dirección tangente a la línea de campo local:</p>
-        $$\\alpha = \\operatorname{atan2}(B_y, B_x) = ${angDeg}^\\circ$$
-        <div class="analysis-note">En el exterior del imán las líneas emergen del polo Norte ($+Y$) y convergen hacia el polo Sur ($-Y$); al acercar la brújula a cualquiera de los polos, la magnitud crece rápidamente y la dirección se alinea con el eje del imán.</div>
+        ${eq(`\\alpha = \\operatorname{atan2}(B_y, B_x) = ${angDeg}^\\circ`, [['YF', '§27.3']])}
+        <div class="analysis-note">En el exterior del imán las líneas emergen del polo Norte ($+Y$) y convergen hacia el polo Sur ($-Y$); la aguja de prueba se alinea siempre tangente al vector $\\vec{B}$ local ${cite('SJ', '§29.1')}.</div>
       `;
     }
 
@@ -42,9 +48,15 @@
 
     return `
       <p>Con $\\vec{B} = ${S.B}\\text{ mT}\\,\\hat{j}$ y una velocidad $v = ${v}\\text{ m/s}$ inclinada $\\theta = ${S.th}^\\circ$ en el plano $XY$, el módulo del producto cruz corresponde al área del paralelogramo generado por ambos vectores:</p>
-      $$|\\vec{v}\\times\\vec{B}| = v\\,B\\,\\sin\\theta = (${v})\\,(${fmTex(B)})\\,(${sTh.toFixed(4)}) = ${fmTex(vxb)}\\text{ V/m}$$
+      ${eq(`|\\vec{v}\\times\\vec{B}| = v\\,B\\,\\sin\\theta = (${v})\\,(${fmTex(B)})\\,(${sTh.toFixed(4)}) = ${fmTex(vxb)}\\text{ V/m}`, [
+        ['YF', '§27.2'],
+        ['SJ', '§29.1']
+      ])}
       <p>Multiplicando por la carga $q = ${qSign > 0 ? '+' : '-'}${S.q}\\text{ }\\mu\\text{C}$ se obtiene la fuerza magnética perpendicular al plano $XY$:</p>
-      $$|\\vec{F}_B| = |q|\\,|\\vec{v}\\times\\vec{B}| = (${fmTex(absQ)}\\text{ C})\\,(${fmTex(vxb)}\\text{ V/m}) = ${fmTex(FB * 1e6)}\\text{ }\\mu\\text{N}$$
+      ${eq(`|\\vec{F}_B| = |q|\\,|\\vec{v}\\times\\vec{B}| = (${fmTex(absQ)}\\text{ C})\\,(${fmTex(vxb)}\\text{ V/m}) = ${fmTex(FB * 1e6)}\\text{ }\\mu\\text{N}`, [
+        ['GR', '§5.1.2'],
+        ['CO', 'SI']
+      ])}
       <table class="calc-table">
         <thead><tr><th>Magnitud</th><th>Valor</th></tr></thead>
         <tbody>
@@ -56,7 +68,7 @@
     `;
   }
 
-  /* Tema 2: contraste directo entre Biot-Savart discreto y expresión analítica según geometría */
+  /* Tema 2: contraste entre Biot-Savart discreto y solución analítica */
   function buildTema2(S, mod) {
     const xm = S.px * 1e-2;
     const ym = S.py * 1e-2;
@@ -73,49 +85,63 @@
       const dm = Math.abs(xm);
       derivation =
         dm > 0.003
-          ? `<p>A una distancia perpendicular $d = |x| = ${fmTex(dm)}\\text{ m}$ del conductor largo sobre el eje $Y$:</p>
-             $$B = \\frac{\\mu_0\\,I}{2\\pi\\,d} = \\frac{(2\\times 10^{-7})\\,(${S.I})}{${fmTex(dm)}} = ${fmTex(((MU0 * S.I) / (2 * Math.PI * dm)) * 1e6)}\\text{ }\\mu\\text{T}$$`
+          ? `<p>A una distancia perpendicular $d = |x| = ${fmTex(dm)}\\text{ m}$ del conductor largo sobre el eje $Y$:</p>` +
+            eq(`B = \\frac{\\mu_0\\,I}{2\\pi\\,d} = \\frac{(2\\times 10^{-7})\\,(${S.I})}{${fmTex(dm)}} = ${fmTex(((MU0 * S.I) / (2 * Math.PI * dm)) * 1e6)}\\text{ }\\mu\\text{T}`, [
+              ['YF', '§28.3'],
+              ['GR', '§5.2.1 (Ej. 5.5)']
+            ])
           : `<p>La sonda coincide con el eje del conductor ($d = 0$), donde la aproximación de hilo filiforme diverge.</p>`;
       note = 'El simulador discretiza un conductor finito de 240 cm; el pequeño residuo respecto a la fórmula de hilo infinito refleja los extremos del tramo.';
     } else if (S.geo === 'espira') {
       const r2y2 = Rm * Rm + ym * ym;
       derivation =
         Math.abs(S.px) < 0.05
-          ? `<p>Sobre el eje de simetría ($x = 0$) a altura $y = ${fmTex(ym)}\\text{ m}$ de la espira de radio $R = ${fmTex(Rm)}\\text{ m}$:</p>
-             $$B_y(y) = \\frac{\\mu_0\\,I\\,R^2}{2\\,(R^2 + y^2)^{3/2}} = \\frac{(4\\pi\\times 10^{-7})\\,(${S.I})\\,(${fmTex(Rm * Rm)})}{2\\,(${fmTex(r2y2)})^{3/2}} = ${fmTex((live.bAna || 0) * 1e6)}\\text{ }\\mu\\text{T}$$`
+          ? `<p>Sobre el eje de simetría ($x = 0$) a altura $y = ${fmTex(ym)}\\text{ m}$ de la espira de radio $R = ${fmTex(Rm)}\\text{ m}$:</p>` +
+            eq(`B_y(y) = \\frac{\\mu_0\\,I\\,R^2}{2\\,(R^2 + y^2)^{3/2}} = \\frac{(4\\pi\\times 10^{-7})\\,(${S.I})\\,(${fmTex(Rm * Rm)})}{2\\,(${fmTex(r2y2)})^{3/2}} = ${fmTex((live.bAna || 0) * 1e6)}\\text{ }\\mu\\text{T}`, [
+              ['YF', '§28.5'],
+              ['GR', '§5.2.1 (Ej. 5.6)']
+            ])
           : `<p>Fuera del eje ($x = ${S.px}\\text{ cm} \\neq 0$) la integral de Biot-Savart involucra integrales elípticas; sitúa $x = 0\\text{ cm}$ para contrastar con la expresión axial cerrada.</p>`;
-      note = 'En el centro de la espira ($y = 0$), el campo alcanza su máximo $B_0 = \\mu_0 I / (2R)$.';
+      note = `En el centro de la espira ($y = 0$), el campo alcanza su máximo $B_0 = \\mu_0 I / (2R)$ ${cite('SJ', '§30.1')}.`;
     } else if (S.geo === 'helmholtz') {
       const lp = (yy) => (MU0 * S.I * Rm * Rm) / (2 * Math.pow(Rm * Rm + yy * yy, 1.5));
       const b1 = lp(ym - Rm / 2);
       const b2 = lp(ym + Rm / 2);
       derivation =
         Math.abs(S.px) < 0.05
-          ? `<p>Por superposición de las dos espiras situadas en $y = \\pm R/2$ ($R = ${S.R}\\text{ cm}$):</p>
-             $$B_y = B_1 + B_2 = ${fmTex(b1 * 1e6)} + ${fmTex(b2 * 1e6)} = ${fmTex((b1 + b2) * 1e6)}\\text{ }\\mu\\text{T}$$`
+          ? `<p>Por superposición de las dos espiras situadas en $y = \\pm R/2$ ($R = ${S.R}\\text{ cm}$):</p>` +
+            eq(`B_y = B_1 + B_2 = ${fmTex(b1 * 1e6)} + ${fmTex(b2 * 1e6)} = ${fmTex((b1 + b2) * 1e6)}\\text{ }\\mu\\text{T}`, [
+              ['YF', '§28.5'],
+              ['SJ', '§30.1']
+            ])
           : `<p>Desplaza la sonda a $x = 0\\text{ cm}$ para evaluar la superposición analítica sobre el eje de las bobinas.</p>`;
       note = 'Separar las bobinas una distancia igual a su radio anula la primera y segunda derivada de $B_y(y)$ en el origen, generando una región central casi uniforme.';
     } else if (S.geo === 'solenoide') {
       const nDens = S.N / Lm;
       const bInf = MU0 * nDens * S.I;
-      derivation = `
-        <p>Con $N = ${S.N}$ espiras en $L = ${S.L}\\text{ cm}$, la densidad lineal es $n = N/L = ${fmTex(nDens)}\\text{ m}^{-1}$:</p>
-        $$B_{\\text{ideal}} = \\mu_0\\,n\\,I = (4\\pi\\times 10^{-7})\\,(${fmTex(nDens)})\\,(${S.I}) = ${fmTex(bInf * 1e6)}\\text{ }\\mu\\text{T}$$
-      `;
-      note = 'La fórmula $\\mu_0 n I$ supone un solenoide largo ($L \\gg R$). Cuando $L$ es comparable a $R$ o la sonda se acerca a los extremos, el cálculo discreto muestra la caída real del campo.';
+      derivation =
+        `<p>Con $N = ${S.N}$ espiras en $L = ${S.L}\\text{ cm}$, la densidad lineal es $n = N/L = ${fmTex(nDens)}\\text{ m}^{-1}$:</p>` +
+        eq(`B_{\\text{ideal}} = \\mu_0\\,n\\,I = (4\\pi\\times 10^{-7})\\,(${fmTex(nDens)})\\,(${S.I}) = ${fmTex(bInf * 1e6)}\\text{ }\\mu\\text{T}`, [
+          ['YF', '§28.7'],
+          ['GR', '§5.3.3 (Ej. 5.9)']
+        ]);
+      note = `La fórmula $\\mu_0 n I$ supone un solenoide largo ($L \\gg R$) ${cite('SJ', '§30.4')}. Cuando $L$ es comparable a $R$ o la sonda se acerca a los extremos, el cálculo discreto muestra la caída real del campo.`;
     } else if (S.geo === 'carga_mov') {
       const sinTh = rm > 1e-4 ? Math.abs(xm) / rm : 0;
-      derivation = `
-        <p>Una carga puntual con momento de corriente equivalente $q\\vec{v} = ${fmTex(qvEq)}\\text{ C}\\cdot\\text{m/s}\\,\\hat{j}$ produce en $(${S.px}, ${S.py}, 0)\\text{ cm}$:</p>
-        $$|\\vec{B}_q| = \\frac{\\mu_0}{4\\pi}\\,\\frac{q\\,v\\,\\sin\\theta}{r^2} = (10^{-7})\\,\\frac{(${fmTex(qvEq)})\\,(${sinTh.toFixed(4)})}{(${fmTex(rm || 1)})^2} = ${live.bAna != null ? fmTex(live.bAna * 1e6) + '\\text{ }\\mu\\text{T}' : '\\text{singularidad en } r = 0'}$$
-      `;
+      derivation =
+        `<p>Una carga puntual con momento de corriente equivalente $q\\vec{v} = ${fmTex(qvEq)}\\text{ C}\\cdot\\text{m/s}\\,\\hat{j}$ produce en $(${S.px}, ${S.py}, 0)\\text{ cm}$:</p>` +
+        eq(`|\\vec{B}_q| = \\frac{\\mu_0}{4\\pi}\\,\\frac{q\\,v\\,\\sin\\theta}{r^2} = (10^{-7})\\,\\frac{(${fmTex(qvEq)})\\,(${sinTh.toFixed(4)})}{(${fmTex(rm || 1)})^2} = ${live.bAna != null ? fmTex(live.bAna * 1e6) + '\\text{ }\\mu\\text{T}' : '\\text{singularidad en } r = 0'}`, [
+          ['YF', '§28.1']
+        ]);
       note = 'El campo se anula sobre la línea de movimiento ($x = 0$, $\\sin\\theta = 0$) y es máximo en el plano perpendicular ($y = 0$).';
     } else {
       const sinTh = rm > 1e-4 ? Math.abs(xm) / rm : 0;
-      derivation = `
-        <p>Para un elemento aislado $I\\,\\Delta\\vec{l}$ ($\\Delta l = 0.01\\text{ m}$) en el origen, evaluado a distancia $r = ${fmTex(rm)}\\text{ m}$:</p>
-        $$|\\Delta\\vec{B}| = \\frac{\\mu_0}{4\\pi}\\,\\frac{I\\,\\Delta l\\,\\sin\\theta}{r^2} = (10^{-7})\\,\\frac{(${S.I})\\,(0.01)\\,(${sinTh.toFixed(4)})}{(${fmTex(rm || 1)})^2} = ${live.bAna != null ? fmTex(live.bAna * 1e6) + '\\text{ }\\mu\\text{T}' : '\\text{singularidad en } r = 0'}$$
-      `;
+      derivation =
+        `<p>Para un elemento aislado $I\\,\\Delta\\vec{l}$ ($\\Delta l = 0.01\\text{ m}$) en el origen, evaluado a distancia $r = ${fmTex(rm)}\\text{ m}$:</p>` +
+        eq(`|\\Delta\\vec{B}| = \\frac{\\mu_0}{4\\pi}\\,\\frac{I\\,\\Delta l\\,\\sin\\theta}{r^2} = (10^{-7})\\,\\frac{(${S.I})\\,(0.01)\\,(${sinTh.toFixed(4)})}{(${fmTex(rm || 1)})^2} = ${live.bAna != null ? fmTex(live.bAna * 1e6) + '\\text{ }\\mu\\text{T}' : '\\text{singularidad en } r = 0'}`, [
+          ['YF', '§28.2'],
+          ['GR', '§5.2.1']
+        ]);
       note = 'Un elemento diferencial aislado no existe físicamente por conservación de la carga, pero constituye la base de superposición para cualquier circuito cerrado.';
     }
 
@@ -133,7 +159,7 @@
     `;
   }
 
-  /* Tema 3: análisis en dos etapas (campo B1 -> fuerza sobre segmento Δl) */
+  /* Tema 3: interacción en dos etapas */
   function buildTema3(S) {
     const dm = S.d * 1e-2;
     const dlm = S.dl * 1e-2;
@@ -145,12 +171,20 @@
     return `
       <h3>1. Campo del primer conductor sobre el segundo</h3>
       <p>El hilo 1 ($I_1 = ${S.I1}\\text{ A}$ en $+Y$) genera a la distancia $d = ${fmTex(dm)}\\text{ m}$ un campo magnético dirigido en $-Z$:</p>
-      $$B_1 = \\frac{\\mu_0\\,I_1}{2\\pi\\,d} = \\frac{(2\\times 10^{-7})\\,(${S.I1})}{${fmTex(dm)}} = ${fmTex(B1 * 1e6)}\\text{ }\\mu\\text{T}$$
+      ${eq(`B_1 = \\frac{\\mu_0\\,I_1}{2\\pi\\,d} = \\frac{(2\\times 10^{-7})\\,(${S.I1})}{${fmTex(dm)}} = ${fmTex(B1 * 1e6)}\\text{ }\\mu\\text{T}`, [
+        ['YF', '§28.3'],
+        ['SJ', '§30.1']
+      ])}
 
       <h3>2. Fuerza de Laplace sobre el segmento $\\Delta l = ${S.dl}\\text{ cm}$</h3>
       <p>Al ser $d\\vec{l}_2 \\perp \\vec{B}_1$, el producto vectorial $I_2\\,d\\vec{l}_2\\times\\vec{B}_1$ produce una fuerza horizontal por unidad de longitud:</p>
-      $$\\frac{F}{L} = I_2\\,B_1 = \\frac{\\mu_0\\,I_1\\,I_2}{2\\pi\\,d} = ${fmTex(FperL * 1e6)}\\text{ }\\mu\\text{N/m}$$
-      $$\\Delta F = \\left(\\frac{F}{L}\\right)\\Delta l = (${fmTex(FperL)}\\text{ N/m})\\,(${fmTex(dlm)}\\text{ m}) = ${fmTex(dF * 1e6)}\\text{ }\\mu\\text{N}$$
+      ${eq(`\\frac{F}{L} = I_2\\,B_1 = \\frac{\\mu_0\\,I_1\\,I_2}{2\\pi\\,d} = ${fmTex(FperL * 1e6)}\\text{ }\\mu\\text{N/m}`, [
+        ['YF', '§28.4'],
+        ['GR', '§5.2.1']
+      ])}
+      ${eq(`\\Delta F = \\left(\\frac{F}{L}\\right)\\Delta l = (${fmTex(FperL)}\\text{ N/m})\\,(${fmTex(dlm)}\\text{ m}) = ${fmTex(dF * 1e6)}\\text{ }\\mu\\text{N}`, [
+        ['SJ', '§30.2']
+      ])}
 
       <div class="analysis-note">${
         mismo
@@ -160,7 +194,7 @@
     `;
   }
 
-  /* Tema 4: estado instantáneo del rotor magnético y criterio de equilibrio */
+  /* Tema 4: estado instantáneo del rotor magnético */
   function buildTema4(S, mod) {
     const live = mod.getLive ? mod.getLive() : { curTh: (S.th0 * Math.PI) / 180, deg: S.th0 };
     const thDeg = Number(live.deg.toFixed(1));
@@ -185,15 +219,24 @@
 
     return `
       <p>La espira (${S.shape === 'rect' ? `cuadrada de lado $L = ${S.L}\\text{ cm}$` : `circular de diámetro $L = ${S.L}\\text{ cm}$`}, $N = ${S.N}$) tiene área $A = ${fmTex(A * 1e4)}\\text{ cm}^2$ y momento dipolar:</p>
-      $$|\\vec{\\mu}| = N\\,I\\,A = (${S.N})\\,(${S.I})\\,(${fmTex(A)}) = ${fmTex(mu)}\\text{ A}\\cdot\\text{m}^2$$
+      ${eq(`|\\vec{\\mu}| = N\\,I\\,A = (${S.N})\\,(${S.I})\\,(${fmTex(A)}) = ${fmTex(mu)}\\text{ A}\\cdot\\text{m}^2`, [
+        ['YF', '§27.7'],
+        ['SJ', '§29.5']
+      ])}
       <p>En la orientación actual $\\theta = ${thDeg}^\\circ$ respecto a $\\vec{B} = ${S.B}\\text{ mT}\\,\\hat{i}$:</p>
-      $$|\\vec{\\tau}| = \\mu\\,B\\,|\\sin\\theta| = (${fmTex(mu)})\\,(${fmTex(B)})\\,|\\sin(${thDeg}^\\circ)| = ${fmTex(tau)}\\text{ N}\\cdot\\text{m}$$
-      $$U = -\\vec{\\mu}\\cdot\\vec{B} = -\\mu\\,B\\,\\cos(${thDeg}^\\circ) = ${fmTex(U)}\\text{ J}$$
+      ${eq(`|\\vec{\\tau}| = \\mu\\,B\\,|\\sin\\theta| = (${fmTex(mu)})\\,(${fmTex(B)})\\,|\\sin(${thDeg}^\\circ)| = ${fmTex(tau)}\\text{ N}\\cdot\\text{m}`, [
+        ['YF', '§27.7'],
+        ['GR', '§6.1.1']
+      ])}
+      ${eq(`U = -\\vec{\\mu}\\cdot\\vec{B} = -\\mu\\,B\\,\\cos(${thDeg}^\\circ) = ${fmTex(U)}\\text{ J}`, [
+        ['YF', '§27.7'],
+        ['SJ', '§29.5']
+      ])}
       <div class="analysis-note">${eqState} Aunque cada brazo vertical soporta una fuerza lateral de $${fmTex(S.N * S.I * Lm * B)}\\text{ N}$, ambas se anulan en traslación ($\\sum\\vec{F} = \\vec{0}$) y actúan únicamente como par de giro.</div>
     `;
   }
 
-  /* Tema 5: evaluación adaptada al régimen dinámico de Lorentz */
+  /* Tema 5: régimen dinámico de Lorentz e integrador de Boris */
   function buildTema5(S) {
     const [q, m] = P[S.part];
     const absQ = Math.abs(q);
@@ -217,7 +260,7 @@
       selector: 'Ajustando $v_0 = E/B$, la fuerza eléctrica $q\\vec{E}$ cancela exactamente a $q(\\vec{v}\\times\\vec{B})$ y la partícula atraviesa sin desviarse.',
       espectrometro: 'Para igual rapidez y campo, el radio crece linealmente con $m/|q|$: la partícula $\\alpha$ describe el doble de radio que el protón.',
       deriva: 'Al diferir $v_0$ de $E/B$, el campo eléctrico varía la rapidez en cada tramo cambiando el radio instantáneo y originando una trayectoria cicloidal.',
-      libre: 'Movimiento general bajo campos $\\vec{E}$ y $\\vec{B}$ uniformes integrado mediante el algoritmo simpléctico de Boris.'
+      libre: 'Movimiento general bajo campos $\\vec{E}$ y $\\vec{B}$ uniformes.'
     };
 
     return `
@@ -233,12 +276,20 @@
           <tr><td>Energía cinética inicial $E_k$</td><td>${fmTex(EkeV)} eV</td></tr>
         </tbody>
       </table>
-      $$r = \\frac{m\\,v_\\perp}{|q|\\,B} = ${fmTex(r)}\\text{ m}, \\qquad T = \\frac{2\\pi\\,m}{|q|\\,B} = ${fmTex(T)}\\text{ s}$$
+      ${eq(`r = \\frac{m\\,v_\\perp}{|q|\\,B} = ${fmTex(r)}\\text{ m}, \\qquad T = \\frac{2\\pi\\,m}{|q|\\,B} = ${fmTex(T)}\\text{ s}`, [
+        ['YF', '§27.4'],
+        ['SJ', '§29.2']
+      ])}
       ${
         E > 0
-          ? `<p>Con campo eléctrico $E = ${fmTex(E)}\\text{ V/m}$, la velocidad de deriva es $v_d = E/B = ${fmTex(vd)}\\text{ m/s}$ (${Math.abs(v0 - vd) / (vd || 1) < 0.03 ? 'equilibrio de filtro de Wien' : 'régimen de deriva cicloidal'}).</p>`
-          : `<div class="analysis-note">Como $\\vec{F}_B \\perp \\vec{v}$, el campo magnético no realiza trabajo y el integrador de Boris conserva la energía cinética sin deriva numérica secular.</div>`
+          ? `<p>Con campo eléctrico $E = ${fmTex(E)}\\text{ V/m}$, la velocidad de selector o deriva transversal resulta:</p>` +
+            eq(`v_d = \\frac{E}{B} = ${fmTex(vd)}\\text{ m/s}`, [
+              ['YF', '§27.5'],
+              ['GR', '§5.1.2 (Ej. 5.2)']
+            ])
+          : ''
       }
+      <div class="analysis-note">La ecuación de movimiento se integra con el esquema simpléctico de Boris ${cite('BO', 'pp. 3–67')} ${cite('BL', '§4-3')}, empleando valores de carga elemental y masas atómicas recomendados por ${cite('CO', 'SI')}.</div>
     `;
   }
 
@@ -258,9 +309,14 @@
 
     return `
       <p>Al inclinar la normal $\\hat{n}$ un ángulo $\\theta = ${thDeg}^\\circ$ respecto a $\\vec{B} = ${S.B}\\text{ mT}\\,\\hat{i}$, la sección eficaz que intercepta el campo se proyecta sobre el plano perpendicular ($x = -10\\text{ cm}$) con área:</p>
-      $$A_\\perp = A\\,\\cos\\theta = (${fmTex(A * 1e4)}\\text{ cm}^2)\\,(${cTh.toFixed(4)}) = ${fmTex(Aeff * 1e4)}\\text{ cm}^2$$
+      ${eq(`A_\\perp = A\\,\\cos\\theta = (${fmTex(A * 1e4)}\\text{ cm}^2)\\,(${cTh.toFixed(4)}) = ${fmTex(Aeff * 1e4)}\\text{ cm}^2`, [
+        ['YF', '§27.3']
+      ])}
       <p>El flujo magnético resultante es proporcional a dicha proyección:</p>
-      $$\\Phi_B = B\\,A_\\perp = (${fmTex(B)}\\text{ T})\\,(${fmTex(Aeff)}\\text{ m}^2) = ${fmTex(phi * 1e6)}\\text{ }\\mu\\text{Wb}$$
+      ${eq(`\\Phi_B = B\\,A_\\perp = (${fmTex(B)}\\text{ T})\\,(${fmTex(Aeff)}\\text{ m}^2) = ${fmTex(phi * 1e6)}\\text{ }\\mu\\text{Wb}`, [
+        ['YF', '§27.3'],
+        ['SJ', '§30.5']
+      ])}
       <ul class="analysis-list">
         <li><b>$\\cos\\theta > 0$ ($|\\theta| < 90^\\circ$):</b> las líneas atraviesan en el sentido de $+\\hat{n}$ (flujo positivo).</li>
         <li><b>$\\cos\\theta = 0$ ($\\theta = \\pm 90^\\circ$):</b> la superficie queda paralela al campo y el flujo se anula.</li>
@@ -269,7 +325,7 @@
     `;
   }
 
-  /* Tema 7: balance de flujo en superficie cerrada y significado de ∇·B = 0 */
+  /* Tema 7: balance de flujo en superficie cerrada */
   function buildTema7(S, mod) {
     const Rgm = S.Rg * 1e-2;
     const Atot = S.surf === 'esfera' ? 4 * Math.PI * Rgm * Rgm : 6 * Math.pow(2 * Rgm, 2);
@@ -277,9 +333,15 @@
 
     return `
       <p>Sobre la superficie cerrada $S$ (${S.surf === 'esfera' ? `esfera de radio $R_g = ${S.Rg}\\text{ cm}$` : `cubo de arista $2R_g = ${2 * S.Rg}\\text{ cm}$`}, área total $${fmTex(Atot * 1e4)}\\text{ cm}^2$) centrada en $(${S.gx}, ${S.gy}, 0)\\text{ cm}$, la integración discreta separa las regiones con $\\vec{B}\\cdot\\hat{n} > 0$ y $\\vec{B}\\cdot\\hat{n} < 0$:</p>
-      $$\\Phi_{\\text{sal}} = +${fmTex(live.phiOut * 1e6)}\\text{ }\\mu\\text{Wb}, \\qquad \\Phi_{\\text{ent}} = -${fmTex(Math.abs(live.phiIn) * 1e6)}\\text{ }\\mu\\text{Wb}$$
-      $$\\oint_S \\vec{B}\\cdot d\\vec{A} \\approx ${fmTex(live.phiNet * 1e6)}\\text{ }\\mu\\text{Wb} \\quad (\\text{teórico: } 0\\text{ Wb})$$
-      <div class="analysis-note">Incluso cuando la superficie envuelve un único polo del imán, las líneas de campo regresan por el interior del material de Sur a Norte, manteniendo el balance nulo ($\\nabla\\cdot\\vec{B} = 0$). El pequeño residuo mostrado corresponde exclusivamente al tamaño finito de la malla de integración numérica.</div>
+      ${eq(`\\Phi_{\\text{sal}} = +${fmTex(live.phiOut * 1e6)}\\text{ }\\mu\\text{Wb}, \\qquad \\Phi_{\\text{ent}} = -${fmTex(Math.abs(live.phiIn) * 1e6)}\\text{ }\\mu\\text{Wb}`, [
+        ['YF', '§27.3'],
+        ['SJ', '§30.5']
+      ])}
+      ${eq(`\\oint_S \\vec{B}\\cdot d\\vec{A} \\approx ${fmTex(live.phiNet * 1e6)}\\text{ }\\mu\\text{Wb} \\quad (\\text{teórico: } 0\\text{ Wb},\\; \\nabla\\cdot\\vec{B} = 0)`, [
+        ['GR', '§5.3.2'],
+        ['YF', '§27.3']
+      ])}
+      <div class="analysis-note">Incluso cuando la superficie envuelve un único polo del imán, las líneas de campo regresan por el interior del material de Sur a Norte, manteniendo el balance nulo ${cite('GR', '§5.3.2')}. El residuo mostrado corresponde al tamaño finito de la malla numérica.</div>
     `;
   }
 
@@ -328,6 +390,10 @@
     bodyEl.innerHTML = html;
     if (Sim.ui && Sim.ui.renderMath) {
       Sim.ui.renderMath(bodyEl);
+    }
+    if (Sim.refs) {
+      Sim.refs.renderBibliography();
+      Sim.refs.bindCitationClicks(bodyEl);
     }
   }
 

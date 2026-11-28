@@ -1103,6 +1103,92 @@ input[type="range"]:hover::-moz-range-thumb {
   font-size: 1.02em;
 }
 
+/* Bloques de ecuación con referencia bibliográfica integrada */
+.eq-block {
+  margin: 10px 0 14px;
+  background: var(--surface-subtle);
+  border-left: 2px solid var(--border-strong);
+}
+
+.eq-block .eq-math {
+  padding: 8px 10px 4px;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.eq-block .katex-display {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border-left: 0;
+}
+
+.eq-cite {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: baseline;
+  gap: 5px;
+  padding: 3px 10px 6px;
+  border-top: 1px solid var(--border-hairline);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink-muted);
+}
+
+.cite-link,
+.cite-inline {
+  color: var(--ink-secondary);
+  text-decoration: none;
+}
+
+.cite-link:hover,
+.cite-inline:hover {
+  color: var(--accent-primary);
+  text-decoration: underline;
+}
+
+.cite-inline {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+}
+
+.cite-sep {
+  color: var(--border-strong);
+}
+
+/* Lista de referencias bibliográficas al pie del panel de análisis */
+.refs-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.ref-item {
+  font-size: 11.5px;
+  line-height: 1.52;
+  color: var(--ink-secondary);
+  padding: 3px 6px;
+  margin: 0 -6px;
+  border-radius: var(--radius-xs);
+  transition: background-color 0.25s ease;
+}
+
+.ref-item.is-highlighted {
+  background: var(--accent-soft);
+  color: var(--ink-primary);
+}
+
+.ref-key {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--accent-primary);
+}
+
 .th-list,
 .analysis-list {
   margin: 6px 0 12px;

@@ -382,7 +382,10 @@
     },
     theory:
       '<p>La fuerza magnética sobre una carga puntual $q$ que se desplaza con velocidad $\\vec{v}$ en un campo $\\vec{B}$ define operacionalmente el vector de inducción magnética:</p>' +
-      '$$\\vec{F}_B = q\\,(\\vec{v} \\times \\vec{B}), \\qquad |\\vec{F}_B| = |q|\\,v\\,B\\,\\sin\\theta$$' +
+      Sim.refs.eq('\\vec{F}_B = q\\,(\\vec{v} \\times \\vec{B}), \\qquad |\\vec{F}_B| = |q|\\,v\\,B\\,\\sin\\theta', [
+        ['YF', '§27.2'],
+        ['GR', '§5.1.2']
+      ]) +
       '<p>En el Sistema Internacional, $1\\text{ T} = 1\\text{ N}/(\\text{A}\\cdot\\text{m})$. La fuerza es máxima cuando $\\vec{v}\\perp\\vec{B}$ y se anula cuando $\\vec{v}\\parallel\\vec{B}$.</p>',
     activate() {
       build(cfg0, S0, on0);

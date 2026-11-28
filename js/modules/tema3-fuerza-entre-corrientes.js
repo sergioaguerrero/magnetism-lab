@@ -255,7 +255,10 @@
     },
     theory:
       '<p>Cada conductor se halla inmerso en el campo magnético producido por el otro, experimentando la fuerza de Laplace:</p>' +
-      '$$d\\vec{F}_{1\\to 2} = I_2\\,d\\vec{l}_2 \\times \\vec{B}_1, \\qquad \\frac{F}{L} = \\frac{\\mu_0\\,I_1\\,I_2}{2\\pi\\,d}$$' +
+      Sim.refs.eq('d\\vec{F}_{1\\to 2} = I_2\\,d\\vec{l}_2 \\times \\vec{B}_1, \\qquad \\frac{F}{L} = \\frac{\\mu_0\\,I_1\\,I_2}{2\\pi\\,d}', [
+        ['YF', '§28.4'],
+        ['GR', '§5.2.1']
+      ]) +
       '<p>Las corrientes paralelas se atraen y las antiparalelas se repelen, cumpliendo en todo momento la tercera ley de Newton ($\\vec{F}_{1\\to 2} = -\\vec{F}_{2\\to 1}$).</p>',
     activate() {
       build(cfgC, SC, onC);

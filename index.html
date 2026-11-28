@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
-  <link rel="stylesheet" href="css/styles.css?v=6">
+  <link rel="stylesheet" href="css/styles.css?v=7">
 </head>
 <body>
   <!-- Barra superior integrada: marca, navegación de los 7 temas y herramientas globales -->
@@ -167,6 +167,14 @@
           </div>
           <div id="explain-body" class="analysis-block"></div>
         </section>
+
+        <section class="rail-section" id="sec-refs" hidden>
+          <div class="sec-hdr">
+            <h2>Referencias bibliográficas</h2>
+            <span class="sec-meta">APA</span>
+          </div>
+          <ul id="refs-list" class="refs-list"></ul>
+        </section>
       </div>
     </aside>
   </div>
@@ -257,6 +265,7 @@
 
   <!-- Núcleo del simulador -->
   <script src="js/core/constants.js"></script>
+  <script src="js/core/references.js"></script>
   <script src="js/core/scene.js"></script>
   <script src="js/core/viz3d.js"></script>
   <script src="js/core/plot2d.js"></script>
