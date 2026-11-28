@@ -1,4 +1,4 @@
-/* ===== Coordinador principal, navegación de temas y bucle de animación ===== */
+/* ===== Coordinador principal, navegación de temas, hash URL y bucle de animación ===== */
 let activeMod = null;
 let paused = true;
 let fr = 0;
@@ -12,27 +12,40 @@ function setPaused(p) {
   }
 }
 
-/* Contador de FPS en vivo (RNF-05) */
+/* Contador de FPS reales en vivo (sin límite artificial a 60 Hz) */
 let fpsFrames = 0;
 let fpsLastTime = performance.now();
+let lastFrameTime = performance.now();
 const fpsEl = $('fps');
 
 const tabButtons = Sim.modules.map((mod) => {
   const b = document.createElement('button');
+  b.type = 'button';
   b.textContent = mod.title;
   b.onclick = () => setMode(mod.id);
   $('tabs').append(b);
   return { id: mod.id, btn: b };
 });
 
-function setMode(id, presetName) {
+function syncUrlHash(id) {
+  const target = '#' + id;
+  if (window.location.hash !== target) {
+    try {
+      history.replaceState(null, '', target);
+    } catch (_) {
+      window.location.hash = target;
+    }
+  }
+}
+
+function setMode(id, presetName, skipHash) {
   const mod = Sim.modulesById[id];
   if (!mod) return;
   activeMod = mod;
   Sim.activeMod = mod;
 
   Sim.modules.forEach((m) => {
-    m.group.visible = m.id === id;
+    if (m.group) m.group.visible = m.id === id;
   });
 
   tabButtons.forEach((t) => {
@@ -54,17 +67,22 @@ function setMode(id, presetName) {
   }
 
   if (Sim.explainer) {
-    Sim.explainer.update(mod);
+    Sim.explainer.update(mod, false);
   }
   if (Sim.inspector) {
     Sim.inspector.clear();
+    Sim.inspector.syncLegend(mod);
+  }
+
+  if (!skipHash) {
+    syncUrlHash(id);
   }
 
   centerCamera();
 }
 
 function centerCamera() {
-  if (!activeMod) return;
+  if (!activeMod || !Sim.scene || !Sim.scene.webglReady) return;
   if (activeMod.cameraPos) {
     cam.position.set(...activeMod.cameraPos);
   }
@@ -76,6 +94,8 @@ $('rs').onclick = () => {
   setPaused(true);
   if (activeMod && activeMod.reset) {
     activeMod.reset();
+    if (Sim.explainer) Sim.explainer.update(activeMod, false);
+    if (Sim.inspector) Sim.inspector.markDirty();
   }
 };
 
@@ -91,6 +111,9 @@ if ($('btn-defaults')) {
 
 $('pz').onclick = () => {
   setPaused(!paused);
+  if (paused && activeMod && Sim.explainer) {
+    Sim.explainer.update(activeMod, false);
+  }
 };
 
 Sim.freeCam = false;
@@ -109,14 +132,6 @@ if ($('btn-cam')) {
   };
 }
 
-document.querySelectorAll('.leg-item[data-vec]').forEach((btn) => {
-  btn.onclick = () => {
-    if (Sim.inspector) {
-      Sim.inspector.select(btn.getAttribute('data-vec'));
-    }
-  };
-});
-
 if ($('vec-hud-close')) {
   $('vec-hud-close').onclick = () => {
     if (Sim.inspector) Sim.inspector.clear();
@@ -127,18 +142,30 @@ if ($('btn-theme')) {
   $('btn-theme').onclick = () => Sim.scene.toggleTheme();
 }
 
-/* Alternar entre barra lateral izquierda (Temas) y barra lateral derecha (Explicación detallada) con animación */
+if (Sim.scene && Sim.scene.onThemeChange) {
+  Sim.scene.onThemeChange(() => {
+    if (activeMod && activeMod.onThemeChange) {
+      activeMod.onThemeChange();
+    }
+    if (Sim.inspector && activeMod) {
+      Sim.inspector.syncLegend(activeMod);
+      Sim.inspector.markDirty();
+    }
+  });
+}
+
+/* Alternar entre barra lateral izquierda (Temas) y barra lateral derecha (Explicación) */
 let explainOpen = false;
 function toggleExplain(forceState) {
   explainOpen = typeof forceState === 'boolean' ? forceState : !explainOpen;
   const btnExp = $('btn-explain');
 
-  if (explainOpen && Sim.explainer && activeMod) {
-    Sim.explainer.update(activeMod);
-  }
-
   document.body.classList.toggle('explain-open', explainOpen);
   if (btnExp) btnExp.classList.toggle('on', explainOpen);
+
+  if (explainOpen && Sim.explainer && activeMod) {
+    Sim.explainer.update(activeMod, true);
+  }
 }
 
 if ($('btn-explain')) {
@@ -153,6 +180,8 @@ const modalEl = $('welcome-modal');
 if ($('btn-home') && modalEl) {
   $('btn-home').onclick = () => {
     modalEl.hidden = false;
+    const closeBtn = $('btn-close-modal');
+    if (closeBtn) closeBtn.focus();
   };
 }
 if ($('btn-close-modal') && modalEl) {
@@ -164,6 +193,19 @@ if ($('btn-close-modal') && modalEl) {
   };
 }
 
+/* Accesibilidad: cerrar modal o inspector con tecla Escape */
+window.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  if (modalEl && !modalEl.hidden) {
+    modalEl.hidden = true;
+    return;
+  }
+  const hud = $('vec-hud');
+  if (hud && !hud.hidden && Sim.inspector) {
+    Sim.inspector.clear();
+  }
+});
+
 document.querySelectorAll('[data-goto]').forEach((card) => {
   card.onclick = () => {
     const targetMod = card.getAttribute('data-goto');
@@ -173,29 +215,45 @@ document.querySelectorAll('[data-goto]').forEach((card) => {
   };
 });
 
+window.addEventListener('hashchange', () => {
+  const hashId = window.location.hash.replace(/^#/, '');
+  if (hashId && Sim.modulesById[hashId] && (!activeMod || activeMod.id !== hashId)) {
+    setMode(hashId, null, true);
+  }
+});
+
 function loop(now) {
   requestAnimationFrame(loop);
 
+  const dt = Math.min(0.05, Math.max(0.001, (now - lastFrameTime) / 1000));
+  lastFrameTime = now;
+
   fpsFrames++;
   if (now - fpsLastTime >= 600) {
-    const fps = Math.min(60, Math.round((fpsFrames * 1000) / (now - fpsLastTime)));
+    const fps = Math.round((fpsFrames * 1000) / (now - fpsLastTime));
     if (fpsEl) fpsEl.textContent = fps + ' FPS';
     fpsFrames = 0;
     fpsLastTime = now;
   }
 
+  const isAnimating = Boolean(activeMod && activeMod.canPause && !paused);
   if (activeMod && activeMod.update) {
-    activeMod.update(paused, fr++);
+    activeMod.update(paused, fr++, dt);
   }
   if (Sim.inspector) {
-    Sim.inspector.tick(now);
+    Sim.inspector.tick(now, isAnimating);
   }
   ctl.update();
   renderer.render(scene, cam);
 }
 
 if (Sim.modules.length > 0) {
-  setMode(Sim.modules[0].id);
+  const initialHash = window.location.hash.replace(/^#/, '');
+  const initialId = Sim.modulesById[initialHash] ? initialHash : Sim.modules[0].id;
+  setMode(initialId);
 }
 Sim.ui.renderMath(document.body);
-requestAnimationFrame(loop);
+
+if (Sim.scene && Sim.scene.webglReady) {
+  requestAnimationFrame(loop);
+}

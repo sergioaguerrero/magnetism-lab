@@ -19,6 +19,7 @@ function renderMath(el) {
 
 function ro(list) {
   const roEl = $('ro');
+  if (!roEl) return;
   const key = list.map((item) => item[0]).join('||');
 
   if (key !== lastRoKey || roValSpans.length !== list.length) {
@@ -44,6 +45,16 @@ function captureSliderDefaults(cfg, state, baseDefaults) {
   });
 }
 
+function notifyDependents() {
+  if (Sim.explainer && Sim.activeMod) {
+    Sim.explainer.scheduleUpdate(Sim.activeMod);
+  }
+  if (Sim.inspector && Sim.activeMod) {
+    Sim.inspector.syncLegend(Sim.activeMod);
+    Sim.inspector.markDirty();
+  }
+}
+
 function build(cfg, state, onChange) {
   const vContainer = $('variants');
   const cContainer = $('ctrls');
@@ -55,8 +66,6 @@ function build(cfg, state, onChange) {
 
   const baseDefaults = Sim.activeMod && Sim.activeMod.defaultState ? Sim.activeMod.defaultState : null;
   captureSliderDefaults(cfg, state, baseDefaults);
-  /* Si el módulo actual tiene un preset activo (ej. Selector de velocidades o Espira),
-     conserva los valores predeterminados de los sliders propios de esa variante */
   cfg.forEach((o) => {
     if (!o.opts) {
       sliderDefaults[o.k] = state[o.k];
@@ -79,7 +88,6 @@ function build(cfg, state, onChange) {
     let syncVal = null;
 
     if (o.opts) {
-      /* Las variantes / selectores de cada tema van en la barra lateral izquierda (#variants) */
       r.classList.add('variant-row');
       r.innerHTML = `<div><span>${o.t}</span></div>`;
       const s = document.createElement('select');
@@ -89,12 +97,13 @@ function build(cfg, state, onChange) {
       }
       s.value = state[o.k];
       syncVal = () => {
-        s.value = state[o.k];
+        if (s.value !== String(state[o.k])) {
+          s.value = state[o.k];
+        }
       };
       s.oninput = () => {
         const prev = state[o.k];
         state[o.k] = s.value;
-        /* Si la variante cambia, primero restaura la base de los sliders y aplica los defaults de la nueva variante */
         if (o.onSelect) {
           if (baseDefaults) {
             cfg.forEach((item) => {
@@ -111,14 +120,13 @@ function build(cfg, state, onChange) {
           });
         }
         vis();
-        onChange();
-        if (Sim.explainer && Sim.activeMod) Sim.explainer.update(Sim.activeMod);
+        onChange(o.k);
+        notifyDependents();
       };
       r.append(s);
       if (vContainer) vContainer.append(r);
       else if (cContainer) cContainer.append(r);
     } else {
-      /* Los parámetros numéricos modificables (sliders) van en la sección inferior (#ctrls) */
       r.classList.add('slider-row');
       r.innerHTML = `<div><span>${o.t}</span><b></b></div><input type="range" min="${o.min}" max="${o.max}" step="${o.step}">`;
       const i = r.querySelector('input');
@@ -129,14 +137,16 @@ function build(cfg, state, onChange) {
       };
       sh();
       syncVal = () => {
-        i.value = state[o.k];
-        sh();
+        if (+i.value !== +state[o.k]) {
+          i.value = state[o.k];
+          sh();
+        }
       };
       i.oninput = () => {
         state[o.k] = +i.value;
         sh();
-        onChange();
-        if (Sim.explainer && Sim.activeMod) Sim.explainer.update(Sim.activeMod);
+        onChange(o.k);
+        notifyDependents();
       };
       if (cContainer) cContainer.append(r);
     }
@@ -149,15 +159,18 @@ function build(cfg, state, onChange) {
   vis();
 }
 
-/* Restaura únicamente los sliders numéricos (Parámetros modificables) sin alterar las Variantes del tema */
+function syncControls() {
+  if (activeVis) activeVis();
+}
+
 function resetSlidersOnly() {
   if (!activeState) return;
   for (const k in sliderDefaults) {
     activeState[k] = sliderDefaults[k];
   }
   if (activeVis) activeVis();
-  if (activeOnChange) activeOnChange();
-  if (Sim.explainer && Sim.activeMod) Sim.explainer.update(Sim.activeMod);
+  if (activeOnChange) activeOnChange('__reset__');
+  notifyDependents();
 }
 
-Sim.ui = { ro, build, renderMath, resetSlidersOnly };
+Sim.ui = { ro, build, renderMath, resetSlidersOnly, syncControls };

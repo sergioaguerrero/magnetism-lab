@@ -47,8 +47,6 @@
   --bd: #cbd5e1;
   --sep: #94a3b8;
   --card: #f1f5f9;
-  padding-top: env(safe-area-inset-top, 0px);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -83,13 +81,40 @@ html {
 body {
   height: 100%;
   margin: 0;
-  padding: 12px;
+  padding: calc(12px + env(safe-area-inset-top, 0px)) 12px calc(12px + env(safe-area-inset-bottom, 0px));
   gap: 14px;
   display: flex;
   overflow: hidden;
   font: 13.5px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
   background: var(--bg);
   color: var(--tx);
+}
+
+button:focus-visible,
+select:focus-visible,
+input[type="range"]:focus-visible {
+  outline: 2px solid var(--ac);
+  outline-offset: 2px;
+}
+
+.sim-fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px;
+  gap: 8px;
+  background: var(--pn);
+  color: var(--tx);
+}
+
+.sim-fallback p {
+  margin: 0;
+  max-width: 420px;
+  color: var(--mu);
 }
 
 /* ===== Barra lateral izquierda: Temas y Variantes (con animación de apertura/cierre) ===== */
@@ -565,7 +590,7 @@ body.explain-open aside#explain-sidebar {
   padding: 12px 14px;
   font-size: 13px;
   line-height: 1.62;
-  text-align: justify;
+  text-align: left;
 }
 
 .exp-sec h3 {
@@ -650,10 +675,6 @@ section#bottom-dock {
 
 .row {
   display: block;
-}
-
-.row[hidden] {
-  display: none;
 }
 
 .slider-row {
@@ -798,10 +819,6 @@ input[type="range"]::-webkit-slider-thumb:hover {
   justify-content: center;
 }
 
-.btns button[hidden] {
-  display: none;
-}
-
 /* Lecturas en vivo: filas espaciadas con separador claro */
 #ro {
   flex: 1;
@@ -870,7 +887,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
   overflow-y: auto;
   font-size: 13px;
   line-height: 1.6;
-  text-align: justify;
+  text-align: left;
   background: var(--card);
   padding: 12px 14px;
   border-radius: 9px;
@@ -891,7 +908,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
 
 #th p {
   margin: 8px 0 2px;
-  text-align: justify;
+  text-align: left;
 }
 
 .th-list {
@@ -916,10 +933,6 @@ input[type="range"]::-webkit-slider-thumb:hover {
   justify-content: center;
   z-index: 100;
   padding: 16px;
-}
-
-.modal-backdrop[hidden] {
-  display: none;
 }
 
 .modal {
@@ -967,6 +980,10 @@ input[type="range"]::-webkit-slider-thumb:hover {
 }
 
 .topic-card {
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
   background: var(--card);
   border: 1.5px solid var(--bd);
   border-radius: 10px;
@@ -975,6 +992,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
   transition: transform 0.12s, border-color 0.12s;
   display: flex;
   flex-direction: column;
+  align-items: stretch;
   gap: 6px;
 }
 
