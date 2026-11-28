@@ -355,9 +355,10 @@
           numPts.push([y, bn]);
           anaPts.push([y, ba != null ? ba * 1e6 : NaN]);
         }
+        const onAxis = Math.abs(SB.px) < 0.05;
         const curY = Bf(V(0, SB.py, 0)).y * 1e6;
         return {
-          title: 'Perfil axial B_y(y) en x = 0',
+          title: onAxis ? 'Perfil axial B_y(y) en x = 0' : 'Perfil axial B_y(y) en x = 0 (sonda fuera del eje)',
           xLabel: 'y (cm)',
           yUnit: 'μT',
           xMin: -12,
@@ -367,7 +368,7 @@
             { label: 'Biot-Savart', color: c.B, pts: numPts },
             { label: 'Analítico', color: c.I, pts: anaPts, dashed: true }
           ],
-          marker: { x: SB.py, y: curY, color: c.mu }
+          marker: onAxis ? { x: SB.py, y: curY, color: c.mu } : null
         };
       }
 

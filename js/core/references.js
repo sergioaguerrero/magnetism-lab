@@ -40,7 +40,7 @@
         const entry = CATALOG[id];
         if (!entry) return '';
         const label = loc ? `${entry.short}, ${loc}` : entry.short;
-        return `<a href="#ref-${id}" class="cite-link" data-ref="${id}">${label}</a>`;
+        return `<button type="button" class="cite-link" data-ref="${id}">${label}</button>`;
       })
       .filter(Boolean)
       .join('<span class="cite-sep">·</span>');
@@ -58,7 +58,7 @@
     const entry = CATALOG[id];
     if (!entry) return '';
     const label = loc ? `${entry.short}, ${loc}` : entry.short;
-    return `<a href="#ref-${id}" class="cite-inline" data-ref="${id}">(${label})</a>`;
+    return `<button type="button" class="cite-inline" data-ref="${id}">(${label})</button>`;
   }
 
   /* Extrae todas las referencias citadas en #th y #explain-body y construye la bibliografía del tema activo */

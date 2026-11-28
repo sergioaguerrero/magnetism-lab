@@ -357,6 +357,7 @@ input:focus-visible {
   display: block;
   width: 100% !important;
   height: 100% !important;
+  touch-action: none;
 }
 
 /* Encabezado y leyenda contextual dentro del visor */
@@ -513,6 +514,12 @@ input:focus-visible {
   background: var(--accent-soft);
   border-color: var(--accent-primary);
   color: var(--accent-primary);
+}
+
+.tr-view {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 0 8px;
 }
 
 .tr-sep {
@@ -1141,8 +1148,13 @@ input[type="range"]:hover::-moz-range-thumb {
 
 .cite-link,
 .cite-inline {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
   color: var(--ink-secondary);
   text-decoration: none;
+  cursor: pointer;
 }
 
 .cite-link:hover,
@@ -1362,6 +1374,20 @@ input[type="range"]:hover::-moz-range-thumb {
    Adaptación responsiva y reducción de movimiento
    ========================================================================== */
 
+@media (max-width: 1360px) {
+  .topic-tab,
+  #tabs > button {
+    padding: 0 8px;
+    font-size: 12px;
+    gap: 5px;
+  }
+
+  .topbar {
+    gap: 8px;
+    padding: 0 10px;
+  }
+}
+
 @media (max-width: 1120px) {
   :root {
     --rail-w: 340px;
@@ -1371,7 +1397,8 @@ input[type="range"]:hover::-moz-range-thumb {
     display: none;
   }
 
-  .topic-tab {
+  .topic-tab,
+  #tabs > button {
     padding: 0 10px;
   }
 }

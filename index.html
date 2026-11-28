@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
-  <link rel="stylesheet" href="css/styles.css?v=8">
+  <link rel="stylesheet" href="css/styles.css?v=9">
 </head>
 <body>
   <!-- Barra superior integrada: marca, navegación de los 7 temas y herramientas globales -->
@@ -100,13 +100,17 @@
           <div id="vec-hud-desc" class="vec-hud-desc"></div>
         </div>
 
-        <!-- Barra de transporte de simulación acoplada en la base del visor -->
-        <div class="vp-transport" role="toolbar" aria-label="Control de simulación">
+        <!-- Barra de transporte y vistas ortogonales acoplada en la base del visor -->
+        <div class="vp-transport" role="toolbar" aria-label="Control de simulación y cámara">
           <button type="button" id="pz" class="tr-btn tr-primary">Iniciar</button>
           <button type="button" id="rs" class="tr-btn">Reiniciar</button>
-          <span class="tr-sep" aria-hidden="true"></span>
+          <span id="tr-sep-sim" class="tr-sep" aria-hidden="true"></span>
           <button type="button" id="btn-free" class="tr-btn" title="Liberar seguimiento automático de cámara">Cámara libre</button>
-          <button type="button" id="btn-cam" class="tr-btn" title="Restablecer encuadre inicial">Encuadre inicial</button>
+          <button type="button" class="tr-btn tr-view on" data-view="3d" title="Vista isométrica inicial">3D</button>
+          <button type="button" class="tr-btn tr-view" data-view="xy" title="Vista frontal (plano XY, mirando desde +Z)">XY</button>
+          <button type="button" class="tr-btn tr-view" data-view="xz" title="Vista superior (plano XZ, mirando desde +Y)">XZ</button>
+          <button type="button" class="tr-btn tr-view" data-view="yz" title="Vista lateral (plano YZ, mirando desde +X)">YZ</button>
+          <button type="button" id="btn-cam" class="tr-btn" title="Restablecer encuadre inicial">Centrar</button>
         </div>
       </div>
     </main>
@@ -264,27 +268,27 @@
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
 
   <!-- Núcleo del simulador -->
-  <script src="js/core/constants.js?v=8"></script>
-  <script src="js/core/references.js?v=8"></script>
-  <script src="js/core/scene.js?v=8"></script>
-  <script src="js/core/viz3d.js?v=8"></script>
-  <script src="js/core/plot2d.js?v=8"></script>
-  <script src="js/core/drag3d.js?v=8"></script>
-  <script src="js/core/export.js?v=8"></script>
-  <script src="js/core/ui.js?v=8"></script>
-  <script src="js/core/explainer.js?v=8"></script>
-  <script src="js/core/inspector.js?v=8"></script>
+  <script src="js/core/constants.js?v=9"></script>
+  <script src="js/core/references.js?v=9"></script>
+  <script src="js/core/scene.js?v=9"></script>
+  <script src="js/core/viz3d.js?v=9"></script>
+  <script src="js/core/plot2d.js?v=9"></script>
+  <script src="js/core/drag3d.js?v=9"></script>
+  <script src="js/core/export.js?v=9"></script>
+  <script src="js/core/ui.js?v=9"></script>
+  <script src="js/core/explainer.js?v=9"></script>
+  <script src="js/core/inspector.js?v=9"></script>
 
   <!-- Módulos de simulación -->
-  <script src="js/modules/tema1-campo-magnetico.js?v=8"></script>
-  <script src="js/modules/tema2-fuentes-campo-magnetico.js?v=8"></script>
-  <script src="js/modules/tema3-fuerza-entre-corrientes.js?v=8"></script>
-  <script src="js/modules/tema4-momento-torsion-lazo.js?v=8"></script>
-  <script src="js/modules/tema5-movimiento-particula.js?v=8"></script>
-  <script src="js/modules/tema6-flujo-magnetico.js?v=8"></script>
-  <script src="js/modules/tema7-ley-gauss-magnetismo.js?v=8"></script>
+  <script src="js/modules/tema1-campo-magnetico.js?v=9"></script>
+  <script src="js/modules/tema2-fuentes-campo-magnetico.js?v=9"></script>
+  <script src="js/modules/tema3-fuerza-entre-corrientes.js?v=9"></script>
+  <script src="js/modules/tema4-momento-torsion-lazo.js?v=9"></script>
+  <script src="js/modules/tema5-movimiento-particula.js?v=9"></script>
+  <script src="js/modules/tema6-flujo-magnetico.js?v=9"></script>
+  <script src="js/modules/tema7-ley-gauss-magnetismo.js?v=9"></script>
 
   <!-- Punto de entrada -->
-  <script src="js/main.js?v=8"></script>
+  <script src="js/main.js?v=9"></script>
 </body>
 </html>

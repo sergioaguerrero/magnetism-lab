@@ -84,7 +84,11 @@ function setMode(id, presetName, skipHash) {
   }
 
   const pzBtn = $('pz');
+  const rsBtn = $('rs');
+  const trSepSim = $('tr-sep-sim');
   if (pzBtn) pzBtn.hidden = !mod.canPause;
+  if (rsBtn) rsBtn.hidden = !mod.canPause;
+  if (trSepSim) trSepSim.hidden = !mod.canPause;
   setPaused(true);
 
   const freeBtn = $('btn-free');
@@ -119,6 +123,12 @@ function setMode(id, presetName, skipHash) {
   centerCamera();
 }
 
+function markViewButton(view) {
+  document.querySelectorAll('.tr-view[data-view]').forEach((btn) => {
+    btn.classList.toggle('on', btn.getAttribute('data-view') === view);
+  });
+}
+
 function centerCamera() {
   if (!activeMod || !Sim.scene || !Sim.scene.webglReady) return;
   if (activeMod.cameraPos) {
@@ -126,7 +136,29 @@ function centerCamera() {
   }
   ctl.target.set(0, 0, 0);
   ctl.update();
+  markViewButton('3d');
 }
+
+function setCameraView(view) {
+  if (!activeMod || !Sim.scene || !Sim.scene.webglReady) return;
+  if (Sim.inspector) Sim.inspector.clear();
+  if (view === '3d') {
+    centerCamera();
+    return;
+  }
+  const base = activeMod.cameraPos || [12, 10, 18];
+  const dist = Math.hypot(base[0], base[1], base[2]) * 0.92;
+  ctl.target.set(0, 0, 0);
+  if (view === 'xy') cam.position.set(0, 0, dist);
+  else if (view === 'xz') cam.position.set(0, dist, 0.01);
+  else if (view === 'yz') cam.position.set(dist, 0, 0);
+  ctl.update();
+  markViewButton(view);
+}
+
+document.querySelectorAll('.tr-view[data-view]').forEach((btn) => {
+  btn.onclick = () => setCameraView(btn.getAttribute('data-view'));
+});
 
 /* Gestión de pestañas del panel derecho: Instrumentación | Análisis y teoría */
 let activeRailTab = 'controls';
@@ -161,12 +193,27 @@ function setRailTab(tabName) {
 if ($('tab-controls')) $('tab-controls').onclick = () => setRailTab('controls');
 if ($('tab-analysis')) $('tab-analysis').onclick = () => setRailTab('analysis');
 
-/* Mostrar u ocultar panel lateral derecho */
+/* Mostrar u ocultar panel lateral derecho (con persistencia en localStorage) */
+try {
+  if (localStorage.getItem('mlab-rail') === 'collapsed') {
+    document.body.classList.add('rail-collapsed');
+    if ($('btn-toggle-rail')) $('btn-toggle-rail').setAttribute('aria-expanded', 'false');
+  }
+} catch (_) {
+  /* noop */
+}
+
 if ($('btn-toggle-rail')) {
   $('btn-toggle-rail').onclick = () => {
     const collapsed = document.body.classList.toggle('rail-collapsed');
     $('btn-toggle-rail').setAttribute('aria-expanded', String(!collapsed));
+    try {
+      localStorage.setItem('mlab-rail', collapsed ? 'collapsed' : 'open');
+    } catch (_) {
+      /* noop */
+    }
     if (Sim.scene && Sim.scene.syncSize) Sim.scene.syncSize();
+    if (!collapsed && Sim.plot && activeMod) Sim.plot.render(activeMod);
   };
 }
 
@@ -236,12 +283,30 @@ if ($('btn-export-csv')) {
   };
 }
 
+const ICON_SUN =
+  '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+  '<circle cx="12" cy="12" r="4"></circle>' +
+  '<path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path></svg>';
+const ICON_MOON =
+  '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+  '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>';
+
+function syncThemeIcon() {
+  const btn = $('btn-theme');
+  if (!btn || !Sim.scene || !Sim.scene.isDarkTheme) return;
+  const dark = Sim.scene.isDarkTheme();
+  btn.innerHTML = dark ? ICON_SUN : ICON_MOON;
+  btn.title = dark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro';
+}
+
+syncThemeIcon();
 if ($('btn-theme')) {
   $('btn-theme').onclick = () => Sim.scene.toggleTheme();
 }
 
 if (Sim.scene && Sim.scene.onThemeChange) {
   Sim.scene.onThemeChange(() => {
+    syncThemeIcon();
     if (activeMod && activeMod.onThemeChange) {
       activeMod.onThemeChange();
     }

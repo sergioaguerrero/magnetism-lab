@@ -83,15 +83,28 @@
     grp.add(shaft, cone);
 
     let labelSprite = null;
-    if (opts.label) {
-      const hexStr = '#' + new THREE.Color(color).getHexString();
-      labelSprite = createLabel(opts.label, {
+    let labelHex = '';
+    const labelText = opts.label || '';
+    const labelWorldH = opts.labelHeight || 0.75;
+
+    function rebuildLabelSprite(hexStr) {
+      if (!labelText || hexStr === labelHex) return;
+      labelHex = hexStr;
+      if (labelSprite) {
+        grp.remove(labelSprite);
+        if (Sim.scene && Sim.scene.disposeObject) {
+          Sim.scene.disposeObject(labelSprite);
+        }
+        labelSprite = null;
+      }
+      labelSprite = createLabel(labelText, {
         color: hexStr,
-        worldHeight: opts.labelHeight || 0.75,
+        worldHeight: labelWorldH,
         depthTest: false
       });
       if (labelSprite) {
         labelSprite.renderOrder = 20;
+        labelSprite.position.set(0, Math.max(0.001, curLen) + 0.55, 0);
         grp.add(labelSprite);
       }
     }
@@ -100,6 +113,10 @@
     let curLen = length;
     let curHeadLen = headLenRatio;
     let curHeadRad = headRad;
+
+    if (labelText) {
+      rebuildLabelSprite('#' + new THREE.Color(color).getHexString());
+    }
 
     function layoutGeometry() {
       const safeLen = Math.max(0.001, curLen);
@@ -138,6 +155,9 @@
 
     grp.setColor = function (c) {
       mat.color.set(c);
+      if (labelText) {
+        rebuildLabelSprite('#' + new THREE.Color(c).getHexString());
+      }
       return grp;
     };
 

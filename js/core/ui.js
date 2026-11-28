@@ -261,7 +261,10 @@ function build(cfg, state, onChange) {
         applyNumericValue(numInput.value, true);
       };
       numInput.onchange = () => {
-        const clamped = Math.max(o.min, Math.min(o.max, Number(numInput.value) || o.min));
+        const raw = numInput.value.trim();
+        const parsed = raw === '' ? state[o.k] : Number(raw);
+        const safe = Number.isFinite(parsed) ? parsed : state[o.k];
+        const clamped = Math.max(o.min, Math.min(o.max, safe));
         numInput.value = clamped;
         applyNumericValue(clamped, false);
       };

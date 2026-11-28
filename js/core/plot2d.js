@@ -332,5 +332,20 @@
     return lastSpec;
   }
 
+  /* Redibujar con nitidez HiDPI al cambiar el ancho del panel o la ventana */
+  if (typeof ResizeObserver === 'function') {
+    const plotCanvas = $('plot-canvas');
+    if (plotCanvas) {
+      let plotResizeTimer = null;
+      new ResizeObserver(() => {
+        if (!Sim.activeMod || !lastSpec) return;
+        clearTimeout(plotResizeTimer);
+        plotResizeTimer = setTimeout(() => {
+          if (Sim.activeMod) render(Sim.activeMod);
+        }, 50);
+      }).observe(plotCanvas);
+    }
+  }
+
   Sim.plot = { render, getLastSpec };
 })();

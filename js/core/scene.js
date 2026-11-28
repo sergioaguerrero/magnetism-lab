@@ -4,6 +4,16 @@ const cvw = $('cvw');
 const darkMedia = window.matchMedia('(prefers-color-scheme: dark)');
 const themeListeners = [];
 
+/* Restaurar preferencia de tema guardada en localStorage si existe */
+try {
+  const savedTheme = localStorage.getItem('mlab-theme');
+  if (savedTheme === 'light' || savedTheme === 'dark') {
+    document.documentElement.dataset.theme = savedTheme;
+  }
+} catch (_) {
+  /* noop */
+}
+
 function isDarkTheme() {
   const manual = document.documentElement.dataset.theme;
   if (manual === 'dark') return true;
@@ -265,6 +275,11 @@ if (webglReady) {
     toggleTheme() {
       const next = isDarkTheme() ? 'light' : 'dark';
       document.documentElement.dataset.theme = next;
+      try {
+        localStorage.setItem('mlab-theme', next);
+      } catch (_) {
+        /* noop */
+      }
       applySceneTheme();
     }
   };
